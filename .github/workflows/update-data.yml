@@ -9,6 +9,10 @@ on:
         description: "다시 받을 최근 개월 수 (처음은 13)"
         default: "2"
         required: true
+      sgg:
+        description: "특정 시군구만 (쉼표로, 비우면 전체)"
+        default: ""
+        required: false
 
 permissions:
   contents: write
@@ -24,7 +28,7 @@ jobs:
       - name: 실거래 받아서 요약 만들기
         env:
           DATA_GO_KR_KEY: ${{ secrets.DATA_GO_KR_KEY }}
-        run: python scripts/update_data.py --months ${{ github.event.inputs.months || '2' }}
+        run: python scripts/update_data.py --months ${{ github.event.inputs.months || '2' }} --sgg "${{ github.event.inputs.sgg || '' }}"
       - name: 커밋·푸시
         run: |
           git config user.name "jipteo-bot"

@@ -91,6 +91,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--months", type=int, default=2, help="이번에 다시 받을 최근 개월 수")
     ap.add_argument("--sido", default="", help="한 시도만 (테스트용)")
+    ap.add_argument("--sgg", default="", help="쉼표로 나눈 시군구 이름만 (예: 화성동탄구,검단구)")
     args = ap.parse_args()
     key = os.environ.get("DATA_GO_KR_KEY", "").strip()
     if not key:
@@ -117,7 +118,10 @@ def main():
             by_sgg_name.setdefault(sgg + "|" + norm_name(r[2]), r)
 
         sggs = sorted((c, v[1]) for c, v in codes.items() if v[0] == sido)
+        only = [x.strip() for x in args.sgg.split(",") if x.strip()]
         for lawd, sgg in sggs:
+            if only and sgg not in only:
+                continue
             hpath = os.path.join(DATA, "history", sido, sgg + ".json")
             hist = load_json(hpath, {})
             for ym in yms:

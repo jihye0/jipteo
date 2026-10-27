@@ -302,3 +302,9 @@ table.cmp td { vertical-align: top; white-space: normal; min-width: 9rem; }
 .commute-row .maxwalk { max-width: 12rem; }
 .stop-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--ink); border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,0.25); opacity: 0.85; }
 .leaflet-div-icon { background: transparent; border: 0; }
+
+/* ---- 관심 단지 추이 ---- */
+.trend { width: 100%; height: auto; display: block; color: var(--ink); }
+.legend { display: flex; gap: 0.9rem; flex-wrap: wrap; font-size: 0.8rem; color: var(--muted); }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 0.35rem; vertical-align: middle; }
+label.btn { cursor: pointer; }

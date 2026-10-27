@@ -9,6 +9,7 @@ window.JT = (function () {
     { href: "find.html", key: "find", label: "후보 찾기" },
     { href: "map.html", key: "map", label: "지도·핀" },
     { href: "visit.html", key: "visit", label: "임장" },
+    { href: "watch.html", key: "watch", label: "관심 단지" },
     { href: "policy.html", key: "policy", label: "정책" },
     { href: "terms.html", key: "terms", label: "용어" }
   ];

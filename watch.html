@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>집터 · 관심 단지</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<link rel="stylesheet" href="assets/style.css?v=20261027k">
+</head>
+<body>
+<header class="topbar"><div class="topbar-inner"></div></header>
+
+<main class="page">
+  <div class="page-head">
+    <span class="eyebrow">Tracking</span>
+    <h1>관심 단지 가격 추이</h1>
+    <p class="lead">핀으로 담아 둔 단지의 월별 <dfn data-t="actual-price">실거래</dfn> 중앙값을 그래프로 봅니다. 데이터는 매달 1일 자동으로 쌓이니, 몇 년 뒤 살 계획이라면 지금부터 담아 두세요.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <div>
+        <h2>내 데이터 백업</h2>
+        <p class="small muted">핀·임장 기록·출퇴근 기준·예산 입력은 이 브라우저에만 저장됩니다. 다른 기기에서도 보려면 파일로 내보내고 거기서 가져오세요.</p>
+      </div>
+      <div class="actions"><button type="button" class="btn sm" id="export">내보내기</button><label class="btn sm" for="import">가져오기</label><input type="file" id="import" accept="application/json" hidden></div>
+    </div>
+    <p class="status" id="io-status"></p>
+  </div>
+
+  <p class="small muted" id="meta"></p>
+  <div class="list" id="watch"></div>
+</main>
+
+<script src="assets/terms.js?v=20261027k"></script>
+<script src="assets/app.js?v=20261027k"></script>
+<script>
+(function () {
+  var J = window.JT, $ = J.$, esc = J.esc, fmtEok = J.fmtEok;
+  J.renderNav("watch");
+  var budget = J.lsGet("imjang.budget", null);
+
+  // ---- 백업
+  $("export").addEventListener("click", function () {
+    var keys = ["imjang.candidates.v1", "imjang.visits.v1", "imjang.commute.v1", "imjang.budgetInputs", "imjang.budget", "imjang.findInputs"], out = { app: "jipteo", exportedAt: new Date().toISOString(), data: {} };
+    keys.forEach(function (k) { var v = localStorage.getItem(k); if (v != null) out.data[k] = JSON.parse(v); });
+    var blob = new Blob([JSON.stringify(out, null, 1)], { type: "application/json" }), a = document.createElement("a");
+    a.href = URL.createObjectURL(blob); a.download = "jipteo-backup-" + new Date().toISOString().slice(0, 10) + ".json"; a.click();
+    $("io-status").textContent = "내보냈습니다. 파일을 다른 기기로 옮겨 '가져오기'를 누르세요.";
+  });
+  $("import").addEventListener("change", function () {
+    var f = this.files[0]; if (!f) return;
+    f.text().then(function (t) {
+      var o = JSON.parse(t); if (!o || o.app !== "jipteo" || !o.data) throw new Error("형식");
+      Object.keys(o.data).forEach(function (k) { localStorage.setItem(k, JSON.stringify(o.data[k])); });
+      $("io-status").textContent = "가져왔습니다. 페이지를 다시 불러옵니다."; setTimeout(function () { location.reload(); }, 800);
+    }).catch(function () { $("io-status").textContent = "이 사이트에서 내보낸 파일이 아닙니다."; $("io-status").className = "status err"; });
+  });
+
+  // ---- 추이
+  function ymLabel(ym) { return ym.slice(2, 4) + "." + ym.slice(4); }
+  function chart(series, months, budgetLine) {
+    // series: [{ label, pts: {ym: value} }], months: 정렬된 ym 목록
+    var W = 640, H = 220, L = 54, R = 12, T = 14, B = 28, cols = ["#2b62e5", "#1a8a52", "#c2740f", "#d23f3f", "#7b61ff", "#0f9bb3"];
+    var vals = []; series.forEach(function (s) { months.forEach(function (m) { if (s.pts[m]) vals.push(s.pts[m]); }); });
+    if (budgetLine) vals.push(budgetLine);
+    if (!vals.length) return "";
+    var lo = Math.min.apply(null, vals) * 0.92, hi = Math.max.apply(null, vals) * 1.05;
+    var x = function (i) { return L + (W - L - R) * (months.length === 1 ? 0.5 : i / (months.length - 1)); };
+    var y = function (v) { return T + (H - T - B) * (1 - (v - lo) / (hi - lo)); };
+    var g = "";
+    for (var k = 0; k <= 4; k++) { var v = lo + (hi - lo) * k / 4, yy = y(v); g += '<line x1="' + L + '" y1="' + yy + '" x2="' + (W - R) + '" y2="' + yy + '" stroke="currentColor" stroke-opacity="0.12"/><text x="' + (L - 6) + '" y="' + (yy + 4) + '" text-anchor="end" font-size="11" fill="currentColor" fill-opacity="0.6">' + fmtEok(v, 1) + '</text>'; }
+    months.forEach(function (m, i) { if (months.length <= 14 || i % Math.ceil(months.length / 12) === 0) g += '<text x="' + x(i) + '" y="' + (H - 8) + '" text-anchor="middle" font-size="11" fill="currentColor" fill-opacity="0.6">' + ymLabel(m) + '</text>'; });
+    if (budgetLine && budgetLine > lo && budgetLine < hi) g += '<line x1="' + L + '" y1="' + y(budgetLine) + '" x2="' + (W - R) + '" y2="' + y(budgetLine) + '" stroke="#d23f3f" stroke-dasharray="4 4"/><text x="' + (W - R) + '" y="' + (y(budgetLine) - 4) + '" text-anchor="end" font-size="11" fill="#d23f3f">내 예산 ' + fmtEok(budgetLine) + '</text>';
+    series.forEach(function (s, si) {
+      var d = "", c = cols[si % cols.length];
+      months.forEach(function (m, i) { var v = s.pts[m]; if (!v) return; d += (d ? " L" : "M") + x(i).toFixed(1) + " " + y(v).toFixed(1); g += '<circle cx="' + x(i) + '" cy="' + y(v) + '" r="2.5" fill="' + c + '"><title>' + esc(s.label) + " " + ymLabel(m) + " " + fmtEok(v, 1) + '</title></circle>'; });
+      g += '<path d="' + d + '" fill="none" stroke="' + c + '" stroke-width="2"/>';
+    });
+    var legend = series.map(function (s, si) { return '<span><i style="background:' + cols[si % cols.length] + '"></i>' + esc(s.label) + '</span>'; }).join("");
+    return '<div class="legend">' + legend + '</div><svg viewBox="0 0 ' + W + ' ' + H + '" class="trend" role="img">' + g + '</svg>';
+  }
+
+  var cands = J.candidates.items.filter(function (c) { return c.addr && c.addr.code && J.PRICE_AVAILABLE.indexOf(c.addr.code) >= 0 && c.addr.dongKey; });
+  if (!cands.length) {
+    $("watch").innerHTML = '<div class="empty"><h3>아직 담아 둔 단지가 없습니다</h3><p>후보 찾기에서 "핀으로 담기"를 누르면 여기에 가격 추이가 쌓입니다.</p><a class="btn primary" href="find.html">후보 찾기로</a></div>';
+  }
+  fetch("data/meta.json").then(function (r) { return r.ok ? r.json() : null; }).then(function (m) { if (m && m.updatedAt) $("meta").textContent = "마지막 갱신 " + m.updatedAt.slice(0, 10) + " · 매달 1일 국토교통부 실거래가 API로 자동 갱신"; }).catch(function () {});
+
+  cands.forEach(function (c) {
+    var sgg = c.addr.dongKey.split(" ")[0], key = c.addr.dongKey + "|" + (c.addr.jibun || "");
+    var box = document.createElement("article"); box.className = "row-card"; box.innerHTML = '<div class="title"><h3>' + esc(c.name) + '</h3><span class="small muted">' + esc(c.area || "") + '</span></div><p class="small muted">불러오는 중</p>';
+    $("watch").appendChild(box);
+    fetch("data/history/" + c.addr.code + "/" + encodeURIComponent(sgg) + ".json").then(function (r) { if (!r.ok) throw new Error("no"); return r.json(); }).then(function (hist) {
+      var h = hist[key];
+      if (!h) { var nk = J.normName(c.name); Object.keys(hist).forEach(function (k) { if (!h && k.split("|")[0] === c.addr.dongKey && J.normName(hist[k].n) === nk) h = hist[k]; }); }
+      if (!h) { box.querySelector("p").textContent = "이 단지의 월별 기록이 아직 없습니다."; return; }
+      var months = Object.keys(h.m).sort(), areas = {};
+      months.forEach(function (m) { Object.keys(h.m[m]).forEach(function (a) { if (h.m[m][a][0]) areas[a] = (areas[a] || 0) + h.m[m][a][0]; }); });
+      var top = Object.keys(areas).sort(function (a, b) { return areas[b] - areas[a]; }).slice(0, 4).sort(function (a, b) { return a - b; });
+      var series = top.map(function (a) { var pts = {}; months.forEach(function (m) { var v = h.m[m][a]; if (v && v[1]) pts[m] = v[1]; }); return { label: a + "㎡ 매매", pts: pts }; });
+      var rows = top.map(function (a) {
+        var last = null, first = null, lastJ = null;
+        months.forEach(function (m) { var v = h.m[m][a]; if (!v) return; if (v[1]) { if (!first) first = { m: m, v: v[1] }; last = { m: m, v: v[1] }; } if (v[5]) lastJ = { m: m, v: v[5] }; });
+        var chg = last && first && first.m !== last.m ? ((last.v / first.v - 1) * 100) : null;
+        return "<tr><td>" + a + "㎡ <span class=\"muted\">" + J.pyeong(a) + "평형</span></td><td class=\"n\">" + (last ? "<b>" + fmtEok(last.v, 1) + "</b> <span class=\"muted small\">" + ymLabel(last.m) + "</span>" : "–") + "</td>" +
+          "<td class=\"n\">" + (chg != null ? (chg >= 0 ? "+" : "") + chg.toFixed(1) + "% <span class=\"muted small\">" + ymLabel(first.m) + "→</span>" : "–") + "</td>" +
+          "<td class=\"n\">" + (lastJ ? fmtEok(lastJ.v, 1) + (last ? " <span class=\"muted small\">" + Math.round(lastJ.v / last.v * 100) + "%</span>" : "") : "–") + "</td>" +
+          "<td class=\"n\">" + (budget && budget.price && last ? (last.v <= budget.price ? '<span class="chip good">예산 안</span>' : "예산 +" + fmtEok(last.v - budget.price)) : "–") + "</td></tr>";
+      }).join("");
+      box.innerHTML = '<div class="title"><h3>' + esc(c.name) + '</h3><span class="small muted">' + esc(c.area || "") + ' · 기록 ' + months.length + '개월</span></div>' +
+        chart(series, months, budget && budget.price) +
+        '<div class="tablewrap"><table><thead><tr><th>전용</th><th class="n">최근 매매 중앙값</th><th class="n">첫 기록 대비</th><th class="n">최근 전세 (전세가율)</th><th class="n">내 예산과</th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
+        '<div class="actions end"><a class="btn sm" href="map.html?focus=' + encodeURIComponent(c.id) + '">지도</a><a class="btn sm" href="https://new.land.naver.com/search?sk=' + encodeURIComponent(c.name) + '" target="_blank" rel="noopener">네이버부동산</a></div>';
+      J.termify(box);
+    }).catch(function () { box.querySelector("p").textContent = "월별 기록 파일이 아직 없습니다. 첫 자동 갱신이 끝나면 나타납니다."; });
+  });
+})();
+</script>
+</body>
+</html>

@@ -18,7 +18,7 @@
   var SIDO_NAME = { seoul: "서울", gyeonggi: "경기", incheon: "인천" };
   function expand(code, dongKey) {
     var t = dongKey.split(" ");
-    if (code === "gyeonggi" && t.length >= 2 && /구$/.test(t[0]) && t[0].length >= 4) { var m = /^(.+?)(\S{2,}구)$/.exec(t[0]); if (m) t[0] = m[1] + "시 " + m[2]; }
+    if (code === "gyeonggi" && t.length >= 2 && /구$/.test(t[0]) && t[0].length >= 4) t[0] = t[0].slice(0, 2) + "시 " + t[0].slice(2); // 경기의 시·구 합친 키: 시 이름은 모두 두 글자
     return t.join(" ");
   }
   window.GEO = { code: null, rows: 0, done: 0, ok: 0, out: [], running: false };

@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>집터 · 단지 좌표 만들기 (관리용)</title>
+<style>body{font-family:system-ui,sans-serif;max-width:720px;margin:2rem auto;padding:0 1rem;line-height:1.5}pre{background:#f4f4f4;padding:.6rem;white-space:pre-wrap}button{padding:.5rem 1rem}</style>
+</head>
+<body>
+<h1>단지 좌표 만들기</h1>
+<p>data/price-&lt;시도&gt;.json 의 단지마다 카카오 주소 검색으로 위도·경도를 구합니다. 이 페이지는 사이트 관리용이며 결과는 window.GEO 에 쌓입니다.</p>
+<p><label>시도 <select id="sido"><option value="seoul">서울</option><option value="gyeonggi">경기</option><option value="incheon">인천</option></select></label> <button id="go">시작</button></p>
+<pre id="log">대기 중</pre>
+<script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=37e04196393a74fd4c0faa01f2042f84&autoload=false&libraries=services"></script>
+<script>
+(function () {
+  var log = document.getElementById("log");
+  var SIDO_NAME = { seoul: "서울", gyeonggi: "경기", incheon: "인천" };
+  function expand(code, dongKey) {
+    var t = dongKey.split(" ");
+    if (code === "gyeonggi" && t.length >= 2 && /구$/.test(t[0]) && t[0].length >= 4) { var m = /^(.+?)(\S{2,}구)$/.exec(t[0]); if (m) t[0] = m[1] + "시 " + m[2]; }
+    return t.join(" ");
+  }
+  window.GEO = { code: null, rows: 0, done: 0, ok: 0, out: [], running: false };
+  function geocode(code, r) {
+    var addr = SIDO_NAME[code] + " " + expand(code, r[0]) + " " + r[1];
+    var dong = r[0].split(" ").slice(-1)[0];
+    return new Promise(function (resolve) {
+      new kakao.maps.services.Geocoder().addressSearch(addr, function (rows, st) {
+        if (st === kakao.maps.services.Status.OK && rows[0]) return resolve([+(+rows[0].y).toFixed(5), +(+rows[0].x).toFixed(5), "a"]);
+        new kakao.maps.services.Places().keywordSearch(dong + " " + r[2], function (data, status) {
+          if (status === kakao.maps.services.Status.OK && data[0] && String(data[0].address_name).indexOf(dong) >= 0) return resolve([+(+data[0].y).toFixed(5), +(+data[0].x).toFixed(5), "k"]);
+          resolve(null);
+        });
+      });
+    });
+  }
+  function run(code) {
+    var G = window.GEO; G.code = code; G.out = []; G.done = 0; G.ok = 0; G.running = true;
+    fetch("../data/price-" + code + ".json").then(function (r) { return r.json(); }).then(function (rows) {
+      G.rows = rows.length; G.out = new Array(rows.length).fill(null);
+      var i = 0, active = 0, CONC = 4;
+      function tick() {
+        while (active < CONC && i < rows.length) {
+          (function (idx) {
+            active++;
+            geocode(code, rows[idx]).then(function (p) { G.out[idx] = p; if (p) G.ok++; }).catch(function () {}).then(function () {
+              active--; G.done++;
+              if (G.done % 50 === 0 || G.done === rows.length) log.textContent = code + ": " + G.done + "/" + rows.length + " 처리, 좌표 찾음 " + G.ok;
+              if (G.done === rows.length) { G.running = false; log.textContent += "\n완료"; } else setTimeout(tick, 30);
+            });
+          })(i++);
+        }
+      }
+      tick();
+    }).catch(function (e) { log.textContent = "데이터 로드 실패: " + e; G.running = false; });
+  }
+  document.getElementById("go").addEventListener("click", function () {
+    var code = document.getElementById("sido").value;
+    kakao.maps.load(function () { log.textContent = "시작: " + code; run(code); });
+  });
+  window.GEO.start = function (code) { kakao.maps.load(function () { run(code); }); };
+})();
+</script>
+</body>
+</html>

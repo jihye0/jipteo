@@ -481,7 +481,7 @@ window.JT = (function () {
   }
   function scoreHtml(sc) {
     if (!sc || sc.total == null) return "";
-    return '<div class="score-box"><div class="score-head"><b>추천 ' + sc.total + '점</b><span class="muted small"> (반영된 항목 ' + sc.counted + '점 만점을 100점으로 환산)</span></div><ul class="score-parts">' +
+    return '<div class="score-box"><div class="score-head"><b>추천 ' + sc.total + '점</b>' + (sc.counted < 100 ? '<span class="muted small"> (자료 있는 항목 ' + sc.counted + '점 만점을 100점으로 환산)</span>' : "") + '</div><ul class="score-parts">' +
       sc.parts.map(function (p) { return "<li><span>" + esc(p.label) + "</span><b>" + (p.pts == null ? "–" : p.pts + "/" + p.max) + "</b><span class=\"muted small\">" + p.why + "</span></li>"; }).join("") + "</ul></div>";
   }
 

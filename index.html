@@ -3,1933 +3,211 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<style>:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}img{max-width:100%}[hidden]{display:none!important}</style>
-<title>집터</title>
-<meta name="claude:viewport-fit-sides" content="cover">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
-<style>
-/* required styles */
-
-.leaflet-pane,
-.leaflet-tile,
-.leaflet-marker-icon,
-.leaflet-marker-shadow,
-.leaflet-tile-container,
-.leaflet-pane > svg,
-.leaflet-pane > canvas,
-.leaflet-zoom-box,
-.leaflet-image-layer,
-.leaflet-layer {
-	position: absolute;
-	left: 0;
-	top: 0;
-	}
-.leaflet-container {
-	overflow: hidden;
-	}
-.leaflet-tile,
-.leaflet-marker-icon,
-.leaflet-marker-shadow {
-	-webkit-user-select: none;
-	   -moz-user-select: none;
-	        user-select: none;
-	  -webkit-user-drag: none;
-	}
-/* Prevents IE11 from highlighting tiles in blue */
-.leaflet-tile::selection {
-	background: transparent;
-}
-/* Safari renders non-retina tile on retina better with this, but Chrome is worse */
-.leaflet-safari .leaflet-tile {
-	image-rendering: -webkit-optimize-contrast;
-	}
-/* hack that prevents hw layers "stretching" when loading new tiles */
-.leaflet-safari .leaflet-tile-container {
-	width: 1600px;
-	height: 1600px;
-	-webkit-transform-origin: 0 0;
-	}
-.leaflet-marker-icon,
-.leaflet-marker-shadow {
-	display: block;
-	}
-/* .leaflet-container svg: reset svg max-width decleration shipped in Joomla! (joomla.org) 3.x */
-/* .leaflet-container img: map is broken in FF if you have max-width: 100% on tiles */
-.leaflet-container .leaflet-overlay-pane svg {
-	max-width: none !important;
-	max-height: none !important;
-	}
-.leaflet-container .leaflet-marker-pane img,
-.leaflet-container .leaflet-shadow-pane img,
-.leaflet-container .leaflet-tile-pane img,
-.leaflet-container img.leaflet-image-layer,
-.leaflet-container .leaflet-tile {
-	max-width: none !important;
-	max-height: none !important;
-	width: auto;
-	padding: 0;
-	}
-
-.leaflet-container img.leaflet-tile {
-	/* See: https://bugs.chromium.org/p/chromium/issues/detail?id=600120 */
-	mix-blend-mode: plus-lighter;
-}
-
-.leaflet-container.leaflet-touch-zoom {
-	-ms-touch-action: pan-x pan-y;
-	touch-action: pan-x pan-y;
-	}
-.leaflet-container.leaflet-touch-drag {
-	-ms-touch-action: pinch-zoom;
-	/* Fallback for FF which doesn't support pinch-zoom */
-	touch-action: none;
-	touch-action: pinch-zoom;
-}
-.leaflet-container.leaflet-touch-drag.leaflet-touch-zoom {
-	-ms-touch-action: none;
-	touch-action: none;
-}
-.leaflet-container {
-	-webkit-tap-highlight-color: transparent;
-}
-.leaflet-container a {
-	-webkit-tap-highlight-color: rgba(51, 181, 229, 0.4);
-}
-.leaflet-tile {
-	filter: inherit;
-	visibility: hidden;
-	}
-.leaflet-tile-loaded {
-	visibility: inherit;
-	}
-.leaflet-zoom-box {
-	width: 0;
-	height: 0;
-	-moz-box-sizing: border-box;
-	     box-sizing: border-box;
-	z-index: 800;
-	}
-/* workaround for https://bugzilla.mozilla.org/show_bug.cgi?id=888319 */
-.leaflet-overlay-pane svg {
-	-moz-user-select: none;
-	}
-
-.leaflet-pane         { z-index: 400; }
-
-.leaflet-tile-pane    { z-index: 200; }
-.leaflet-overlay-pane { z-index: 400; }
-.leaflet-shadow-pane  { z-index: 500; }
-.leaflet-marker-pane  { z-index: 600; }
-.leaflet-tooltip-pane   { z-index: 650; }
-.leaflet-popup-pane   { z-index: 700; }
-
-.leaflet-map-pane canvas { z-index: 100; }
-.leaflet-map-pane svg    { z-index: 200; }
-
-.leaflet-vml-shape {
-	width: 1px;
-	height: 1px;
-	}
-.lvml {
-	behavior: url(#default#VML);
-	display: inline-block;
-	position: absolute;
-	}
-
-
-/* control positioning */
-
-.leaflet-control {
-	position: relative;
-	z-index: 800;
-	pointer-events: visiblePainted; /* IE 9-10 doesn't have auto */
-	pointer-events: auto;
-	}
-.leaflet-top,
-.leaflet-bottom {
-	position: absolute;
-	z-index: 1000;
-	pointer-events: none;
-	}
-.leaflet-top {
-	top: 0;
-	}
-.leaflet-right {
-	right: 0;
-	}
-.leaflet-bottom {
-	bottom: 0;
-	}
-.leaflet-left {
-	left: 0;
-	}
-.leaflet-control {
-	float: left;
-	clear: both;
-	}
-.leaflet-right .leaflet-control {
-	float: right;
-	}
-.leaflet-top .leaflet-control {
-	margin-top: 10px;
-	}
-.leaflet-bottom .leaflet-control {
-	margin-bottom: 10px;
-	}
-.leaflet-left .leaflet-control {
-	margin-left: 10px;
-	}
-.leaflet-right .leaflet-control {
-	margin-right: 10px;
-	}
-
-
-/* zoom and fade animations */
-
-.leaflet-fade-anim .leaflet-popup {
-	opacity: 0;
-	-webkit-transition: opacity 0.2s linear;
-	   -moz-transition: opacity 0.2s linear;
-	        transition: opacity 0.2s linear;
-	}
-.leaflet-fade-anim .leaflet-map-pane .leaflet-popup {
-	opacity: 1;
-	}
-.leaflet-zoom-animated {
-	-webkit-transform-origin: 0 0;
-	    -ms-transform-origin: 0 0;
-	        transform-origin: 0 0;
-	}
-svg.leaflet-zoom-animated {
-	will-change: transform;
-}
-
-.leaflet-zoom-anim .leaflet-zoom-animated {
-	-webkit-transition: -webkit-transform 0.25s cubic-bezier(0,0,0.25,1);
-	   -moz-transition:    -moz-transform 0.25s cubic-bezier(0,0,0.25,1);
-	        transition:         transform 0.25s cubic-bezier(0,0,0.25,1);
-	}
-.leaflet-zoom-anim .leaflet-tile,
-.leaflet-pan-anim .leaflet-tile {
-	-webkit-transition: none;
-	   -moz-transition: none;
-	        transition: none;
-	}
-
-.leaflet-zoom-anim .leaflet-zoom-hide {
-	visibility: hidden;
-	}
-
-
-/* cursors */
-
-.leaflet-interactive {
-	cursor: pointer;
-	}
-.leaflet-grab {
-	cursor: -webkit-grab;
-	cursor:    -moz-grab;
-	cursor:         grab;
-	}
-.leaflet-crosshair,
-.leaflet-crosshair .leaflet-interactive {
-	cursor: crosshair;
-	}
-.leaflet-popup-pane,
-.leaflet-control {
-	cursor: auto;
-	}
-.leaflet-dragging .leaflet-grab,
-.leaflet-dragging .leaflet-grab .leaflet-interactive,
-.leaflet-dragging .leaflet-marker-draggable {
-	cursor: move;
-	cursor: -webkit-grabbing;
-	cursor:    -moz-grabbing;
-	cursor:         grabbing;
-	}
-
-/* marker & overlays interactivity */
-.leaflet-marker-icon,
-.leaflet-marker-shadow,
-.leaflet-image-layer,
-.leaflet-pane > svg path,
-.leaflet-tile-container {
-	pointer-events: none;
-	}
-
-.leaflet-marker-icon.leaflet-interactive,
-.leaflet-image-layer.leaflet-interactive,
-.leaflet-pane > svg path.leaflet-interactive,
-svg.leaflet-image-layer.leaflet-interactive path {
-	pointer-events: visiblePainted; /* IE 9-10 doesn't have auto */
-	pointer-events: auto;
-	}
-
-/* visual tweaks */
-
-.leaflet-container {
-	background: #ddd;
-	outline-offset: 1px;
-	}
-.leaflet-container a {
-	color: #0078A8;
-	}
-.leaflet-zoom-box {
-	border: 2px dotted #38f;
-	background: rgba(255,255,255,0.5);
-	}
-
-
-/* general typography */
-.leaflet-container {
-	font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
-	font-size: 12px;
-	font-size: 0.75rem;
-	line-height: 1.5;
-	}
-
-
-/* general toolbar styles */
-
-.leaflet-bar {
-	box-shadow: 0 1px 5px rgba(0,0,0,0.65);
-	border-radius: 4px;
-	}
-.leaflet-bar a {
-	background-color: #fff;
-	border-bottom: 1px solid #ccc;
-	width: 26px;
-	height: 26px;
-	line-height: 26px;
-	display: block;
-	text-align: center;
-	text-decoration: none;
-	color: black;
-	}
-.leaflet-bar a,
-.leaflet-control-layers-toggle {
-	background-position: 50% 50%;
-	background-repeat: no-repeat;
-	display: block;
-	}
-.leaflet-bar a:hover,
-.leaflet-bar a:focus {
-	background-color: #f4f4f4;
-	}
-.leaflet-bar a:first-child {
-	border-top-left-radius: 4px;
-	border-top-right-radius: 4px;
-	}
-.leaflet-bar a:last-child {
-	border-bottom-left-radius: 4px;
-	border-bottom-right-radius: 4px;
-	border-bottom: none;
-	}
-.leaflet-bar a.leaflet-disabled {
-	cursor: default;
-	background-color: #f4f4f4;
-	color: #bbb;
-	}
-
-.leaflet-touch .leaflet-bar a {
-	width: 30px;
-	height: 30px;
-	line-height: 30px;
-	}
-.leaflet-touch .leaflet-bar a:first-child {
-	border-top-left-radius: 2px;
-	border-top-right-radius: 2px;
-	}
-.leaflet-touch .leaflet-bar a:last-child {
-	border-bottom-left-radius: 2px;
-	border-bottom-right-radius: 2px;
-	}
-
-/* zoom control */
-
-.leaflet-control-zoom-in,
-.leaflet-control-zoom-out {
-	font: bold 18px 'Lucida Console', Monaco, monospace;
-	text-indent: 1px;
-	}
-
-.leaflet-touch .leaflet-control-zoom-in, .leaflet-touch .leaflet-control-zoom-out  {
-	font-size: 22px;
-	}
-
-
-/* layers control */
-
-.leaflet-control-layers {
-	box-shadow: 0 1px 5px rgba(0,0,0,0.4);
-	background: #fff;
-	border-radius: 5px;
-	}
-.leaflet-control-layers-toggle {
-	background-image: none;
-	width: 36px;
-	height: 36px;
-	}
-.leaflet-retina .leaflet-control-layers-toggle {
-	background-image: none;
-	background-size: 26px 26px;
-	}
-.leaflet-touch .leaflet-control-layers-toggle {
-	width: 44px;
-	height: 44px;
-	}
-.leaflet-control-layers .leaflet-control-layers-list,
-.leaflet-control-layers-expanded .leaflet-control-layers-toggle {
-	display: none;
-	}
-.leaflet-control-layers-expanded .leaflet-control-layers-list {
-	display: block;
-	position: relative;
-	}
-.leaflet-control-layers-expanded {
-	padding: 6px 10px 6px 6px;
-	color: #333;
-	background: #fff;
-	}
-.leaflet-control-layers-scrollbar {
-	overflow-y: scroll;
-	overflow-x: hidden;
-	padding-right: 5px;
-	}
-.leaflet-control-layers-selector {
-	margin-top: 2px;
-	position: relative;
-	top: 1px;
-	}
-.leaflet-control-layers label {
-	display: block;
-	font-size: 13px;
-	font-size: 1.08333em;
-	}
-.leaflet-control-layers-separator {
-	height: 0;
-	border-top: 1px solid #ddd;
-	margin: 5px -10px 5px -6px;
-	}
-
-/* Default icon URLs */
-.leaflet-default-icon-path { /* used only in path-guessing heuristic, see L.Icon.Default */
-	background-image: none;
-	}
-
-
-/* attribution and scale controls */
-
-.leaflet-container .leaflet-control-attribution {
-	background: #fff;
-	background: rgba(255, 255, 255, 0.8);
-	margin: 0;
-	}
-.leaflet-control-attribution,
-.leaflet-control-scale-line {
-	padding: 0 5px;
-	color: #333;
-	line-height: 1.4;
-	}
-.leaflet-control-attribution a {
-	text-decoration: none;
-	}
-.leaflet-control-attribution a:hover,
-.leaflet-control-attribution a:focus {
-	text-decoration: underline;
-	}
-.leaflet-attribution-flag {
-	display: inline !important;
-	vertical-align: baseline !important;
-	width: 1em;
-	height: 0.6669em;
-	}
-.leaflet-left .leaflet-control-scale {
-	margin-left: 5px;
-	}
-.leaflet-bottom .leaflet-control-scale {
-	margin-bottom: 5px;
-	}
-.leaflet-control-scale-line {
-	border: 2px solid #777;
-	border-top: none;
-	line-height: 1.1;
-	padding: 2px 5px 1px;
-	white-space: nowrap;
-	-moz-box-sizing: border-box;
-	     box-sizing: border-box;
-	background: rgba(255, 255, 255, 0.8);
-	text-shadow: 1px 1px #fff;
-	}
-.leaflet-control-scale-line:not(:first-child) {
-	border-top: 2px solid #777;
-	border-bottom: none;
-	margin-top: -2px;
-	}
-.leaflet-control-scale-line:not(:first-child):not(:last-child) {
-	border-bottom: 2px solid #777;
-	}
-
-.leaflet-touch .leaflet-control-attribution,
-.leaflet-touch .leaflet-control-layers,
-.leaflet-touch .leaflet-bar {
-	box-shadow: none;
-	}
-.leaflet-touch .leaflet-control-layers,
-.leaflet-touch .leaflet-bar {
-	border: 2px solid rgba(0,0,0,0.2);
-	background-clip: padding-box;
-	}
-
-
-/* popup */
-
-.leaflet-popup {
-	position: absolute;
-	text-align: center;
-	margin-bottom: 20px;
-	}
-.leaflet-popup-content-wrapper {
-	padding: 1px;
-	text-align: left;
-	border-radius: 12px;
-	}
-.leaflet-popup-content {
-	margin: 13px 24px 13px 20px;
-	line-height: 1.3;
-	font-size: 13px;
-	font-size: 1.08333em;
-	min-height: 1px;
-	}
-.leaflet-popup-content p {
-	margin: 17px 0;
-	margin: 1.3em 0;
-	}
-.leaflet-popup-tip-container {
-	width: 40px;
-	height: 20px;
-	position: absolute;
-	left: 50%;
-	margin-top: -1px;
-	margin-left: -20px;
-	overflow: hidden;
-	pointer-events: none;
-	}
-.leaflet-popup-tip {
-	width: 17px;
-	height: 17px;
-	padding: 1px;
-
-	margin: -10px auto 0;
-	pointer-events: auto;
-
-	-webkit-transform: rotate(45deg);
-	   -moz-transform: rotate(45deg);
-	    -ms-transform: rotate(45deg);
-	        transform: rotate(45deg);
-	}
-.leaflet-popup-content-wrapper,
-.leaflet-popup-tip {
-	background: white;
-	color: #333;
-	box-shadow: 0 3px 14px rgba(0,0,0,0.4);
-	}
-.leaflet-container a.leaflet-popup-close-button {
-	position: absolute;
-	top: 0;
-	right: 0;
-	border: none;
-	text-align: center;
-	width: 24px;
-	height: 24px;
-	font: 16px/24px Tahoma, Verdana, sans-serif;
-	color: #757575;
-	text-decoration: none;
-	background: transparent;
-	}
-.leaflet-container a.leaflet-popup-close-button:hover,
-.leaflet-container a.leaflet-popup-close-button:focus {
-	color: #585858;
-	}
-.leaflet-popup-scrolled {
-	overflow: auto;
-	}
-
-.leaflet-oldie .leaflet-popup-content-wrapper {
-	-ms-zoom: 1;
-	}
-.leaflet-oldie .leaflet-popup-tip {
-	width: 24px;
-	margin: 0 auto;
-
-	-ms-filter: "progid:DXImageTransform.Microsoft.Matrix(M11=0.70710678, M12=0.70710678, M21=-0.70710678, M22=0.70710678)";
-	filter: progid:DXImageTransform.Microsoft.Matrix(M11=0.70710678, M12=0.70710678, M21=-0.70710678, M22=0.70710678);
-	}
-
-.leaflet-oldie .leaflet-control-zoom,
-.leaflet-oldie .leaflet-control-layers,
-.leaflet-oldie .leaflet-popup-content-wrapper,
-.leaflet-oldie .leaflet-popup-tip {
-	border: 1px solid #999;
-	}
-
-
-/* div icon */
-
-.leaflet-div-icon {
-	background: #fff;
-	border: 1px solid #666;
-	}
-
-
-/* Tooltip */
-/* Base styles for the element that has a tooltip */
-.leaflet-tooltip {
-	position: absolute;
-	padding: 6px;
-	background-color: #fff;
-	border: 1px solid #fff;
-	border-radius: 3px;
-	color: #222;
-	white-space: nowrap;
-	-webkit-user-select: none;
-	-moz-user-select: none;
-	-ms-user-select: none;
-	user-select: none;
-	pointer-events: none;
-	box-shadow: 0 1px 3px rgba(0,0,0,0.4);
-	}
-.leaflet-tooltip.leaflet-interactive {
-	cursor: pointer;
-	pointer-events: auto;
-	}
-.leaflet-tooltip-top:before,
-.leaflet-tooltip-bottom:before,
-.leaflet-tooltip-left:before,
-.leaflet-tooltip-right:before {
-	position: absolute;
-	pointer-events: none;
-	border: 6px solid transparent;
-	background: transparent;
-	content: "";
-	}
-
-/* Directions */
-
-.leaflet-tooltip-bottom {
-	margin-top: 6px;
-}
-.leaflet-tooltip-top {
-	margin-top: -6px;
-}
-.leaflet-tooltip-bottom:before,
-.leaflet-tooltip-top:before {
-	left: 50%;
-	margin-left: -6px;
-	}
-.leaflet-tooltip-top:before {
-	bottom: 0;
-	margin-bottom: -12px;
-	border-top-color: #fff;
-	}
-.leaflet-tooltip-bottom:before {
-	top: 0;
-	margin-top: -12px;
-	margin-left: -6px;
-	border-bottom-color: #fff;
-	}
-.leaflet-tooltip-left {
-	margin-left: -6px;
-}
-.leaflet-tooltip-right {
-	margin-left: 6px;
-}
-.leaflet-tooltip-left:before,
-.leaflet-tooltip-right:before {
-	top: 50%;
-	margin-top: -6px;
-	}
-.leaflet-tooltip-left:before {
-	right: 0;
-	margin-right: -12px;
-	border-left-color: #fff;
-	}
-.leaflet-tooltip-right:before {
-	left: 0;
-	margin-left: -12px;
-	border-right-color: #fff;
-	}
-
-/* Printing */
-
-@media print {
-	/* Prevent printers from removing background-images of controls. */
-	.leaflet-control {
-		-webkit-print-color-adjust: exact;
-		print-color-adjust: exact;
-		}
-	}
-</style>
-<style>
-/* Layout: field-notebook — a sticky tab bar, one working column (max 880px), checklists as ruled rows, scores as marker-highlighted segments. */
-:root {
-  --bg: #f3f5f7;
-  --surface: #ffffff;
-  --surface-2: #e9eef2;
-  --ink: #172029;
-  --muted: #5d6974;
-  --line: #d5dde4;
-  --accent: #1f5f8b;
-  --accent-ink: #ffffff;
-  --accent-soft: #e3eef7;
-  --mark: #ffd84d;
-  --mark-ink: #2b2300;
-  --good: #2e7d4f;
-  --warn: #c0761a;
-  --bad: #b3372e;
-  --font-display: "Do Hyeon", "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
-  --font-body: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
-  --radius: 10px;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #0f1418; --surface: #171e25; --surface-2: #1f2930; --ink: #e7ecf0; --muted: #9ba8b4; --line: #2b3741;
-    --accent: #6fb0e0; --accent-ink: #0b1a26; --accent-soft: #1b2c3a; --mark: #e6bf2f; --mark-ink: #1a1500;
-    --good: #5cbf85; --warn: #e2a24a; --bad: #e46b61; color-scheme: dark;
-  }
-}
-:root[data-theme="dark"] {
-  --bg: #0f1418; --surface: #171e25; --surface-2: #1f2930; --ink: #e7ecf0; --muted: #9ba8b4; --line: #2b3741;
-  --accent: #6fb0e0; --accent-ink: #0b1a26; --accent-soft: #1b2c3a; --mark: #e6bf2f; --mark-ink: #1a1500;
-  --good: #5cbf85; --warn: #e2a24a; --bad: #e46b61; color-scheme: dark;
-}
-* { box-sizing: border-box; }
-[hidden] { display: none !important; }
-body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.55; margin: 0; }
-body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--surface); }
-h1, h2, h3 { font-family: var(--font-display); font-weight: 400; letter-spacing: 0.01em; margin: 0; text-wrap: balance; }
-h1 { font-size: 1.7rem; line-height: 1.1; }
-h2 { font-size: 1.35rem; margin-bottom: 0.5rem; }
-h3 { font-size: 1.1rem; }
-p { margin: 0; }
-a { color: var(--accent); }
-button { font: inherit; color: inherit; cursor: pointer; }
-input, select, textarea { font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 0.55rem 0.7rem; width: 100%; min-width: 0; }
-textarea { min-height: 4.5em; resize: vertical; }
-input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.num { font-variant-numeric: tabular-nums; }
-.muted { color: var(--muted); }
-.small { font-size: 0.85rem; }
-
-/* header + tabs */
-.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 9; background: var(--surface); border-bottom: 1px solid var(--line); }
-.top-inner { max-width: 880px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0.7rem 0; display: flex; flex-direction: column; gap: 0.6rem; }
-.brand { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
-.brand h1 span { color: var(--accent); }
-.storage { font-size: 0.78rem; color: var(--muted); display: inline-flex; align-items: center; gap: 0.4rem; }
-.storage i { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); display: inline-block; }
-.storage.cloud i { background: var(--good); }
-.tabs { display: flex; gap: 0.25rem; }
-.tab { background: none; border: 0; border-bottom: 3px solid transparent; padding: 0.45rem 0.8rem; font-family: var(--font-display); font-size: 1.05rem; color: var(--muted); margin-bottom: -1px; }
-.tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--mark); }
-
-main { max-width: 880px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 1.4rem 4rem; display: flex; flex-direction: column; gap: 1.6rem; }
-section.view { display: flex; flex-direction: column; gap: 1.5rem; }
-.block { display: flex; flex-direction: column; gap: 0.7rem; }
-.lead { max-width: 62ch; color: var(--muted); }
-
-/* prep: steps */
-.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; counter-reset: step; }
-.steps li { display: grid; grid-template-columns: 2.2rem 1fr; gap: 0.6rem; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 0.75rem 0.9rem; }
-.steps li::before { counter-increment: step; content: counter(step); font-family: var(--font-display); font-size: 1.3rem; color: var(--accent); line-height: 1; }
-.steps b { display: block; font-weight: 600; }
-.steps span { color: var(--muted); font-size: 0.9rem; }
-
-/* link grid */
-.linkgroups { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
-.linkgroup { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 0.8rem 0.9rem; display: flex; flex-direction: column; gap: 0.3rem; min-width: 0; }
-.linkgroup h3 { padding-bottom: 0.3rem; border-bottom: 2px solid var(--mark); margin-bottom: 0.3rem; }
-.linkgroup a { display: flex; justify-content: space-between; gap: 0.6rem; text-decoration: none; padding: 0.35rem 0; border-bottom: 1px dashed var(--line); }
-.linkgroup a:last-child { border-bottom: 0; }
-.linkgroup a b { font-weight: 500; color: var(--ink); }
-.linkgroup a span { color: var(--muted); font-size: 0.82rem; text-align: right; }
-
-.qlist { margin: 0; padding-left: 1.2rem; display: grid; gap: 0.3rem; columns: 1; }
-.two { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
-.note { background: var(--accent-soft); border-left: 4px solid var(--accent); border-radius: 6px; padding: 0.7rem 0.9rem; font-size: 0.92rem; }
-
-/* visits list */
-.toolbar { display: flex; justify-content: space-between; align-items: center; gap: 0.8rem; flex-wrap: wrap; }
-.btn { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 0.5rem 0.9rem; font-weight: 500; }
-.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
-.btn.danger { color: var(--bad); }
-.btn.ghost { background: none; border-color: transparent; color: var(--muted); }
-.btn:disabled { opacity: 0.5; cursor: default; }
-.cards { display: grid; gap: 0.8rem; }
-.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 0.9rem 1rem; display: grid; gap: 0.55rem; }
-.card-head { display: flex; justify-content: space-between; gap: 0.8rem; align-items: flex-start; flex-wrap: wrap; }
-.card-head h3 { font-size: 1.25rem; }
-.chips { display: flex; flex-wrap: wrap; gap: 0.35rem; }
-.chip { font-size: 0.78rem; padding: 0.1rem 0.5rem; border-radius: 999px; background: var(--surface-2); color: var(--muted); white-space: nowrap; }
-.chip.mark { background: var(--mark); color: var(--mark-ink); }
-.chip.good { color: var(--good); background: color-mix(in srgb, var(--good) 14%, transparent); }
-.chip.warn { color: var(--warn); background: color-mix(in srgb, var(--warn) 14%, transparent); }
-.chip.bad { color: var(--bad); background: color-mix(in srgb, var(--bad) 14%, transparent); }
-.scorebar { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 0.6rem; font-size: 0.85rem; }
-.scorebar .track { height: 8px; background: var(--surface-2); border-radius: 4px; overflow: hidden; }
-.scorebar .fill { height: 100%; background: var(--accent); border-radius: 4px; }
-.minis { display: flex; flex-wrap: wrap; gap: 0.3rem 0.8rem; font-size: 0.8rem; color: var(--muted); }
-.minis b { color: var(--ink); font-weight: 500; }
-.proscons { display: grid; gap: 0.3rem 1rem; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); font-size: 0.9rem; }
-.proscons div::before { font-weight: 600; margin-right: 0.3rem; }
-.proscons .pro::before { content: "장점"; color: var(--good); }
-.proscons .con::before { content: "단점"; color: var(--bad); }
-.card-actions { display: flex; gap: 0.4rem; justify-content: flex-end; flex-wrap: wrap; }
-.confirm { display: flex; gap: 0.4rem; align-items: center; font-size: 0.9rem; color: var(--bad); }
-.empty { border: 1px dashed var(--line); border-radius: var(--radius); padding: 2rem 1rem; text-align: center; color: var(--muted); display: grid; gap: 0.6rem; justify-items: center; }
-.empty h3 { color: var(--ink); }
-
-/* form */
-.form { display: grid; gap: 1.2rem; }
-.fieldset { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 0.9rem 1rem; display: grid; gap: 0.7rem; }
-.fieldset > h3 { display: flex; justify-content: space-between; align-items: baseline; gap: 0.6rem; }
-.grid { display: grid; gap: 0.7rem; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
-.field { display: grid; gap: 0.25rem; min-width: 0; }
-.field label { font-size: 0.82rem; color: var(--muted); }
-.field .hint { font-size: 0.78rem; color: var(--muted); }
-.checks { display: grid; gap: 0; }
-.checks label { display: grid; grid-template-columns: auto 1fr; gap: 0.6rem; align-items: start; padding: 0.5rem 0.2rem; border-bottom: 1px solid var(--line); font-size: 0.92rem; cursor: pointer; }
-.checks label:last-child { border-bottom: 0; }
-.checks input { width: 1.1rem; height: 1.1rem; margin-top: 0.2rem; accent-color: var(--accent); }
-.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
-.seg button { background: var(--surface); border: 0; border-right: 1px solid var(--line); min-width: 2.4rem; padding: 0.35rem 0.5rem; font-weight: 500; }
-.seg button:last-child { border-right: 0; }
-.seg button[aria-pressed="true"] { background: var(--mark); color: var(--mark-ink); }
-.score-row { display: flex; justify-content: space-between; align-items: center; gap: 0.6rem; flex-wrap: wrap; font-size: 0.85rem; color: var(--muted); }
-.derived { display: flex; flex-wrap: wrap; gap: 0.4rem 1.2rem; font-size: 0.9rem; }
-.derived b { font-weight: 600; }
-.form-actions { display: flex; gap: 0.5rem; justify-content: flex-end; flex-wrap: wrap; position: sticky; bottom: 0; background: var(--bg); padding-block: 0.6rem; }
-.status { font-size: 0.85rem; color: var(--muted); min-height: 1.2em; }
-.status.err { color: var(--bad); }
-
-/* compare */
-.tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
-table { border-collapse: collapse; width: 100%; font-size: 0.88rem; min-width: 760px; }
-th, td { padding: 0.55rem 0.6rem; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap; }
-th { font-weight: 600; color: var(--muted); font-size: 0.8rem; background: var(--surface-2); position: sticky; top: 0; }
-td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; }
-tr.best td:first-child { box-shadow: inset 4px 0 0 var(--mark); }
-td.top { background: color-mix(in srgb, var(--mark) 35%, transparent); font-weight: 600; }
-.legend { font-size: 0.82rem; color: var(--muted); }
-
-/* candidate map */
-.maprow { display: grid; gap: 1rem; grid-template-columns: minmax(0, 1.4fr) minmax(280px, 1fr); }
-.mapcol, .pincol { display: grid; gap: 0.6rem; min-width: 0; align-content: start; }
-.map { height: 460px; max-height: 70vh; border-radius: var(--radius); border: 1px solid var(--line); background: var(--surface-2); position: relative; z-index: 0; isolation: isolate; }
-.leaflet-container { font-family: var(--font-body); }
-.search { display: flex; gap: 0.4rem; }
-.search input { flex: 1; }
-.geo-results { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; display: grid; overflow: hidden; }
-.geo-results button { text-align: left; background: none; border: 0; border-bottom: 1px solid var(--line); padding: 0.5rem 0.7rem; font-size: 0.9rem; }
-.geo-results button:last-child { border-bottom: 0; }
-.geo-results button:hover { background: var(--accent-soft); }
-.geo-msg { padding: 0.5rem 0.7rem; font-size: 0.88rem; color: var(--muted); }
-.map-blocked { background: var(--accent-soft); border-left: 4px solid var(--accent); border-radius: 6px; padding: 0.7rem 0.9rem; font-size: 0.9rem; }
-.pin { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); font-family: var(--font-display); font-size: 0.95rem; border: 2px solid #ffffff; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35); flex-shrink: 0; }
-.pin.s-plan { background: var(--mark); color: var(--mark-ink); }
-.pin.s-done { background: var(--good); color: #ffffff; }
-.pin.s-out { background: var(--muted); color: #ffffff; }
-.pin-title { display: flex; gap: 0.6rem; align-items: center; min-width: 0; }
-.pin-title h3 { font-size: 1.15rem; }
-.status-sel { width: auto; padding: 0.3rem 0.5rem; font-size: 0.85rem; }
-.pin-card .card-actions { justify-content: flex-start; }
-.pin-card .btn { padding: 0.35rem 0.6rem; font-size: 0.85rem; text-decoration: none; }
-.route { font-size: 0.88rem; color: var(--muted); }
-.mapcfg { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 0.5rem 0.8rem; font-size: 0.9rem; }
-.mapcfg summary { cursor: pointer; font-weight: 500; }
-.mapcfg summary span { font-weight: 400; color: var(--muted); }
-.mapcfg .field { margin-top: 0.6rem; }
-.temp-dot { width: 18px; height: 18px; border-radius: 50%; background: rgba(179, 55, 46, 0.5); border: 2px solid #b3372e; }
-@media (max-width: 760px) {
-  .maprow { grid-template-columns: 1fr; }
-  .map { height: 380px; }
-}
-@media (max-width: 480px) {
-  .tab { padding: 0.45rem 0.55rem; font-size: 0.98rem; }
-  .seg button { min-width: 2.1rem; }
-}
-@media (prefers-reduced-motion: no-preference) {
-  .scorebar .fill { transition: width 0.4s ease; }
-}
-</style>
-
+<title>집터 · 내 예산</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
-<header class="top">
-  <div class="top-inner">
-    <div class="brand">
-      <h1>집<span>터</span></h1>
-      <span class="storage" id="storage"><i></i><span id="storage-text">저장 위치 확인 중</span></span>
-    </div>
-    <nav class="tabs" role="tablist">
-      <button class="tab" role="tab" data-view="prep" aria-selected="true">준비</button>
-      <button class="tab" role="tab" data-view="map" aria-selected="false">후보 지도</button>
-      <button class="tab" role="tab" data-view="visits" aria-selected="false">임장 기록</button>
-      <button class="tab" role="tab" data-view="compare" aria-selected="false">비교</button>
-    </nav>
+<header class="topbar"><div class="topbar-inner"></div></header>
+
+<main class="page">
+  <div class="page-head">
+    <span class="eyebrow">Step 1</span>
+    <h1>내 예산부터 정하기</h1>
+    <p class="lead">가진 현금과 소득을 넣으면 지금 규정(LTV·DSR·대출 한도)으로 살 수 있는 집값 범위를 계산합니다. 취득세와 중개보수 같은 부대비용도 뺀 값입니다. 결과는 이 브라우저에 저장되어 후보 찾기에서 바로 쓰입니다.</p>
   </div>
-</header>
 
-<main>
-  <!-- ========== 준비 ========== -->
-  <section class="view" id="view-prep">
-    <div class="block">
-      <h2>임장 순서</h2>
-      <p class="lead">임장은 손품(사전조사)으로 후보를 좁히고, 발품으로 숫자에 안 나오는 것을 확인하는 일입니다. 한 번 나갈 때 같은 생활권 단지 2~3곳을 묶어서 돌면 비교가 쉽습니다.</p>
-      <ol class="steps">
-        <li><div><b>후보 단지 정하기</b><span>실거래가 추이, 전세가율, 세대수·연식, 입주물량을 보고 같은 생활권에서 2~3곳을 고릅니다. 고른 단지는 후보 지도 탭에 핀으로 찍어 둡니다.</span></div></li>
-        <li><div><b>지도로 동선 그리기</b><span>역 → 단지 → 초등학교 → 상권 → 다음 단지 순으로 걷는 경로를 미리 저장해 둡니다.</span></div></li>
-        <li><div><b>역에서 단지까지 직접 걷기</b><span>표기 도보 시간과 실제 시간, 경사, 횡단보도 수를 기록합니다. 가장 중요한 체감 항목입니다.</span></div></li>
-        <li><div><b>단지 한 바퀴</b><span>관리 상태, 주차, 동 배치, 소음원, 앞동 거리를 봅니다. 가능하면 동·라인별로 사진을 남깁니다.</span></div></li>
-        <li><div><b>중개사무소 2~3곳 방문</b><span>호가·급매·전세 매물 수를 묻고 분위기를 비교합니다. 한 곳 말만 믿지 않습니다.</span></div></li>
-        <li><div><b>세대 내부 보기</b><span>향·일조·결로·소음·수리 상태를 확인합니다. 창문을 열어 보고, 욕실 천장과 창틀을 봅니다.</span></div></li>
-        <li><div><b>당일 기록, 야간 재방문</b><span>기억이 남아 있을 때 기록 탭에 바로 적습니다. 주차와 치안은 저녁 시간대에 다시 봅니다.</span></div></li>
-      </ol>
-    </div>
-
-    <div class="block">
-      <h2>손품 사이트</h2>
-      <p class="lead">나가기 전에 아래 사이트에서 숫자를 먼저 챙깁니다. 모두 새 탭에서 열립니다.</p>
-      <div class="linkgroups">
-        <div class="linkgroup">
-          <h3>시세·실거래</h3>
-          <a href="https://rt.molit.go.kr" target="_blank" rel="noopener"><b>국토교통부 실거래가</b><span>공식 실거래 원본</span></a>
-          <a href="https://land.naver.com" target="_blank" rel="noopener"><b>네이버 부동산</b><span>호가·매물 수</span></a>
-          <a href="https://hogangnono.com" target="_blank" rel="noopener"><b>호갱노노</b><span>실거래 추이·이야기</span></a>
-          <a href="https://asil.kr" target="_blank" rel="noopener"><b>아실</b><span>입주물량·갭·거래량</span></a>
-          <a href="https://kbland.kr" target="_blank" rel="noopener"><b>KB부동산</b><span>KB시세·주간동향</span></a>
-          <a href="https://www.disco.re" target="_blank" rel="noopener"><b>디스코</b><span>빌라·상가·토지 실거래</span></a>
-        </div>
-        <div class="linkgroup">
-          <h3>지도·입지</h3>
-          <a href="https://map.naver.com" target="_blank" rel="noopener"><b>네이버 지도</b><span>도보 시간·거리뷰</span></a>
-          <a href="https://map.kakao.com" target="_blank" rel="noopener"><b>카카오맵</b><span>로드뷰·지형</span></a>
-          <a href="https://aptgin.com" target="_blank" rel="noopener"><b>부동산지인</b><span>지역 수급·공급</span></a>
-          <a href="https://seereal.lh.or.kr" target="_blank" rel="noopener"><b>씨리얼 (LH)</b><span>지역 개발·토지 정보</span></a>
-          <a href="https://cleanup.seoul.go.kr" target="_blank" rel="noopener"><b>정비사업 정보몽땅</b><span>서울 재개발·재건축 단계</span></a>
-        </div>
-        <div class="linkgroup">
-          <h3>학군·교육</h3>
-          <a href="https://www.schoolinfo.go.kr" target="_blank" rel="noopener"><b>학교알리미</b><span>학교별 공시 정보</span></a>
-          <a href="https://asil.kr" target="_blank" rel="noopener"><b>아실 학군 메뉴</b><span>학업성취도·진학률</span></a>
-          <a href="https://hogangnono.com" target="_blank" rel="noopener"><b>호갱노노 학원가</b><span>학원 밀집도 지도</span></a>
-        </div>
-        <div class="linkgroup">
-          <h3>공적장부·규제</h3>
-          <a href="https://www.iros.go.kr" target="_blank" rel="noopener"><b>인터넷등기소</b><span>등기부등본 열람</span></a>
-          <a href="https://www.gov.kr" target="_blank" rel="noopener"><b>정부24</b><span>건축물대장·토지대장</span></a>
-          <a href="https://www.eum.go.kr" target="_blank" rel="noopener"><b>토지이음</b><span>용도지역·규제 확인</span></a>
-          <a href="https://www.applyhome.co.kr" target="_blank" rel="noopener"><b>청약홈</b><span>청약·분양 일정</span></a>
-          <a href="https://www.reb.or.kr" target="_blank" rel="noopener"><b>한국부동산원</b><span>공식 가격 통계</span></a>
+  <div class="two-col">
+    <section class="block">
+      <div class="card">
+        <h2>돈</h2>
+        <div class="grid">
+          <div class="field span-all">
+            <label for="cash">집 사는 데 쓸 수 있는 현금</label>
+            <div class="unit"><input id="cash" type="number" inputmode="numeric" placeholder="예: 20000"><span>만원</span></div>
+            <span class="hint">예금·적금·주식 처분액·부모님 증여 등 실제로 꺼낼 수 있는 돈. 2억이면 20000.</span>
+          </div>
+          <div class="field">
+            <label for="income">연소득 (세전, 부부 합산)</label>
+            <div class="unit"><input id="income" type="number" inputmode="numeric" placeholder="예: 7000"><span>만원</span></div>
+          </div>
+          <div class="field">
+            <label for="debt">기존 대출 월 상환액</label>
+            <div class="unit"><input id="debt" type="number" inputmode="numeric" placeholder="0"><span>만원</span></div>
+            <span class="hint">학자금·신용·자동차 할부 등 매달 갚는 돈. 전세대출 이자는 무주택자면 넣지 않아도 됩니다.</span>
+          </div>
         </div>
       </div>
-    </div>
 
-    <div class="two">
-      <div class="block">
-        <h2>중개사에게 물어볼 것</h2>
-        <ul class="qlist">
-          <li>최근 3개월 실거래가와 지금 호가 차이는 얼마인가요?</li>
-          <li>급매가 있나요? 있다면 왜 급매인가요?</li>
-          <li>매매·전세 매물이 각각 몇 개이고, 전세는 얼마 만에 나가나요?</li>
-          <li>어떤 동·라인이 선호되고, 그 이유는요?</li>
-          <li>관리비는 평균 얼마이고 장기수선충당금은 쌓여 있나요?</li>
-          <li>주차는 세대당 몇 대이고 저녁에 자리가 있나요?</li>
-          <li>재건축·리모델링 이야기가 어디까지 진행됐나요?</li>
-          <li>주변에 입주 예정 단지나 개발 계획이 있나요?</li>
-          <li>이 매물의 등기상 특이사항(근저당, 임차인)이 있나요?</li>
-        </ul>
+      <div class="card">
+        <h2>나의 상황</h2>
+        <div class="grid">
+          <label class="check span-all"><input type="checkbox" id="firstTime" checked> 생애최초 (나와 배우자 모두 집을 가져 본 적이 없음)</label>
+          <label class="check"><input type="checkbox" id="newlywed"> 신혼부부 (혼인 7년 이내)</label>
+          <label class="check"><input type="checkbox" id="dualIncome"> 맞벌이</label>
+          <label class="check"><input type="checkbox" id="newborn"> 2년 내 출산·입양</label>
+          <div class="field">
+            <label for="children">자녀 수</label>
+            <select id="children"><option value="0">없음</option><option value="1">1명</option><option value="2">2명</option><option value="3">3명 이상</option></select>
+          </div>
+          <div class="field span-all">
+            <label>사려는 지역</label>
+            <div class="seg" id="region">
+              <button type="button" data-v="regulated" aria-pressed="true">서울·경기 규제지역</button>
+              <button type="button" data-v="metro" aria-pressed="false">수도권 비규제</button>
+              <button type="button" data-v="nonmetro" aria-pressed="false">지방</button>
+            </div>
+            <span class="hint">규제지역: 서울 전체와 경기 과천·광명·성남(분당·수정·중원)·수원(영통·장안·팔달)·안양 동안·용인(수지·기흥)·의왕·하남·화성 동탄·구리. 인천과 나머지 경기는 수도권 비규제.</span>
+          </div>
+        </div>
       </div>
-      <div class="block">
-        <h2>챙길 것</h2>
-        <ul class="qlist">
-          <li>편한 신발, 보조배터리 (지도와 사진으로 배터리가 빨리 닳습니다)</li>
-          <li>지도 앱에 후보 단지·학교·역을 미리 즐겨찾기</li>
-          <li>사전조사 숫자 메모: 실거래가, 호가, 전세가, 세대수, 연식</li>
-          <li>사진은 동 번호가 보이게, 단지 입구부터 순서대로</li>
-          <li>중개사 통화·상담은 메모 앱에 바로 요점 기록</li>
-        </ul>
-        <div class="note">전세가율이 높을수록 실수요가 받쳐 주는 지역이고, 매매가와 전세가 차이(갭)가 곧 필요한 자기자본입니다. 기록 탭에서 호가와 전세가를 넣으면 자동으로 계산됩니다.</div>
-      </div>
-    </div>
-  </section>
 
-  <!-- ========== 후보 지도 ========== -->
-  <section class="view" id="view-map" hidden>
-    <div class="block">
-      <div class="toolbar">
+      <div class="card">
+        <h2>대출 조건</h2>
+        <div class="grid tight">
+          <div class="field">
+            <label for="rate">금리</label>
+            <div class="unit"><input id="rate" type="number" step="0.1" inputmode="decimal" value="4.5"><span>%</span></div>
+            <span class="hint">2026년 10월 은행 주담대 4.4~6.6%</span>
+          </div>
+          <div class="field">
+            <label for="term">만기</label>
+            <select id="term"><option value="20">20년</option><option value="30" selected>30년</option><option value="40">40년 (지방만)</option></select>
+          </div>
+          <div class="field span-all">
+            <label>금리 유형 <span class="muted">(스트레스 DSR 반영 비율이 달라집니다)</span></label>
+            <div class="seg" id="loanType">
+              <button type="button" data-v="variable" aria-pressed="true">변동</button>
+              <button type="button" data-v="mixed" aria-pressed="false">혼합 (5년 고정)</button>
+              <button type="button" data-v="periodic" aria-pressed="false">주기형</button>
+              <button type="button" data-v="fixed" aria-pressed="false">순수 고정</button>
+            </div>
+          </div>
+          <label class="check span-all"><input type="checkbox" id="over85"> 전용 85㎡(34평형) 넘는 집을 볼 예정 (농어촌특별세 0.2% 추가)</label>
+        </div>
+      </div>
+
+      <details class="card quiet">
+        <summary><b>용어가 낯설다면</b></summary>
+        <dl class="kv">
+          <dt>LTV</dt><dd>집값 대비 대출 비율. 규제지역 40%, 생애최초는 70%. 10억 집이면 각각 4억·7억까지.</dd>
+          <dt>DSR</dt><dd>연소득 대비 모든 대출의 연간 원리금 비율. 은행은 40%까지. 연소득 7천만이면 1년에 2,800만원(월 233만원)까지만 갚을 수 있게 빌려줍니다.</dd>
+          <dt>스트레스 DSR</dt><dd>DSR을 계산할 때 실제 금리에 가산금리(수도권 3%p)를 더해 더 보수적으로 봅니다. 변동금리면 100% 반영, 고정이면 덜 반영.</dd>
+          <dt>대출 한도</dt><dd>수도권·규제지역은 집값이 15억 이하여도 주담대가 최대 6억. 15~25억은 4억, 25억 초과는 2억.</dd>
+          <dt>부대비용</dt><dd>취득세(1~3% + 지방교육세), 중개보수(0.4~0.7% + 부가세), 법무사·인지세 등 약 150만원.</dd>
+        </dl>
+      </details>
+    </section>
+
+    <aside class="block sticky">
+      <div class="card" id="result">
+        <div class="hero-number">
+          <span class="label">이 조건이면 살 수 있는 집값은</span>
+          <span class="value"><span id="r-price">–</span><small>까지</small></span>
+          <span class="small muted" id="r-sub">현금과 소득을 입력하면 계산됩니다.</span>
+        </div>
         <div>
-          <h2>후보 단지 지도</h2>
-          <p class="muted small">검색하거나 지도를 클릭해 핀을 찍으세요. '임장 예정' 핀은 순서대로 점선으로 이어집니다.</p>
+          <div class="bar" id="r-bar"><i class="cash" style="width:0"></i><i class="loan" style="width:0"></i><i class="cost" style="width:0"></i></div>
+          <div class="legend"><span><i style="background:var(--accent)"></i>내 현금</span><span><i style="background:color-mix(in srgb, var(--accent) 45%, var(--surface))"></i>대출</span><span><i style="background:var(--mark)"></i>부대비용</span></div>
+        </div>
+        <div class="stat-list" id="r-stats"></div>
+        <div class="note" id="r-binding"></div>
+        <div class="actions end">
+          <a class="btn" href="policy.html">규정 자세히</a>
+          <button type="button" class="btn primary" id="go-find">이 예산으로 후보 찾기</button>
         </div>
       </div>
-      <div class="maprow">
-        <div class="mapcol">
-          <form class="search" id="geo-form">
-            <input id="geo-q" placeholder="단지명, 동, 지하철역, 주소로 검색 (예: 서현동 시범삼성, 판교역)">
-            <button type="submit" class="btn">검색</button>
-          </form>
-          <div id="geo-results" class="geo-results" hidden></div>
-          <div id="map" class="map"></div>
-          <div id="map-blocked" class="map-blocked" hidden><span id="map-blocked-text"></span></div>
-          <details class="mapcfg" id="mapcfg" hidden>
-            <summary>지도 설정 · <span id="map-provider"></span></summary>
-            <div class="field">
-              <label for="kakao-key">카카오맵 JavaScript 키</label>
-              <div class="search"><input id="kakao-key" autocomplete="off" placeholder="JavaScript 키"><button type="button" class="btn" id="kakao-save">적용</button></div>
-              <p class="status" id="kakao-status"></p>
-            </div>
-          </details>
-        </div>
-        <div class="pincol">
-          <form id="pin-form" class="fieldset" hidden>
-            <h3 id="pin-form-title">새 핀</h3>
-            <div class="grid">
-              <div class="field" style="grid-column: 1 / -1;"><label for="pf-name">단지명 (필수)</label><input id="pf-name" required placeholder="예: 시범단지 삼성한신"></div>
-              <div class="field"><label for="pf-area">지역</label><input id="pf-area" placeholder="예: 성남 분당구 서현동"></div>
-              <div class="field"><label for="pf-status">상태</label>
-                <select id="pf-status"><option>후보</option><option>임장 예정</option><option>임장 완료</option><option>제외</option></select></div>
-              <div class="field"><label for="pf-price">호가 (만원)</label><input id="pf-price" type="number" inputmode="numeric" placeholder="예: 120000"></div>
-              <div class="field" style="grid-column: 1 / -1;"><label for="pf-memo">메모</label><input id="pf-memo" placeholder="예: 역 도보 10분 표기, 전세가율 65%"></div>
-            </div>
-            <div class="field">
-              <label for="pf-aptq">단지 정보 찾기</label>
-              <div class="search"><input id="pf-aptq" autocomplete="off" placeholder="단지명으로 다시 찾기"><button type="button" class="btn" id="pf-aptsearch">찾기</button></div>
-              <div id="pf-aptresults" class="geo-results" hidden></div>
-              <p class="hint" id="pf-aptstatus"></p>
-            </div>
-            <div class="grid">
-              <div class="field"><label for="pf-units">세대수</label><input id="pf-units" type="number" inputmode="numeric"></div>
-              <div class="field"><label for="pf-bld">동수</label><input id="pf-bld" type="number" inputmode="numeric"></div>
-              <div class="field"><label for="pf-year">준공(사용승인) 년도</label><input id="pf-year" type="number" inputmode="numeric"></div>
-              <div class="field"><label for="pf-sizes">평형·전용면적</label><input id="pf-sizes" placeholder="예: 59·84·114㎡"></div>
-              <div class="field" style="grid-column: 1 / -1;"><label for="pf-redev">재건축·재개발 진행 상황</label><input id="pf-redev" placeholder="예: 안전진단 통과, 조합설립 인가"></div>
-            </div>
-            <p class="small muted" id="pf-coords"></p>
-            <div class="card-actions">
-              <span class="status" id="pin-status"></span>
-              <button type="button" class="btn" id="pf-cancel">취소</button>
-              <button type="submit" class="btn primary" id="pf-save">핀 저장</button>
-            </div>
-          </form>
-          <div class="cards" id="pins"></div>
-          <p class="route" id="route-summary"></p>
-        </div>
+      <div class="card quiet">
+        <h3>정책대출 해당 여부</h3>
+        <p class="small muted">은행 대출보다 금리가 낮은 정부 대출입니다. 조건이 맞으면 먼저 알아보세요.</p>
+        <div class="stat-list" id="r-policy"></div>
       </div>
-    </div>
-  </section>
-
-  <!-- ========== 임장 기록 ========== -->
-  <section class="view" id="view-visits" hidden>
-    <div id="visits-list" class="block">
-      <div class="toolbar">
-        <div>
-          <h2>임장 기록</h2>
-          <p class="muted small" id="visits-count">기록을 불러오는 중</p>
-        </div>
-        <button class="btn primary" id="btn-new">+ 새 임장</button>
-      </div>
-      <div class="cards" id="cards"></div>
-    </div>
-
-    <form id="editor" class="form" hidden>
-      <div class="toolbar">
-        <h2 id="editor-title">새 임장</h2>
-        <button type="button" class="btn ghost" id="btn-cancel-top">목록으로</button>
-      </div>
-
-      <div class="fieldset">
-        <h3>기본 정보</h3>
-        <div class="grid">
-          <div class="field" style="grid-column: 1 / -1;"><label for="f-name">단지명 (필수)</label><input id="f-name" required placeholder="예: 래미안 OO 2차"></div>
-          <div class="field"><label for="f-area">지역</label><input id="f-area" placeholder="예: 성남 분당구 서현동"></div>
-          <div class="field"><label for="f-type">유형</label>
-            <select id="f-type"><option>아파트</option><option>오피스텔</option><option>빌라·다세대</option><option>단독·다가구</option><option>상가</option><option>토지</option></select></div>
-          <div class="field"><label for="f-date">방문일</label><input id="f-date" type="date"></div>
-          <div class="field"><label for="f-time">시간대</label>
-            <select id="f-time"><option>평일 낮</option><option>평일 저녁</option><option>주말 낮</option><option>주말 저녁</option></select></div>
-          <div class="field"><label for="f-year">준공년도</label><input id="f-year" type="number" inputmode="numeric" placeholder="예: 2004"></div>
-          <div class="field"><label for="f-units">세대수</label><input id="f-units" type="number" inputmode="numeric" placeholder="예: 1200"></div>
-        </div>
-      </div>
-
-      <div class="fieldset">
-        <h3>가격 <span class="small muted">단위: 만원</span></h3>
-        <div class="grid">
-          <div class="field"><label for="f-price">호가 (매매)</label><input id="f-price" type="number" inputmode="numeric" placeholder="예: 120000"></div>
-          <div class="field"><label for="f-trade">최근 실거래가</label><input id="f-trade" type="number" inputmode="numeric" placeholder="예: 115000"></div>
-          <div class="field"><label for="f-jeonse">전세가</label><input id="f-jeonse" type="number" inputmode="numeric" placeholder="예: 70000"></div>
-          <div class="field"><label for="f-size">전용면적 (㎡)</label><input id="f-size" type="number" inputmode="decimal" placeholder="예: 84.9"></div>
-        </div>
-        <div class="derived" id="derived"></div>
-      </div>
-
-      <div id="checklist"></div>
-
-      <div class="fieldset">
-        <h3>메모</h3>
-        <div class="grid">
-          <div class="field"><label for="f-pros">장점</label><textarea id="f-pros" placeholder="역까지 실제 7분, 초품아, 관리 깔끔"></textarea></div>
-          <div class="field"><label for="f-cons">단점</label><textarea id="f-cons" placeholder="주차 이중주차 심함, 앞동 가까움"></textarea></div>
-          <div class="field" style="grid-column: 1 / -1;"><label for="f-agent">중개사 코멘트</label><textarea id="f-agent" placeholder="A공인: 급매 1건 11.2억, 전세 3건. B공인: 호가 12억 고정"></textarea></div>
-          <div class="field" style="grid-column: 1 / -1;"><label for="f-memo">기타</label><textarea id="f-memo" placeholder="야간 재방문 필요, 2단지와 비교"></textarea></div>
-        </div>
-        <label style="display:flex;gap:0.5rem;align-items:center;font-size:0.92rem;"><input type="checkbox" id="f-revisit" style="width:1.1rem;height:1.1rem;accent-color:var(--accent);"> 재방문 예정</label>
-      </div>
-
-      <div class="form-actions">
-        <span class="status" id="form-status"></span>
-        <button type="button" class="btn" id="btn-cancel">취소</button>
-        <button type="submit" class="btn primary" id="btn-save">저장</button>
-      </div>
-    </form>
-  </section>
-
-  <!-- ========== 비교 ========== -->
-  <section class="view" id="view-compare" hidden>
-    <div class="block">
-      <h2>단지 비교</h2>
-      <p class="lead">총점 순으로 정렬됩니다. 각 항목 점수는 5점 만점, 총점은 35점 만점입니다. 항목별 가장 높은 점수는 형광펜으로 표시됩니다.</p>
-      <div class="tablewrap" id="compare-wrap"></div>
-      <p class="legend">전세가율 = 전세가 ÷ 호가. 갭 = 호가 − 전세가. 호가 대신 실거래가로 비교하려면 기록에서 실거래가를 입력하세요.</p>
-    </div>
-  </section>
+      <p class="small muted">2026-10-27 기준 규정으로 계산한 참고치입니다. 실제 한도는 은행 심사(신용, 소득 증빙 방식)에 따라 달라집니다.</p>
+    </aside>
+  </div>
 </main>
 
+<script src="assets/app.js"></script>
 <script>
 (function () {
-  "use strict";
+  var J = window.JT, $ = J.$;
+  J.renderNav("budget");
 
-  // ---------- checklist definition ----------
-  var CATS = [
-    { key: "transit", name: "입지·교통", items: [
-      "지하철역까지 실제 도보 시간을 재봤다 (지도 표기와 비교)",
-      "출퇴근 시간대 버스·지하철 혼잡도를 확인했다",
-      "주요 업무지구까지 통근 시간을 확인했다",
-      "단지 진입로 경사와 보행 환경(횡단보도, 인도 폭)을 봤다",
-      "예정된 교통 호재의 실제 진행 단계(착공·개통 시기)를 확인했다"
-    ]},
-    { key: "school", name: "학군·교육", items: [
-      "배정 초등학교까지 도보 경로와 큰길 횡단 여부를 봤다 (초품아 여부)",
-      "중·고등학교 배정과 학업성취도를 확인했다",
-      "학원가 위치·규모와 셔틀버스 운행을 봤다",
-      "어린이집·유치원이 단지 안 또는 바로 옆에 있다"
-    ]},
-    { key: "life", name: "생활편의", items: [
-      "마트·슈퍼·편의점까지 거리를 확인했다",
-      "병원(소아과·내과)과 약국이 가까이 있다",
-      "공원·산책로·하천 등 녹지 접근성을 봤다",
-      "상권 업종 구성(생활형인지 유흥형인지)을 확인했다"
-    ]},
-    { key: "complex", name: "단지 상태", items: [
-      "외벽·복도·계단 관리 상태와 청결도를 봤다",
-      "세대당 주차대수와 저녁 시간대 이중주차 여부를 확인했다",
-      "엘리베이터 상태와 대기 시간을 확인했다",
-      "조경·놀이터·커뮤니티 시설 상태를 봤다",
-      "관리비 수준과 장기수선충당금 적립 현황을 물어봤다",
-      "재건축·리모델링 추진 현황을 확인했다"
-    ]},
-    { key: "unit", name: "세대 내부", items: [
-      "향과 실제 일조 시간을 확인했다",
-      "층수, 앞동과의 거리, 조망·개방감을 봤다",
-      "결로·곰팡이·누수 흔적(창틀, 천장, 욕실)을 확인했다",
-      "수리 상태(샷시, 보일러, 배관)와 예상 수리비를 가늠했다",
-      "구조(판상형·타워형)와 환기·통풍을 확인했다",
-      "창문을 열고 외부 소음(도로, 철도)을 확인했다"
-    ]},
-    { key: "risk", name: "환경·리스크", items: [
-      "혐오시설(소각장, 송전탑, 유흥가, 공장)이 인근에 있는지 봤다",
-      "침수·급경사·축대 등 지형 리스크를 확인했다",
-      "밤 시간대 가로등·유동인구·치안 분위기를 봤다",
-      "주변 개발로 조망·일조가 막힐 가능성을 봤다",
-      "등기부등본(근저당·가압류)과 건축물대장(위반건축물)을 확인했다"
-    ]},
-    { key: "market", name: "시세·중개", items: [
-      "중개사무소 2~3곳을 방문해 호가와 분위기를 비교했다",
-      "최근 실거래가와 호가 차이, 급매 여부를 물어봤다",
-      "매매·전세 매물 수와 소진 속도를 확인했다",
-      "인근 입주 예정 물량(2~3년)을 확인했다"
-    ]}
-  ];
-  var MAX_SCORE = CATS.length * 5;
-
-  // ---------- storage: db (cloud) with localStorage fallback, one store per collection ----------
-  function uid() { return "v" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
-
-  function setStorageBadge(mode) {
-    var el = document.getElementById("storage"), t = document.getElementById("storage-text");
-    el.classList.toggle("cloud", mode === "db");
-    t.textContent = mode === "db" ? "클라우드에 저장됨 · 어느 기기에서나 열림" : "이 브라우저에만 저장됨";
-  }
-
-  function makeStore(coll, lsKey) {
-    var s = { mode: "local", db: null, items: [], listeners: [] };
-    function readLocal() { try { return JSON.parse(localStorage.getItem(lsKey) || "[]"); } catch (e) { return []; } }
-    function writeLocal(arr) { try { localStorage.setItem(lsKey, JSON.stringify(arr)); } catch (e) { /* storage blocked */ } }
-    function emit() { s.listeners.forEach(function (fn) { fn(s.items); }); }
-    s.onChange = function (fn) { s.listeners.push(fn); fn(s.items); };
-    s.loadLocal = function () { s.items = readLocal(); emit(); };
-    s.save = function (rec) {
-      if (s.mode === "db") {
-        var body = Object.assign({}, rec); delete body.id;
-        return s.db.collection(coll).doc(rec.id).set(body);
-      }
-      var arr = readLocal().filter(function (r) { return r.id !== rec.id; });
-      arr.push(rec); writeLocal(arr); s.items = arr; emit();
-      return Promise.resolve();
-    };
-    s.remove = function (id) {
-      if (s.mode === "db") return s.db.collection(coll).doc(id).delete();
-      var arr = readLocal().filter(function (r) { return r.id !== id; });
-      writeLocal(arr); s.items = arr; emit();
-      return Promise.resolve();
-    };
-    s.attach = function (db) {
-      s.db = db; s.mode = "db";
-      db.collection(coll).onSnapshot(function (snap) {
-        s.items = snap.docs.filter(function (d) { return d.exists; }).map(function (d) { return Object.assign({ id: d.id }, d.data()); });
-        emit();
-      }, function () { s.mode = "local"; s.db = null; setStorageBadge("local"); s.loadLocal(); });
-    };
-    return s;
-  }
-  var store = makeStore("visits", "imjang.visits.v1");       // 임장 기록
-  var cstore = makeStore("candidates", "imjang.candidates.v1"); // 후보 핀
-
-  function initStore() {
-    store.loadLocal(); cstore.loadLocal(); setStorageBadge("local");
-    if (!(window.claude && typeof window.claude.use === "function")) return;
-    window.claude.use("db").then(function (db) {
-      if (!db) return;
-      setStorageBadge("db"); store.attach(db); cstore.attach(db);
-    }).catch(function () { /* stay local */ });
-  }
-
-  // ---------- helpers ----------
-  function $(id) { return document.getElementById(id); }
-  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
-  function num(v) { var n = Number(v); return isFinite(n) && v !== "" && v != null ? n : null; }
-  function fmtEok(man) { // 만원 -> "11.5억"
-    if (man == null) return "–";
-    if (Math.abs(man) >= 10000) return (man / 10000).toFixed(man % 10000 === 0 ? 0 : 1) + "억";
-    return man.toLocaleString("ko-KR") + "만";
-  }
-  function totalScore(rec) { var s = 0; CATS.forEach(function (c) { s += Number((rec.scores || {})[c.key] || 0); }); return s; }
-  function checkedCount(rec) { var n = 0, ch = rec.checks || {}; Object.keys(ch).forEach(function (k) { if (ch[k]) n++; }); return n; }
-  function totalItems() { return CATS.reduce(function (a, c) { return a + c.items.length; }, 0); }
-  function jeonseRatio(rec) { var p = num(rec.price), j = num(rec.jeonse); return p && j ? j / p : null; }
-  function ratioClass(r) { if (r == null) return ""; return r >= 0.7 ? "good" : r >= 0.55 ? "warn" : "bad"; }
-  function sortVisits(arr) {
-    return arr.slice().sort(function (a, b) { return (b.date || "").localeCompare(a.date || "") || (b.createdAt || 0) - (a.createdAt || 0); });
-  }
-
-  // ---------- views / hash ----------
-  var VIEWS = ["prep", "map", "visits", "compare"];
-  function showView(name) {
-    if (VIEWS.indexOf(name) < 0) name = "prep";
-    VIEWS.forEach(function (v) { $("view-" + v).hidden = v !== name; });
-    document.querySelectorAll(".tab").forEach(function (t) { t.setAttribute("aria-selected", String(t.dataset.view === name)); });
-    try { localStorage.setItem("imjang.view", name); } catch (e) {}
-    if (name === "map") initMap();
-  }
-  document.querySelectorAll(".tab").forEach(function (t) {
-    t.addEventListener("click", function () { showView(t.dataset.view); window.scrollTo(0, 0); });
-  });
-
-  // ---------- list rendering ----------
-  var pendingDelete = null;
-  function renderList(visits) {
-    var wrap = $("cards"), count = $("visits-count");
-    var list = sortVisits(visits);
-    count.textContent = list.length ? list.length + "곳 기록됨" : "아직 기록이 없습니다";
-    if (!list.length) {
-      wrap.innerHTML = '<div class="empty"><h3>첫 임장을 기록해 보세요</h3><p>단지명과 방문일만 적어도 저장됩니다. 체크리스트와 점수는 현장에서 하나씩 채우면 됩니다.</p><button type="button" class="btn primary" id="btn-new-empty">+ 새 임장</button></div>';
-      $("btn-new-empty").addEventListener("click", function () { openEditor(null); });
-      return;
-    }
-    wrap.innerHTML = list.map(function (r) {
-      var total = totalScore(r), ratio = jeonseRatio(r);
-      var chips = '<span class="chip">' + esc(r.type || "아파트") + '</span>';
-      if (r.time) chips += '<span class="chip">' + esc(r.time) + '</span>';
-      if (ratio != null) chips += '<span class="chip ' + ratioClass(ratio) + '">전세가율 ' + Math.round(ratio * 100) + '%</span>';
-      if (r.revisit) chips += '<span class="chip mark">재방문 예정</span>';
-      var minis = [];
-      if (num(r.price) != null) minis.push("호가 <b>" + fmtEok(num(r.price)) + "</b>");
-      if (num(r.trade) != null) minis.push("실거래 <b>" + fmtEok(num(r.trade)) + "</b>");
-      if (num(r.jeonse) != null) minis.push("전세 <b>" + fmtEok(num(r.jeonse)) + "</b>");
-      if (num(r.year) != null) minis.push("준공 <b>" + esc(r.year) + "</b>");
-      if (num(r.units) != null) minis.push("<b>" + Number(r.units).toLocaleString("ko-KR") + "</b>세대");
-      minis.push("체크 <b>" + checkedCount(r) + "/" + totalItems() + "</b>");
-      var pc = "";
-      if (r.pros || r.cons) pc = '<div class="proscons">' + (r.pros ? '<div class="pro">' + esc(r.pros) + '</div>' : "") + (r.cons ? '<div class="con">' + esc(r.cons) + '</div>' : "") + '</div>';
-      var actions = pendingDelete === r.id
-        ? '<span class="confirm">이 기록을 삭제할까요? <button type="button" class="btn danger" data-act="confirm-delete" data-id="' + esc(r.id) + '">삭제</button><button type="button" class="btn ghost" data-act="cancel-delete">취소</button></span>'
-        : '<button type="button" class="btn ghost" data-act="delete" data-id="' + esc(r.id) + '">삭제</button><button type="button" class="btn" data-act="edit" data-id="' + esc(r.id) + '">편집</button>';
-      return '<article class="card">' +
-        '<div class="card-head"><div><h3>' + esc(r.name) + '</h3><p class="muted small">' + esc(r.area || "") + (r.date ? ' · ' + esc(r.date) : "") + '</p></div><div class="chips">' + chips + '</div></div>' +
-        '<div class="scorebar"><span>총점</span><div class="track"><div class="fill" style="width:' + (total / MAX_SCORE * 100) + '%"></div></div><span class="num"><b>' + total + '</b>/' + MAX_SCORE + '</span></div>' +
-        '<div class="minis">' + minis.map(function (m) { return "<span>" + m + "</span>"; }).join("") + '</div>' +
-        pc +
-        '<div class="card-actions">' + actions + '</div>' +
-        '</article>';
-    }).join("");
-  }
-  $("cards").addEventListener("click", function (e) {
-    var b = e.target.closest("button[data-act]"); if (!b) return;
-    var act = b.dataset.act, id = b.dataset.id;
-    if (act === "edit") { openEditor(store.items.find(function (r) { return r.id === id; })); }
-    else if (act === "delete") { pendingDelete = id; renderList(store.items); }
-    else if (act === "cancel-delete") { pendingDelete = null; renderList(store.items); }
-    else if (act === "confirm-delete") {
-      b.disabled = true;
-      store.remove(id).then(function () { pendingDelete = null; }).catch(function () { pendingDelete = null; renderList(store.items); });
-    }
-  });
-
-  // ---------- compare ----------
-  function renderCompare(visits) {
-    var wrap = $("compare-wrap");
-    var list = visits.slice().sort(function (a, b) { return totalScore(b) - totalScore(a); });
-    if (!list.length) { wrap.innerHTML = '<div class="empty" style="border:0"><p>기록이 2곳 이상 쌓이면 여기서 나란히 비교할 수 있습니다.</p></div>'; return; }
-    var best = {};
-    CATS.forEach(function (c) { best[c.key] = Math.max.apply(null, list.map(function (r) { return Number((r.scores || {})[c.key] || 0); })); });
-    var head = '<tr><th>단지</th><th>지역</th><th>방문일</th><th class="n">호가</th><th class="n">전세가</th><th class="n">전세가율</th><th class="n">갭</th>' +
-      CATS.map(function (c) { return '<th class="n">' + esc(c.name) + '</th>'; }).join("") + '<th class="n">총점</th></tr>';
-    var rows = list.map(function (r, i) {
-      var p = num(r.price), j = num(r.jeonse), ratio = jeonseRatio(r);
-      return '<tr' + (i === 0 ? ' class="best"' : "") + '><td><b>' + esc(r.name) + '</b></td><td>' + esc(r.area || "") + '</td><td>' + esc(r.date || "") + '</td>' +
-        '<td class="n">' + fmtEok(p) + '</td><td class="n">' + fmtEok(j) + '</td>' +
-        '<td class="n">' + (ratio != null ? Math.round(ratio * 100) + "%" : "–") + '</td>' +
-        '<td class="n">' + (p != null && j != null ? fmtEok(p - j) : "–") + '</td>' +
-        CATS.map(function (c) { var s = Number((r.scores || {})[c.key] || 0); return '<td class="n' + (s && s === best[c.key] && list.length > 1 ? " top" : "") + '">' + (s || "–") + '</td>'; }).join("") +
-        '<td class="n"><b>' + totalScore(r) + '</b></td></tr>';
-    }).join("");
-    wrap.innerHTML = "<table><thead>" + head + "</thead><tbody>" + rows + "</tbody></table>";
-  }
-
-  // ---------- editor ----------
-  var editing = null; // record being edited (null = new)
-  var draft = { scores: {}, checks: {} };
-
-  function buildChecklist() {
-    $("checklist").innerHTML = CATS.map(function (c) {
-      return '<div class="fieldset" data-cat="' + c.key + '">' +
-        '<h3>' + esc(c.name) + ' <span class="small muted" data-count></span></h3>' +
-        '<div class="checks">' + c.items.map(function (it, i) {
-          var id = c.key + "_" + i;
-          return '<label><input type="checkbox" data-check="' + id + '" id="c-' + id + '"><span>' + esc(it) + '</span></label>';
-        }).join("") + '</div>' +
-        '<div class="score-row"><span>이 항목 점수 (1 아쉬움 · 5 매우 좋음)</span><div class="seg" role="group" aria-label="' + esc(c.name) + ' 점수">' +
-          [1, 2, 3, 4, 5].map(function (n) { return '<button type="button" data-score="' + c.key + '" data-val="' + n + '" aria-pressed="false">' + n + '</button>'; }).join("") +
-        '</div></div></div>';
-    }).join("");
-  }
-  buildChecklist();
-
-  $("checklist").addEventListener("click", function (e) {
-    var b = e.target.closest("button[data-score]"); if (!b) return;
-    var key = b.dataset.score, val = Number(b.dataset.val);
-    draft.scores[key] = draft.scores[key] === val ? 0 : val;
-    paintScores();
-  });
-  $("checklist").addEventListener("change", function (e) {
-    var cb = e.target; if (!cb.dataset || !cb.dataset.check) return;
-    draft.checks[cb.dataset.check] = cb.checked;
-    paintCounts();
-  });
-  function paintScores() {
-    document.querySelectorAll("button[data-score]").forEach(function (b) {
-      b.setAttribute("aria-pressed", String(Number(b.dataset.val) === (draft.scores[b.dataset.score] || 0)));
+  var seg = { region: "regulated", loanType: "variable" };
+  function wireSeg(id) {
+    $(id).addEventListener("click", function (e) {
+      var b = e.target.closest("button[data-v]"); if (!b) return;
+      seg[id] = b.dataset.v;
+      $(id).querySelectorAll("button").forEach(function (x) { x.setAttribute("aria-pressed", String(x === b)); });
+      if (id === "region") { var t = $("term"); if (seg.region !== "nonmetro" && t.value === "40") t.value = "30"; }
+      recalc();
     });
   }
-  function paintCounts() {
-    CATS.forEach(function (c) {
-      var n = c.items.filter(function (_, i) { return draft.checks[c.key + "_" + i]; }).length;
-      document.querySelector('[data-cat="' + c.key + '"] [data-count]').textContent = n + "/" + c.items.length;
-    });
-  }
-  function paintDerived() {
-    var p = num($("f-price").value), t = num($("f-trade").value), j = num($("f-jeonse").value), sz = num($("f-size").value);
-    var out = [];
-    if (p != null && j != null) { out.push("전세가율 <b>" + Math.round(j / p * 100) + "%</b>"); out.push("갭 <b>" + fmtEok(p - j) + "</b>"); }
-    if (p != null && t != null) { var d = p - t; out.push("호가−실거래 <b>" + (d >= 0 ? "+" : "−") + fmtEok(Math.abs(d)) + "</b>"); }
-    if (p != null && sz) { out.push("평당 호가 <b>" + fmtEok(Math.round(p / (sz / 3.3058))) + "</b>"); }
-    $("derived").innerHTML = out.length ? out.map(function (s) { return "<span>" + s + "</span>"; }).join("") : '<span class="muted small">호가와 전세가를 넣으면 전세가율과 갭이 계산됩니다.</span>';
-  }
-  ["f-price", "f-trade", "f-jeonse", "f-size"].forEach(function (id) { $(id).addEventListener("input", paintDerived); });
+  wireSeg("region"); wireSeg("loanType");
+  function paintSeg(id) { $(id).querySelectorAll("button").forEach(function (x) { x.setAttribute("aria-pressed", String(x.dataset.v === seg[id])); }); }
 
-  function openEditor(rec, prefill) {
-    editing = rec || null;
-    var src = rec || prefill || {};
-    draft = { scores: Object.assign({}, src.scores || {}), checks: Object.assign({}, src.checks || {}), candidateId: src.candidateId || null };
-    $("editor-title").textContent = rec ? "임장 편집" : "새 임장";
-    $("f-name").value = src.name || "";
-    $("f-area").value = src.area || "";
-    $("f-type").value = src.type || "아파트";
-    $("f-date").value = src.date ? src.date : new Date().toISOString().slice(0, 10);
-    $("f-time").value = src.time || "평일 낮";
-    ["year", "units", "price", "trade", "jeonse", "size"].forEach(function (k) { $("f-" + k).value = src[k] != null ? src[k] : ""; });
-    ["pros", "cons", "agent", "memo"].forEach(function (k) { $("f-" + k).value = src[k] || ""; });
-    $("f-revisit").checked = !!src.revisit;
-    document.querySelectorAll("input[data-check]").forEach(function (cb) { cb.checked = !!draft.checks[cb.dataset.check]; });
-    paintScores(); paintCounts(); paintDerived();
-    $("form-status").textContent = ""; $("form-status").className = "status";
-    $("visits-list").hidden = true; $("editor").hidden = false;
-    window.scrollTo(0, 0);
-    $("f-name").focus();
-  }
-  function closeEditor() { $("editor").hidden = true; $("visits-list").hidden = false; editing = null; window.scrollTo(0, 0); }
-
-  $("btn-new").addEventListener("click", function () { openEditor(null); });
-  $("btn-cancel").addEventListener("click", closeEditor);
-  $("btn-cancel-top").addEventListener("click", closeEditor);
-
-  $("editor").addEventListener("submit", function (e) {
-    e.preventDefault();
-    var name = $("f-name").value.trim();
-    if (!name) { $("form-status").textContent = "단지명을 입력해 주세요."; $("form-status").className = "status err"; $("f-name").focus(); return; }
-    var rec = {
-      id: editing ? editing.id : uid(),
-      name: name, area: $("f-area").value.trim(), type: $("f-type").value, date: $("f-date").value, time: $("f-time").value,
-      year: num($("f-year").value), units: num($("f-units").value),
-      price: num($("f-price").value), trade: num($("f-trade").value), jeonse: num($("f-jeonse").value), size: num($("f-size").value),
-      scores: draft.scores, checks: draft.checks,
-      pros: $("f-pros").value.trim(), cons: $("f-cons").value.trim(), agent: $("f-agent").value.trim(), memo: $("f-memo").value.trim(),
-      revisit: $("f-revisit").checked, candidateId: draft.candidateId,
-      createdAt: editing && editing.createdAt || Date.now(), updatedAt: Date.now()
+  var FIELDS = ["cash", "income", "debt", "rate", "term", "children"];
+  var CHECKS = ["firstTime", "newlywed", "dualIncome", "newborn", "over85"];
+  function readInputs() {
+    return {
+      cash: J.num($("cash").value) || 0, income: J.num($("income").value) || 0, debtMonthly: J.num($("debt").value) || 0,
+      rate: J.num($("rate").value) || 4.5, term: Math.min(Number($("term").value) || 30, seg.region === "nonmetro" ? 40 : J.P.maxTermMetro),
+      children: Number($("children").value) || 0, region: seg.region, loanType: seg.loanType,
+      firstTime: $("firstTime").checked, newlywed: $("newlywed").checked, dualIncome: $("dualIncome").checked, newborn: $("newborn").checked, over85: $("over85").checked
     };
-    Object.keys(rec).forEach(function (k) { if (rec[k] === null) delete rec[k]; });
-    var btn = $("btn-save"); btn.disabled = true;
-    $("form-status").textContent = "저장 중"; $("form-status").className = "status";
-    store.save(rec).then(function () {
-      btn.disabled = false; closeEditor();
-      // 연결된 후보 핀은 자동으로 '임장 완료'로 바꿉니다.
-      var cand = rec.candidateId && cstore.items.find(function (c) { return c.id === rec.candidateId; });
-      if (cand && cand.status !== "임장 완료") cstore.save(Object.assign({}, cand, { status: "임장 완료" })).catch(function () {});
-    })
-      .catch(function (err) {
-        btn.disabled = false;
-        var msg = err && err.code === "quota_exceeded" ? "저장 공간이 가득 찼습니다. 오래된 기록을 지우고 다시 시도해 주세요."
-          : err && err.code === "invalid_argument" ? "이 페이지에는 쓰기 권한이 없습니다. 소유자 계정으로 열어 주세요."
-          : "저장하지 못했습니다. 잠시 후 다시 시도해 주세요.";
-        $("form-status").textContent = msg; $("form-status").className = "status err";
-      });
+  }
+  function restore() {
+    var s = J.lsGet("imjang.budgetInputs", null); if (!s) return;
+    FIELDS.forEach(function (k) { if (s[k] != null) $(k).value = s[k]; });
+    CHECKS.forEach(function (k) { if (s[k] != null) $(k).checked = !!s[k]; });
+    if (s.region) seg.region = s.region; if (s.loanType) seg.loanType = s.loanType;
+    paintSeg("region"); paintSeg("loanType");
+  }
+  function persist() {
+    var s = {}; FIELDS.forEach(function (k) { s[k] = $(k).value; }); CHECKS.forEach(function (k) { s[k] = $(k).checked; });
+    s.region = seg.region; s.loanType = seg.loanType; J.lsSet("imjang.budgetInputs", s);
+  }
+
+  var last = null;
+  function recalc() {
+    persist();
+    var inp = readInputs();
+    if (!inp.cash && !inp.income) { $("r-price").textContent = "–"; $("r-sub").textContent = "현금과 소득을 입력하면 계산됩니다."; $("r-stats").innerHTML = ""; $("r-binding").hidden = true; $("r-policy").innerHTML = ""; last = null; return; }
+    var r = J.budget(inp); last = { inputs: inp, result: r };
+    if (r.price) J.lsSet("imjang.budget", { price: r.price, loan: r.loan.loan, region: inp.region, asOf: Date.now() });
+    var price = r.price, loan = r.loan.loan, cost = r.costs.total, total = price + cost;
+    $("r-price").textContent = J.fmtEok(price, 1);
+    $("r-sub").textContent = price ? "현금 " + J.fmtEok(r.cashUsed) + " + 대출 " + J.fmtEok(loan) + " = 집값 " + J.fmtEok(price) + " + 부대비용 " + J.fmtEok(cost) : "이 조건으로는 부대비용을 빼면 살 수 있는 집이 없습니다. 현금이나 소득을 확인해 주세요.";
+    var bar = $("r-bar").children;
+    bar[0].style.width = (total ? r.cashUsed / total * 100 : 0) + "%"; bar[1].style.width = (total ? loan / total * 100 : 0) + "%"; bar[2].style.width = (total ? cost / total * 100 : 0) + "%";
+    var bindText = { ltv: "LTV " + Math.round(r.loan.ltv * 100) + "%", cap: "주담대 총액 한도 " + J.fmtEok(r.loan.byCap), dsr: "DSR 40%" }[r.loan.binding];
+    var stats = [
+      ["집값", J.fmtEok(price), ""],
+      ["대출", J.fmtEok(loan), "한도를 정한 규정: " + bindText],
+      ["내 현금에서 나가는 돈", J.fmtEok(r.cashUsed), "남는 현금 " + J.fmtEok(inp.cash - r.cashUsed)],
+      ["취득세 등", J.fmtEok(r.costs.acq.total), (r.costs.acq.rate * 100).toFixed(2).replace(/\.?0+$/, "") + "% + 교육세" + (r.costs.acq.exempt ? " · 생애최초 " + J.fmtMan(r.costs.acq.exempt) + " 감면" : "")],
+      ["중개보수", J.fmtEok(r.costs.broker.total), "상한 " + (r.costs.broker.rate * 100).toFixed(1) + "% + 부가세"],
+      ["법무사·인지세 등", J.fmtEok(r.costs.misc), "대략"],
+      ["월 상환액", J.fmtMan(r.monthly), "금리 " + inp.rate + "% · " + inp.term + "년 원리금균등"],
+      ["소득 대비 상환 부담", inp.income ? Math.round(r.monthly * 12 / inp.income * 100) + "%" : "–", "스트레스 금리 " + (r.loan.stressRate * 100).toFixed(2) + "%로 심사"]
+    ];
+    $("r-stats").innerHTML = stats.map(function (s) { return '<div class="stat"><span>' + s[0] + (s[2] ? '<br><span class="sub">' + J.esc(s[2]) + '</span>' : "") + '</span><b>' + s[1] + '</b></div>'; }).join("");
+    var tips = { ltv: "집값 대비 대출 비율(LTV)이 한도입니다. 현금이 늘면 집값 상한도 같이 올라갑니다.", cap: "수도권·규제지역 주담대 총액 한도에 걸렸습니다. 집값이 더 비싸져도 대출은 늘지 않으니, 그 위로는 전부 현금이 필요합니다.", dsr: "소득 대비 상환능력(DSR)이 한도입니다. 금리가 낮은 정책대출이나 긴 만기, 고정금리형이 한도를 조금 늘릴 수 있습니다." };
+    $("r-binding").hidden = false;
+    $("r-binding").innerHTML = "<b>" + bindText + "</b>에 걸렸습니다. " + tips[r.loan.binding] + (r.noLoanPrice ? " 대출 없이 현금만으로는 약 " + J.fmtEok(r.noLoanPrice) + "까지입니다." : "");
+    $("r-policy").innerHTML = r.policy.map(function (p) {
+      return '<div class="stat"><span>' + J.esc(p.name) + '<br><span class="sub">' + J.esc(p.why) + ' · 한도 ' + J.fmtEok(p.cap) + ' · 금리 ' + J.esc(p.rate) + '</span></span><span class="chip ' + (p.ok ? "good" : "") + '">' + (p.ok ? "해당" : "조건 밖") + '</span></div>';
+    }).join("") + '<p class="small muted">정책대출은 집값 기준이 있어, 위 최대 집값보다 싼 집을 고르면 해당될 수도 있습니다.</p>';
+  }
+
+  FIELDS.forEach(function (k) { $(k).addEventListener("input", recalc); $(k).addEventListener("change", recalc); });
+  CHECKS.forEach(function (k) { $(k).addEventListener("change", recalc); });
+  $("go-find").addEventListener("click", function () {
+    if (last && last.result.price) J.lsSet("imjang.budget", { price: last.result.price, loan: last.result.loan.loan, region: last.inputs.region, asOf: Date.now() });
+    location.href = "find.html";
   });
-
-  // ---------- candidate map ----------
-  // 카카오맵 JavaScript 키. 여기에 직접 적어 두거나, 페이지의 '지도 설정'에 입력하면 이 브라우저에 저장됩니다.
-  var KAKAO_KEY = "37e04196393a74fd4c0faa01f2042f84";
-  var STATUS = ["후보", "임장 예정", "임장 완료", "제외"];
-  var STATUS_CLASS = { "후보": "s-cand", "임장 예정": "s-plan", "임장 완료": "s-done", "제외": "s-out" };
-  var backend = null, mapReady = false, kakaoFailWhy = "";
-  var pinEditing = null, pinPending = null, pinDelete = null;
-
-  function getKakaoKey() { var k = ""; try { k = localStorage.getItem("imjang.kakaoKey") || ""; } catch (e) {} return String(k || KAKAO_KEY || "").trim(); }
-  function haversine(a, b) {
-    var R = 6371000, toR = Math.PI / 180, dLat = (b[0] - a[0]) * toR, dLng = (b[1] - a[1]) * toR;
-    var h = Math.pow(Math.sin(dLat / 2), 2) + Math.cos(a[0] * toR) * Math.cos(b[0] * toR) * Math.pow(Math.sin(dLng / 2), 2);
-    return 2 * R * Math.asin(Math.sqrt(h));
-  }
-  function sortedCands(items) {
-    return items.slice().sort(function (a, b) { return (a.order || 0) - (b.order || 0) || (a.createdAt || 0) - (b.createdAt || 0); });
-  }
-  var noticeKind = "";
-  function setMapNotice(msg, kind) { var b = $("map-blocked"); b.hidden = !msg; $("map-blocked-text").textContent = msg || ""; noticeKind = msg ? (kind || "") : ""; }
-  function setProvider(text) { $("map-provider").textContent = text; $("mapcfg").hidden = !/실패|없음/.test(text); }
-  function loadView() { try { return JSON.parse(localStorage.getItem("imjang.mapview") || "null") || { lat: 37.5665, lng: 126.978, z: 11 }; } catch (e) { return { lat: 37.5665, lng: 126.978, z: 11 }; } }
-  function saveView() { if (!backend) return; try { localStorage.setItem("imjang.mapview", JSON.stringify(backend.getView())); } catch (e) {} }
-  function mapClicked(lat, lng) { startPin(lat, lng, "", "", null); }
-  function pinHtml(n, status) { return '<div class="pin ' + (STATUS_CLASS[status] || "s-cand") + '">' + n + '</div>'; }
-
-  // --- backend 1: OpenStreetMap (Leaflet). 키가 없을 때의 기본 지도.
-  var osmBackend = {
-    name: "osm", map: null, markers: {}, line: null, temp: null, tilesOk: false,
-    init: function (el, view) {
-      var self = this;
-      this.map = L.map(el).setView([view.lat, view.lng], view.z);
-      var tiles = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "&copy; OpenStreetMap contributors" }).addTo(this.map);
-      tiles.on("tileload", function () { self.tilesOk = true; if (noticeKind === "tiles") setMapNotice(""); });
-      tiles.on("tileerror", function () {
-        if (!self.tilesOk && !noticeKind) setMapNotice("이 화면에서는 지도 타일이 차단되어 지도가 보이지 않습니다. https://jihye0.github.io/jipteo/ 에서 열면 지도가 나타납니다. 핀 목록과 카카오맵 링크는 여기서도 동작합니다.", "tiles");
-      });
-      this.map.on("moveend", saveView);
-      this.map.on("click", function (e) { mapClicked(e.latlng.lat, e.latlng.lng); });
-      setTimeout(function () { self.map.invalidateSize(); }, 50);
-    },
-    getView: function () { var c = this.map.getCenter(); return { lat: c.lat, lng: c.lng, z: this.map.getZoom() }; },
-    flyTo: function (lat, lng, close) { this.map.flyTo([lat, lng], Math.max(this.map.getZoom(), close ? 16 : 14)); },
-    setMarker: function (id, lat, lng, html, title, onClick) {
-      var m = this.markers[id];
-      if (!m) { m = L.marker([lat, lng]); m.on("click", onClick); m.addTo(this.map); this.markers[id] = m; }
-      m.setLatLng([lat, lng]); m.setIcon(L.divIcon({ className: "", html: html, iconSize: [30, 30], iconAnchor: [15, 15] }));
-      m.unbindTooltip(); m.bindTooltip(title, { direction: "top", offset: [0, -14] });
-    },
-    removeMarker: function (id) { if (this.markers[id]) { this.map.removeLayer(this.markers[id]); delete this.markers[id]; } },
-    markerIds: function () { return Object.keys(this.markers); },
-    setLine: function (pts) {
-      if (this.line) { this.map.removeLayer(this.line); this.line = null; }
-      if (pts.length > 1) this.line = L.polyline(pts, { color: "#1f5f8b", weight: 3, dashArray: "6 6", opacity: 0.85 }).addTo(this.map);
-    },
-    setTemp: function (lat, lng) { this.clearTemp(); this.temp = L.circleMarker([lat, lng], { radius: 9, color: "#b3372e", weight: 2, fillOpacity: 0.5 }).addTo(this.map); },
-    clearTemp: function () { if (this.temp) { this.map.removeLayer(this.temp); this.temp = null; } },
-    resize: function () { var self = this; setTimeout(function () { self.map.invalidateSize(); }, 50); },
-    search: null // Nominatim은 아래 공용 함수에서 처리
-  };
-
-  // --- backend 2: 카카오맵. 키가 있고 SDK가 로드되면 사용. 단지명·주소 검색 지원.
-  var kakaoBackend = {
-    name: "kakao", map: null, overlays: {}, line: null, temp: null,
-    toLevel: function (z) { return Math.min(14, Math.max(1, 19 - Math.round(z))); },
-    init: function (el, view) {
-      var self = this;
-      this.map = new kakao.maps.Map(el, { center: new kakao.maps.LatLng(view.lat, view.lng), level: this.toLevel(view.z) });
-      this.map.addControl(new kakao.maps.ZoomControl(), kakao.maps.ControlPosition.RIGHT);
-      this.map.addControl(new kakao.maps.MapTypeControl(), kakao.maps.ControlPosition.TOPRIGHT);
-      kakao.maps.event.addListener(this.map, "click", function (e) { mapClicked(e.latLng.getLat(), e.latLng.getLng()); });
-      kakao.maps.event.addListener(this.map, "idle", saveView);
-      setTimeout(function () { self.map.relayout(); }, 50);
-    },
-    getView: function () { var c = this.map.getCenter(); return { lat: c.getLat(), lng: c.getLng(), z: 19 - this.map.getLevel() }; },
-    flyTo: function (lat, lng, close) {
-      var target = close ? 3 : 5;
-      if (this.map.getLevel() > target) this.map.setLevel(target);
-      this.map.panTo(new kakao.maps.LatLng(lat, lng));
-    },
-    setMarker: function (id, lat, lng, html, title, onClick) {
-      this.removeMarker(id);
-      var el = document.createElement("div"); el.innerHTML = html; el.title = title; el.style.cursor = "pointer";
-      el.addEventListener("click", function (ev) { ev.stopPropagation(); onClick(); });
-      var o = new kakao.maps.CustomOverlay({ position: new kakao.maps.LatLng(lat, lng), content: el, xAnchor: 0.5, yAnchor: 0.5, zIndex: 2 });
-      o.setMap(this.map); this.overlays[id] = o;
-    },
-    removeMarker: function (id) { if (this.overlays[id]) { this.overlays[id].setMap(null); delete this.overlays[id]; } },
-    markerIds: function () { return Object.keys(this.overlays); },
-    setLine: function (pts) {
-      if (this.line) { this.line.setMap(null); this.line = null; }
-      if (pts.length > 1) {
-        this.line = new kakao.maps.Polyline({ path: pts.map(function (p) { return new kakao.maps.LatLng(p[0], p[1]); }), strokeWeight: 3, strokeColor: "#1f5f8b", strokeOpacity: 0.85, strokeStyle: "dash" });
-        this.line.setMap(this.map);
-      }
-    },
-    setTemp: function (lat, lng) {
-      this.clearTemp();
-      var el = document.createElement("div"); el.className = "temp-dot";
-      this.temp = new kakao.maps.CustomOverlay({ position: new kakao.maps.LatLng(lat, lng), content: el, xAnchor: 0.5, yAnchor: 0.5, zIndex: 3 });
-      this.temp.setMap(this.map);
-    },
-    clearTemp: function () { if (this.temp) { this.temp.setMap(null); this.temp = null; } },
-    resize: function () { var self = this; setTimeout(function () { self.map.relayout(); }, 50); },
-    search: function (q) {
-      var self = this;
-      function shortAddr(a) { var t = String(a || "").split(" "), out = []; for (var i = 0; i < t.length; i++) { if (/\d/.test(t[i])) break; out.push(t[i]); } return out.slice(0, 4).join(" "); }
-      return new Promise(function (resolve, reject) {
-        var ps = new kakao.maps.services.Places();
-        ps.keywordSearch(q, function (data, status) {
-          if (status === kakao.maps.services.Status.OK) {
-            return resolve(data.slice(0, 8).map(function (d) { return { name: d.place_name, area: shortAddr(d.address_name), lat: Number(d.y), lng: Number(d.x), detail: d.road_address_name || d.address_name, addr: parseJibunAddr(d.address_name) }; }));
-          }
-          if (status === kakao.maps.services.Status.ZERO_RESULT) {
-            new kakao.maps.services.Geocoder().addressSearch(q, function (rows, st) {
-              if (st === kakao.maps.services.Status.OK) resolve(rows.slice(0, 8).map(function (d) { return { name: d.address_name, area: shortAddr(d.address_name), lat: Number(d.y), lng: Number(d.x), detail: d.road_address ? d.road_address.address_name : "", addr: parseJibunAddr(d.address_name) }; }));
-              else resolve([]);
-            });
-            return;
-          }
-          reject("검색 오류 (" + status + ")");
-        }, { location: self.map.getCenter() });
-      });
-    }
-  };
-
-  function loadKakao(key) {
-    return new Promise(function (resolve, reject) {
-      if (window.kakao && window.kakao.maps && window.kakao.maps.Map) return resolve();
-      var done = false, s = document.createElement("script");
-      s.src = "https://dapi.kakao.com/v2/maps/sdk.js?appkey=" + encodeURIComponent(key) + "&autoload=false&libraries=services";
-      var onErr = function (ev) { if (ev && ev.message && /kakao/i.test(ev.message + (ev.filename || ""))) { done = true; reject(ev.message); } };
-      window.addEventListener("error", onErr);
-      s.onload = function () {
-        if (window.kakao && window.kakao.maps && typeof window.kakao.maps.load === "function") {
-          window.kakao.maps.load(function () { done = true; if (window.kakao.maps.Map) resolve(); else reject("키 또는 사이트 도메인 설정을 확인해 주세요"); });
-        } else { done = true; reject("SDK가 초기화되지 않았습니다. JavaScript 키가 맞는지, 플랫폼 Web 도메인과 카카오맵 사용 설정이 켜져 있는지 확인해 주세요"); }
-      };
-      s.onerror = function () {
-        done = true;
-        fetch(s.src).then(function (r) { return r.text(); }).then(function (body) {
-          var m = /"message"\s*:\s*"([^"]+)"/.exec(body || "");
-          var msg = m ? m[1] : "";
-          if (/domain mismatched/i.test(msg)) msg = "등록되지 않은 도메인입니다 (" + location.origin + "). 카카오 개발자 사이트 > 플랫폼 > Web 사이트 도메인에 이 주소를 등록해 주세요";
-          reject(msg || "SDK 스크립트를 불러오지 못했습니다 (키 오류, 도메인 미등록, 또는 네트워크 차단)");
-        }).catch(function () { reject("SDK 스크립트를 불러오지 못했습니다 (키 오류, 도메인 미등록, 또는 네트워크 차단)"); });
-      };
-      document.head.appendChild(s);
-      setTimeout(function () { if (!done) reject("응답 시간 초과"); }, 8000);
-    });
-  }
-
-  function startBackend(b) {
-    backend = b;
-    $("map").innerHTML = "";
-    b.init($("map"), loadView());
-    setProvider(b.name === "kakao" ? "카카오맵 사용 중" : "OpenStreetMap 사용 중" + (kakaoFailWhy ? " · 카카오맵 실패: " + kakaoFailWhy : ""));
-    paintPins(cstore.items);
-  }
-  function initMap() {
-    if (mapReady) { if (backend) backend.resize(); return; }
-    mapReady = true;
-    var key = getKakaoKey();
-    if (key) {
-      setProvider("카카오맵 불러오는 중");
-      loadKakao(key).then(function () { startBackend(kakaoBackend); }, function (why) {
-        kakaoFailWhy = String(why);
-        setMapNotice("카카오맵을 불러오지 못했습니다: " + why + ". OpenStreetMap으로 대신 표시합니다. 카카오 개발자 사이트에서 플랫폼 Web 도메인(" + location.origin + ")과 카카오맵 사용 설정을 확인해 주세요.", "kakao");
-        startOsm();
-      });
-    } else startOsm();
-  }
-  function startOsm() {
-    if (typeof L === "undefined") { setMapNotice("지도 라이브러리를 불러오지 못했습니다. 인터넷 연결을 확인한 뒤 새로고침해 주세요."); setProvider("지도 없음"); return; }
-    startBackend(osmBackend);
-  }
-
-  // 지도 설정 (카카오 키)
-  (function () {
-    var k = ""; try { k = localStorage.getItem("imjang.kakaoKey") || ""; } catch (e) {}
-    $("kakao-key").value = k;
-  })();
-  $("kakao-save").addEventListener("click", function () {
-    var k = $("kakao-key").value.trim();
-    try { if (k) localStorage.setItem("imjang.kakaoKey", k); else localStorage.removeItem("imjang.kakaoKey"); } catch (e) {}
-    $("kakao-status").textContent = k ? "키를 저장했습니다. 지도를 다시 불러옵니다." : "키를 지웠습니다. OpenStreetMap으로 돌아갑니다.";
-    setTimeout(function () { location.reload(); }, 400);
-  });
-
-  function paintPins(items) {
-    if (!backend) return;
-    var list = sortedCands(items), seen = {};
-    list.forEach(function (c, i) {
-      seen[c.id] = true;
-      backend.setMarker(c.id, c.lat, c.lng, pinHtml(i + 1, c.status), c.name, function () { focusPin(c.id, false); });
-    });
-    backend.markerIds().forEach(function (id) { if (!seen[id]) backend.removeMarker(id); });
-    backend.setLine(list.filter(function (c) { return c.status === "임장 예정"; }).map(function (c) { return [c.lat, c.lng]; }));
-  }
-  function focusPin(id, fly) {
-    var c = cstore.items.find(function (x) { return x.id === id; }); if (!c) return;
-    if (backend && fly !== false) backend.flyTo(c.lat, c.lng, true);
-    var card = document.querySelector('.pin-card[data-id="' + id + '"]');
-    if (card) { card.scrollIntoView({ block: "nearest", behavior: "smooth" }); card.style.outline = "2px solid var(--mark)"; setTimeout(function () { card.style.outline = ""; }, 1200); }
-  }
-
-  function renderPins(items) {
-    var list = sortedCands(items), wrap = $("pins");
-    if (!list.length) {
-      wrap.innerHTML = '<div class="empty"><h3>후보 단지를 핀으로 찍어 보세요</h3><p>위에서 단지명·동·역 이름을 검색하거나 지도를 클릭하면 핀을 추가할 수 있습니다. 같은 생활권 2~3곳을 묶어 두면 동선이 나옵니다.</p></div>';
-      $("route-summary").textContent = "";
-      paintPins(items); return;
-    }
-    wrap.innerHTML = list.map(function (c, i) {
-      var visited = store.items.some(function (r) { return r.candidateId === c.id; });
-      var cls = STATUS_CLASS[c.status] || "s-cand";
-      var opts = STATUS.map(function (s) { return '<option' + (s === c.status ? " selected" : "") + '>' + s + '</option>'; }).join("");
-      var kakao = "https://map.kakao.com/link/map/" + encodeURIComponent(c.name) + "," + c.lat + "," + c.lng;
-      var naver = "https://map.naver.com/p/search/" + encodeURIComponent(c.name);
-      var actions = pinDelete === c.id
-        ? '<span class="confirm">이 핀을 삭제할까요? <button type="button" class="btn danger" data-act="confirm-delete" data-id="' + esc(c.id) + '">삭제</button><button type="button" class="btn ghost" data-act="cancel-delete">취소</button></span>'
-        : '<button type="button" class="btn" data-act="focus" data-id="' + esc(c.id) + '">지도에서 보기</button>' +
-          '<a class="btn" href="' + kakao + '" target="_blank" rel="noopener">카카오맵</a>' +
-          '<a class="btn" href="' + naver + '" target="_blank" rel="noopener">네이버지도</a>' +
-          '<button type="button" class="btn" data-act="up" data-id="' + esc(c.id) + '"' + (i === 0 ? " disabled" : "") + '>위로</button>' +
-          '<button type="button" class="btn" data-act="down" data-id="' + esc(c.id) + '"' + (i === list.length - 1 ? " disabled" : "") + '>아래로</button>' +
-          '<button type="button" class="btn primary" data-act="visit" data-id="' + esc(c.id) + '">임장 기록</button>' +
-          '<button type="button" class="btn" data-act="edit" data-id="' + esc(c.id) + '">편집</button>' +
-          '<button type="button" class="btn ghost" data-act="delete" data-id="' + esc(c.id) + '">삭제</button>';
-      var chips = "";
-      if (visited) chips += '<span class="chip good">임장 기록 있음</span>';
-      if (num(c.price) != null) chips += '<span class="chip">호가 ' + fmtEok(num(c.price)) + '</span>';
-      if (num(c.units) != null) chips += '<span class="chip">' + Number(c.units).toLocaleString("ko-KR") + '세대</span>';
-      if (num(c.buildings) != null) chips += '<span class="chip">' + c.buildings + '개동</span>';
-      if (num(c.year) != null) chips += '<span class="chip">' + c.year + '년 준공</span>';
-      if (c.sizes) chips += '<span class="chip">' + esc(c.sizes) + '</span>';
-      if (c.redev) chips += '<span class="chip mark">' + esc(c.redev) + '</span>';
-      return '<article class="card pin-card" data-id="' + esc(c.id) + '">' +
-        '<div class="card-head"><div class="pin-title"><span class="pin ' + cls + '">' + (i + 1) + '</span><div><h3>' + esc(c.name) + '</h3><p class="muted small">' + esc(c.area || "") + '</p></div></div>' +
-        '<select class="status-sel" data-status="' + esc(c.id) + '" aria-label="상태">' + opts + '</select></div>' +
-        (c.memo ? '<p class="small">' + esc(c.memo) + '</p>' : "") +
-        (chips ? '<div class="chips">' + chips + '</div>' : "") +
-        '<div class="card-actions">' + actions + '</div></article>';
-    }).join("");
-    var plan = list.filter(function (c) { return c.status === "임장 예정"; });
-    if (plan.length > 1) {
-      var d = 0; for (var k = 1; k < plan.length; k++) d += haversine([plan[k - 1].lat, plan[k - 1].lng], [plan[k].lat, plan[k].lng]);
-      $("route-summary").textContent = "임장 예정 " + plan.length + "곳 · 순서대로 직선거리 합 " + (d / 1000).toFixed(1) + " km (지도의 점선 순서)";
-    } else if (plan.length === 1) {
-      $("route-summary").textContent = "임장 예정 1곳. 상태를 '임장 예정'으로 바꾼 핀이 2곳 이상이면 동선이 그려집니다.";
-    } else {
-      $("route-summary").textContent = "갈 곳의 상태를 '임장 예정'으로 바꾸면 순서대로 동선이 그려집니다.";
-    }
-    paintPins(items);
-  }
-
-  function saveOrder(list) { // order = index 로 정규화하고 바뀐 것만 저장
-    var p = Promise.resolve();
-    list.forEach(function (c, i) { if (c.order !== i) p = p.then(function () { return cstore.save(Object.assign({}, c, { order: i })); }); });
-    return p;
-  }
-  $("pins").addEventListener("click", function (e) {
-    var b = e.target.closest("button[data-act]"); if (!b) return;
-    var act = b.dataset.act, id = b.dataset.id;
-    var list = sortedCands(cstore.items), idx = list.findIndex(function (c) { return c.id === id; });
-    if (act === "focus") focusPin(id, true);
-    else if (act === "up" && idx > 0) { var t = list[idx]; list[idx] = list[idx - 1]; list[idx - 1] = t; saveOrder(list); }
-    else if (act === "down" && idx < list.length - 1) { var u = list[idx]; list[idx] = list[idx + 1]; list[idx + 1] = u; saveOrder(list); }
-    else if (act === "visit") {
-      var c = list[idx];
-      showView("visits"); openEditor(null, { name: c.name, area: c.area, price: c.price, year: c.year, units: c.units, candidateId: c.id });
-    }
-    else if (act === "edit") { pinEditing = list[idx]; pinPending = { lat: pinEditing.lat, lng: pinEditing.lng }; openPinForm(pinEditing, "핀 편집"); }
-    else if (act === "delete") { pinDelete = id; renderPins(cstore.items); }
-    else if (act === "cancel-delete") { pinDelete = null; renderPins(cstore.items); }
-    else if (act === "confirm-delete") { b.disabled = true; cstore.remove(id).then(function () { pinDelete = null; }).catch(function () { pinDelete = null; renderPins(cstore.items); }); }
-  });
-  $("pins").addEventListener("change", function (e) {
-    var sel = e.target.closest("select[data-status]"); if (!sel) return;
-    var c = cstore.items.find(function (x) { return x.id === sel.dataset.status; }); if (!c) return;
-    cstore.save(Object.assign({}, c, { status: sel.value })).catch(function () { renderPins(cstore.items); });
-  });
-
-  // ---------- 단지 데이터 (한국부동산원 공시대상 공동주택, 아파트 46,981단지) ----------
-  var APT_SIDO = {
-    "서울": "seoul", "서울시": "seoul", "서울특별시": "seoul", "부산": "busan", "부산시": "busan", "부산광역시": "busan",
-    "대구": "daegu", "대구시": "daegu", "대구광역시": "daegu", "인천": "incheon", "인천시": "incheon", "인천광역시": "incheon",
-    "광주": "gwangju", "광주시": "gwangju", "광주광역시": "gwangju", "대전": "daejeon", "대전시": "daejeon", "대전광역시": "daejeon",
-    "울산": "ulsan", "울산시": "ulsan", "울산광역시": "ulsan", "세종": "sejong", "세종시": "sejong", "세종특별자치시": "sejong",
-    "경기": "gyeonggi", "경기도": "gyeonggi", "강원": "gangwon", "강원도": "gangwon", "강원특별자치도": "gangwon",
-    "충북": "chungbuk", "충청북도": "chungbuk", "충남": "chungnam", "충청남도": "chungnam",
-    "전북": "jeonbuk", "전라북도": "jeonbuk", "전북특별자치도": "jeonbuk", "전남": "jeonnam", "전라남도": "jeonnam",
-    "경북": "gyeongbuk", "경상북도": "gyeongbuk", "경남": "gyeongnam", "경상남도": "gyeongnam", "제주": "jeju", "제주도": "jeju", "제주특별자치도": "jeju"
-  };
-  var aptCache = {};
-  function aptLoad(code) {
-    if (!code) return Promise.reject("sido");
-    if (aptCache[code]) return Promise.resolve(aptCache[code]);
-    return fetch("data/apt-" + code + ".json").then(function (r) { if (!r.ok) throw new Error("http " + r.status); return r.json(); })
-      .then(function (rows) { aptCache[code] = rows; return rows; });
-  }
-  // 지번 주소 "경기 성남시 분당구 서현동 83" -> { code, dongKey, jibun }
-  function parseJibunAddr(a) {
-    var t = String(a || "").trim().split(/\s+/); if (t.length < 2) return null;
-    var code = APT_SIDO[t[0]]; if (!code) return null;
-    var jibun = /^(산)?\d+(-\d+)?$/.test(t[t.length - 1]) ? t[t.length - 1] : "";
-    var mid = t.slice(1, jibun ? -1 : undefined);
-    // 데이터는 "성남시 분당구"를 "성남분당구"로 적는다
-    if (mid.length >= 2 && /시$/.test(mid[0]) && /구$/.test(mid[1])) mid = [mid[0].slice(0, -1) + mid[1]].concat(mid.slice(2));
-    return { code: code, dongKey: mid.join(" "), jibun: jibun, loose: false };
-  }
-  // Nominatim display_name "서현동, 분당구, 성남시, 경기도, 13591, 대한민국" -> { code, dongKey(동 이름만), loose }
-  function parseNominatimAddr(displayName) {
-    var parts = String(displayName || "").split(",").map(function (s) { return s.trim(); });
-    var code = null, dong = "";
-    parts.forEach(function (p) { if (!code && APT_SIDO[p]) code = APT_SIDO[p]; });
-    for (var i = 0; i < parts.length; i++) { if (/(동|읍|면|리|가)$/.test(parts[i]) && !/\d/.test(parts[i]) && parts[i].length <= 6) { dong = parts[i]; break; } }
-    return code ? { code: code, dongKey: dong, jibun: "", loose: true } : null;
-  }
-  function normName(s) { return String(s || "").toLowerCase().replace(/\(.*?\)/g, "").replace(/아파트|apt|단지|\s+/g, ""); }
-  function inDong(row, addr) {
-    if (!addr || !addr.dongKey) return true;
-    if (addr.loose) return row[1] === addr.dongKey || row[1].slice(-addr.dongKey.length - 1) === " " + addr.dongKey;
-    return row[1] === addr.dongKey;
-  }
-  function aptMatch(rows, addr, name) {
-    var out = { exact: null, list: [] };
-    var same = rows.filter(function (r) { return inDong(r, addr); });
-    if (addr && addr.jibun && !addr.loose) {
-      var j = same.filter(function (r) { return r[2] === addr.jibun; });
-      if (j.length === 1) { out.exact = j[0]; return out; }
-      if (j.length > 1) { out.list = j; }
-    }
-    var q = normName(name);
-    if (q) {
-      var scored = (same.length ? same : rows).map(function (r) {
-        var n = normName(r[0]), s = 0;
-        if (n === q) s = 100; else if (n.indexOf(q) >= 0 || q.indexOf(n) >= 0) s = 60 + Math.min(n.length, q.length);
-        else { var hit = 0; q.replace(/[\uac00-\ud7a3a-z0-9]{2}/g, function (bg) { if (n.indexOf(bg) >= 0) hit++; return bg; }); s = hit * 4; }
-        return { r: r, s: s };
-      }).filter(function (x) { return x.s >= 8; }).sort(function (a, b) { return b.s - a.s || b.r[3] - a.r[3]; });
-      if (scored.length && scored[0].s >= 100 && (scored.length === 1 || scored[1].s < 100)) { out.exact = scored[0].r; return out; }
-      if (!out.list.length) out.list = scored.slice(0, 8).map(function (x) { return x.r; });
-    }
-    if (!out.list.length && same.length && same.length <= 12) out.list = same.slice().sort(function (a, b) { return b[3] - a[3]; });
-    return out;
-  }
-  function aptFill(row) {
-    $("pf-units").value = row[3] || ""; $("pf-bld").value = row[4] || ""; $("pf-year").value = row[5] || "";
-    if (!$("pf-name").value.trim()) $("pf-name").value = row[0];
-    $("pf-aptstatus").textContent = "공공데이터 일치: " + row[0] + " · " + row[3].toLocaleString("ko-KR") + "세대 · " + (row[5] || "?") + "년 사용승인" + (row[7] ? " · " + row[7] : "");
-    $("pf-aptresults").hidden = true;
-  }
-  function aptShowList(list, label) {
-    var box = $("pf-aptresults");
-    if (!list.length) { box.hidden = true; return; }
-    box.hidden = false;
-    box.innerHTML = list.map(function (r, i) {
-      return '<button type="button" data-apt="' + i + '"><b>' + esc(r[0]) + '</b> <span class="muted small">' + esc(r[1]) + " " + esc(r[2]) + " · " + r[3].toLocaleString("ko-KR") + "세대 · " + (r[5] || "?") + "년</span></button>";
-    }).join("");
-    box.onclick = function (ev) { var b = ev.target.closest("button[data-apt]"); if (!b) return; aptFill(list[Number(b.dataset.apt)]); };
-    $("pf-aptstatus").textContent = label || "일치하는 단지를 골라 주세요.";
-  }
-  var pinAddr = null; // 현재 핀의 주소 정보
-  function aptAutoFill(addr, name) {
-    pinAddr = addr || pinAddr;
-    if (!pinAddr) { $("pf-aptstatus").textContent = "주소를 알 수 없어 자동 검색을 못 했습니다. 단지명으로 찾아 주세요."; return; }
-    $("pf-aptstatus").textContent = "공공데이터에서 단지를 찾는 중";
-    aptLoad(pinAddr.code).then(function (rows) {
-      var m = aptMatch(rows, pinAddr, name);
-      if (m.exact) aptFill(m.exact);
-      else if (m.list.length) aptShowList(m.list, "비슷한 단지입니다. 맞는 것을 골라 주세요.");
-      else if (!normName(name)) $("pf-aptstatus").textContent = "단지명을 적고 '찾기'를 누르면 이 동네 아파트에서 세대수·준공년도를 찾아 줍니다.";
-      else $("pf-aptstatus").textContent = "공공데이터에 일치하는 단지가 없습니다 (2025년 이후 신축이거나 아파트가 아닐 수 있음). 아래에 직접 적어 주세요.";
-    }).catch(function () { $("pf-aptstatus").textContent = "단지 데이터를 불러오지 못했습니다. 아래에 직접 적어 주세요."; });
-  }
-  $("pf-aptsearch").addEventListener("click", function () {
-    var q = $("pf-aptq").value.trim() || $("pf-name").value.trim();
-    if (!q) { $("pf-aptstatus").textContent = "찾을 단지명을 적어 주세요."; return; }
-    if (!pinAddr) { $("pf-aptstatus").textContent = "어느 시도인지 알 수 없습니다. 지도에서 검색해 핀을 찍으면 자동으로 정해집니다."; return; }
-    aptLoad(pinAddr.code).then(function (rows) {
-      var m = aptMatch(rows, pinAddr, q);
-      var list = m.exact ? [m.exact] : m.list;
-      if (!list.length) { // 동 범위에서 못 찾으면 시도 전체에서
-        m = aptMatch(rows, { code: pinAddr.code, dongKey: "", jibun: "", loose: true }, q); list = m.exact ? [m.exact] : m.list;
-      }
-      if (list.length) aptShowList(list, list.length === 1 ? "하나 찾았습니다. 눌러서 채워 넣으세요." : "맞는 단지를 골라 주세요."); else $("pf-aptstatus").textContent = "찾지 못했습니다. 다른 이름으로 다시 찾거나 직접 적어 주세요.";
-    }).catch(function () { $("pf-aptstatus").textContent = "단지 데이터를 불러오지 못했습니다."; });
-  });
-  // 지도 클릭처럼 주소가 없는 핀: 좌표로 주소를 알아낸다
-  function resolveAddress(lat, lng) {
-    if (backend && backend.name === "kakao") {
-      return new Promise(function (resolve) {
-        new kakao.maps.services.Geocoder().coord2Address(lng, lat, function (res, status) {
-          if (status === kakao.maps.services.Status.OK && res[0] && res[0].address) resolve({ addr: parseJibunAddr(res[0].address.address_name), area: shortKakaoAddr(res[0].address.address_name) });
-          else resolve(null);
-        });
-      });
-    }
-    return fetch("https://nominatim.openstreetmap.org/reverse?format=jsonv2&accept-language=ko&lat=" + lat + "&lon=" + lng)
-      .then(function (r) { return r.json(); })
-      .then(function (d) { return d && d.display_name ? { addr: parseNominatimAddr(d.display_name), area: shortArea(d.display_name) } : null; })
-      .catch(function () { return null; });
-  }
-  function shortKakaoAddr(a) { var t = String(a || "").split(" "), out = []; for (var i = 0; i < t.length; i++) { if (/\d/.test(t[i])) break; out.push(t[i]); } return out.slice(0, 4).join(" "); }
-
-  // 핀 입력창
-  function startPin(lat, lng, name, area, addr) {
-    pinEditing = null; pinPending = { lat: lat, lng: lng }; pinAddr = addr || null;
-    if (backend) backend.setTemp(lat, lng);
-    openPinForm({ name: name, area: area, status: "후보", memo: "", price: "" }, "새 핀");
-    if (addr) aptAutoFill(addr, name);
-    else {
-      $("pf-aptstatus").textContent = "주소를 확인하는 중";
-      var mine = pinPending;
-      resolveAddress(lat, lng).then(function (res) {
-        if (pinPending !== mine) return;
-        if (res && res.area && !$("pf-area").value.trim()) $("pf-area").value = res.area;
-        aptAutoFill(res && res.addr, $("pf-name").value.trim());
-      });
-    }
-  }
-  function openPinForm(c, title) {
-    $("pin-form-title").textContent = title;
-    $("pf-name").value = c.name || ""; $("pf-area").value = c.area || ""; $("pf-status").value = c.status || "후보";
-    $("pf-price").value = c.price != null ? c.price : ""; $("pf-memo").value = c.memo || "";
-    $("pf-units").value = c.units != null ? c.units : ""; $("pf-bld").value = c.buildings != null ? c.buildings : "";
-    $("pf-year").value = c.year != null ? c.year : ""; $("pf-sizes").value = c.sizes || ""; $("pf-redev").value = c.redev || "";
-    $("pf-aptq").value = ""; $("pf-aptresults").hidden = true; $("pf-aptstatus").textContent = "";
-    if (c.id && c.addr) pinAddr = c.addr;
-    $("pf-coords").textContent = "위치 " + pinPending.lat.toFixed(5) + ", " + pinPending.lng.toFixed(5) + (pinEditing ? "" : " · 다른 자리를 클릭하면 위치가 바뀝니다");
-    $("pin-status").textContent = ""; $("pin-status").className = "status";
-    $("pin-form").hidden = false; $("pin-form").scrollIntoView({ block: "nearest" }); $("pf-name").focus();
-  }
-  function closePinForm() {
-    $("pin-form").hidden = true; pinEditing = null; pinPending = null;
-    if (backend) backend.clearTemp();
-  }
-  $("pf-cancel").addEventListener("click", closePinForm);
-  $("pin-form").addEventListener("submit", function (e) {
-    e.preventDefault();
-    var name = $("pf-name").value.trim();
-    if (!name) { $("pin-status").textContent = "단지명을 입력해 주세요."; $("pin-status").className = "status err"; $("pf-name").focus(); return; }
-    if (!pinPending) { $("pin-status").textContent = "지도에서 위치를 먼저 클릭해 주세요."; $("pin-status").className = "status err"; return; }
-    var rec = {
-      id: pinEditing ? pinEditing.id : uid(), name: name, area: $("pf-area").value.trim(), status: $("pf-status").value,
-      memo: $("pf-memo").value.trim(), price: num($("pf-price").value), lat: pinPending.lat, lng: pinPending.lng,
-      units: num($("pf-units").value), buildings: num($("pf-bld").value), year: num($("pf-year").value),
-      sizes: $("pf-sizes").value.trim(), redev: $("pf-redev").value.trim(), addr: pinAddr || null,
-      order: pinEditing ? (pinEditing.order || 0) : cstore.items.length,
-      createdAt: pinEditing && pinEditing.createdAt || Date.now(), updatedAt: Date.now()
-    };
-    ["price", "units", "buildings", "year", "addr"].forEach(function (k) { if (rec[k] === null) delete rec[k]; });
-    var btn = $("pf-save"); btn.disabled = true;
-    cstore.save(rec).then(function () { btn.disabled = false; closePinForm(); })
-      .catch(function () { btn.disabled = false; $("pin-status").textContent = "저장하지 못했습니다. 다시 시도해 주세요."; $("pin-status").className = "status err"; });
-  });
-
-  // 검색: 카카오맵이면 장소·주소 검색, 아니면 OpenStreetMap Nominatim
-  function shortArea(displayName) {
-    var parts = String(displayName || "").split(",").map(function (s) { return s.trim(); });
-    var admin = parts.filter(function (p) { return (/(시|군|구|동|읍|면|리)$/.test(p) || /^.{1,3}도$/.test(p)) && !/^\d/.test(p); });
-    if (!admin.length) admin = parts.filter(function (p) { return !/^\d{5}$/.test(p) && p !== "대한민국"; });
-    return admin.slice(0, 3).reverse().join(" ");
-  }
-  function searchNominatim(q) {
-    return fetch("https://nominatim.openstreetmap.org/search?format=jsonv2&limit=6&countrycodes=kr&accept-language=ko&q=" + encodeURIComponent(q))
-      .then(function (r) { return r.json(); })
-      .then(function (rows) { return rows.map(function (r) { return { name: r.name || r.display_name.split(",")[0], area: shortArea(r.display_name), lat: Number(r.lat), lng: Number(r.lon), detail: r.display_name, addr: parseNominatimAddr(r.display_name) }; }); });
-  }
-  $("geo-form").addEventListener("submit", function (e) {
-    e.preventDefault();
-    var q = $("geo-q").value.trim(); if (!q) return;
-    var box = $("geo-results"); box.hidden = false; box.innerHTML = '<div class="geo-msg">검색 중</div>';
-    var p = (backend && backend.search) ? backend.search(q) : searchNominatim(q);
-    p.then(function (rows) {
-      if (!rows.length) { box.innerHTML = '<div class="geo-msg">결과가 없습니다. 단지명을 줄이거나 동·역 이름으로 다시 검색하고, 안 되면 지도를 직접 클릭해 핀을 찍어 주세요.</div>'; return; }
-      box.innerHTML = rows.map(function (r, i) {
-        return '<button type="button" data-i="' + i + '"><b>' + esc(r.name) + '</b> <span class="muted small">' + esc(r.detail) + '</span></button>';
-      }).join("");
-      box.onclick = function (ev) {
-        var b = ev.target.closest("button[data-i]"); if (!b) return;
-        var r = rows[Number(b.dataset.i)];
-        if (backend) backend.flyTo(r.lat, r.lng, true);
-        startPin(r.lat, r.lng, r.name, r.area, r.addr || null);
-        box.hidden = true;
-      };
-    }).catch(function (why) {
-      box.innerHTML = '<div class="geo-msg">' + (backend && backend.search ? esc(String(why)) : "이 화면에서는 검색이 차단됩니다. https://jihye0.github.io/jipteo/ 에서 열면 검색이 되고, 지도를 클릭해서도 핀을 찍을 수 있습니다.") + '</div>';
-    });
-  });
-
-  // ---------- boot ----------
-  store.onChange(function (visits) { renderList(visits); renderCompare(visits); renderPins(cstore.items); });
-  cstore.onChange(function (cands) { renderPins(cands); });
-  initStore();
-  // 첫 화면: 주소의 #탭 이름 > 마지막으로 보던 탭 > 준비 (모든 정의가 끝난 뒤에 연다)
-  (function () {
-    var h = (location.hash || "").replace("#", "");
-    var remembered = null; try { remembered = localStorage.getItem("imjang.view"); } catch (e) {}
-    showView(VIEWS.indexOf(h) >= 0 ? h : (remembered || "prep"));
-  })();
+  restore(); recalc();
 })();
 </script>
-
 </body>
 </html>

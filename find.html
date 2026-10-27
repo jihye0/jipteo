@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>집터 · 후보 찾기</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<header class="topbar"><div class="topbar-inner"></div></header>
+
+<main class="page">
+  <div class="page-head">
+    <span class="eyebrow">Step 2</span>
+    <h1>예산 안에서 후보 단지 찾기</h1>
+    <p class="lead">최근 1년 실거래가(국토교통부)와 단지 정보(한국부동산원)를 합쳐, 예산에 맞는 평형이 있는 아파트만 추립니다. 마음에 드는 단지는 핀으로 담아 지도와 임장으로 이어집니다.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <div>
+        <h2>조건</h2>
+        <p class="small muted" id="budget-line">예산 페이지에서 계산한 값이 여기로 들어옵니다.</p>
+      </div>
+      <a class="btn sm" href="index.html">예산 다시 계산</a>
+    </div>
+    <div class="grid">
+      <div class="field">
+        <label for="minp">최소 집값</label>
+        <div class="unit"><input id="minp" type="number" inputmode="numeric" placeholder="0"><span>만원</span></div>
+      </div>
+      <div class="field">
+        <label for="maxp">최대 집값</label>
+        <div class="unit"><input id="maxp" type="number" inputmode="numeric" placeholder="예: 90000"><span>만원</span></div>
+      </div>
+      <div class="field">
+        <label for="sido">시도</label>
+        <select id="sido"></select>
+      </div>
+      <div class="field">
+        <label for="sgg">시군구</label>
+        <select id="sgg"><option value="">전체</option></select>
+      </div>
+      <div class="field">
+        <label for="dong">동</label>
+        <select id="dong"><option value="">전체</option></select>
+      </div>
+      <div class="field">
+        <label for="minUnits">세대수</label>
+        <select id="minUnits"><option value="0">전체</option><option value="300">300세대 이상</option><option value="500" selected>500세대 이상</option><option value="1000">1,000세대 이상</option></select>
+      </div>
+      <div class="field">
+        <label for="minYear">준공</label>
+        <select id="minYear"><option value="0">전체</option><option value="2000">2000년 이후</option><option value="2010">2010년 이후</option><option value="2015">2015년 이후</option><option value="2020">2020년 이후</option></select>
+      </div>
+      <div class="field">
+        <label for="sort">정렬</label>
+        <select id="sort"><option value="price">가격 낮은 순</option><option value="units">세대수 많은 순</option><option value="year">최근 준공 순</option><option value="trades">거래 많은 순</option></select>
+      </div>
+      <div class="field span-all">
+        <label>평형 (전용면적)</label>
+        <div class="seg" id="band">
+          <button type="button" data-v="all" aria-pressed="true">전체</button>
+          <button type="button" data-v="s" aria-pressed="false">~60㎡ (18~25평형)</button>
+          <button type="button" data-v="m" aria-pressed="false">60~85㎡ (25~34평형)</button>
+          <button type="button" data-v="l" aria-pressed="false">85㎡~ (34평형~)</button>
+        </div>
+      </div>
+    </div>
+    <p class="status" id="status"></p>
+  </div>
+
+  <div class="note" id="data-note" hidden></div>
+  <div class="list" id="results"></div>
+  <div class="actions" id="more-wrap" hidden><button type="button" class="btn" id="more">더 보기</button></div>
+  <p class="small muted">실거래가: 국토교통부 실거래가 공개시스템, 2025-10-28 ~ 2026-10-27 계약분(해제 거래 제외). 평형별 값은 그 기간 거래가의 중앙값입니다. 단지 정보: 한국부동산원 공시대상 공동주택(2026-08-31 기준). 거래가 없던 단지는 목록에 나오지 않습니다.</p>
+</main>
+
+<script src="assets/app.js"></script>
+<script>
+(function () {
+  var J = window.JT, $ = J.$;
+  J.renderNav("find");
+
+  var state = { band: "all", shown: 0, rows: [] };
+  var sidoSel = $("sido");
+  Object.keys(J.SIDO_NAME).forEach(function (code) {
+    var o = document.createElement("option"); o.value = code; o.textContent = J.SIDO_NAME[code] + (J.PRICE_AVAILABLE.indexOf(code) < 0 ? " (실거래 준비 중)" : ""); sidoSel.appendChild(o);
+  });
+
+  // 예산 가져오기
+  var b = J.lsGet("imjang.budget", null), saved = J.lsGet("imjang.findInputs", {});
+  if (saved.maxp != null) $("maxp").value = saved.maxp; else if (b && b.price) $("maxp").value = b.price;
+  if (saved.minp != null) $("minp").value = saved.minp;
+  if (b && b.price) $("budget-line").textContent = "예산 페이지 계산: 최대 " + J.fmtEok(b.price) + " (대출 " + J.fmtEok(b.loan) + " 포함). 아래 값은 바꿔도 됩니다.";
+  else $("budget-line").textContent = "아직 예산을 계산하지 않았습니다. 최대 집값을 직접 넣거나 예산 페이지에서 계산해 오세요.";
+  sidoSel.value = saved.sido || "seoul";
+  ["minUnits", "minYear", "sort"].forEach(function (k) { if (saved[k] != null) $(k).value = saved[k]; });
+  if (saved.band) { state.band = saved.band; }
+  paintBand();
+
+  function paintBand() { $("band").querySelectorAll("button").forEach(function (x) { x.setAttribute("aria-pressed", String(x.dataset.v === state.band)); }); }
+  $("band").addEventListener("click", function (e) { var x = e.target.closest("button[data-v]"); if (!x) return; state.band = x.dataset.v; paintBand(); run(); });
+
+  function persist() {
+    J.lsSet("imjang.findInputs", { minp: $("minp").value, maxp: $("maxp").value, sido: sidoSel.value, sgg: $("sgg").value, dong: $("dong").value, minUnits: $("minUnits").value, minYear: $("minYear").value, sort: $("sort").value, band: state.band });
+  }
+  function bandOf(area) { return area < 60 ? "s" : area < 85 ? "m" : "l"; }
+  // 데이터의 "성남분당구 서현동"(경기 시·구 합침)을 지도 검색용 "성남시 분당구 서현동"으로
+  function expandDongKey(code, dongKey) {
+    var t = dongKey.split(" ");
+    if (code === "gyeonggi" && t.length >= 2 && /구$/.test(t[0]) && t[0].length >= 4) { var m = /^(.+?)(\S{2,}구)$/.exec(t[0]); if (m) t[0] = m[1] + "시 " + m[2]; }
+    return t.join(" ");
+  }
+
+  var data = null; // { price: rows, apt: rows, aptIndex: Map }
+  function loadSido(code) {
+    $("status").textContent = "데이터 불러오는 중";
+    if (J.PRICE_AVAILABLE.indexOf(code) < 0) {
+      data = null; $("results").innerHTML = ""; $("more-wrap").hidden = true;
+      $("data-note").hidden = false; $("data-note").textContent = J.SIDO_NAME[code] + " 실거래 요약은 아직 들어 있지 않습니다. 지금은 서울만 검색됩니다. 지도·핀 페이지에서는 " + J.SIDO_NAME[code] + " 단지도 세대수·준공년도는 자동으로 채워집니다.";
+      $("status").textContent = ""; fillSgg([]); return Promise.resolve();
+    }
+    $("data-note").hidden = true;
+    return Promise.all([J.loadPrice(code), J.loadApt(code)]).then(function (res) {
+      var idx = new Map(); res[1].forEach(function (r) { idx.set(r[1] + "|" + r[2], r); });
+      data = { price: res[0], apt: res[1], aptIndex: idx, code: code };
+      fillSgg(res[0]);
+      $("status").textContent = "";
+    }).catch(function () { $("status").textContent = "데이터를 불러오지 못했습니다. 새로고침해 주세요."; $("status").className = "status err"; });
+  }
+  function fillSgg(rows) {
+    var set = {}; rows.forEach(function (r) { set[r[0].split(" ")[0]] = true; });
+    var keys = Object.keys(set).sort(), sel = $("sgg"), cur = saved.sgg || "";
+    sel.innerHTML = '<option value="">전체</option>' + keys.map(function (k) { return '<option value="' + J.esc(k) + '">' + J.esc(k) + '</option>'; }).join("");
+    if (keys.indexOf(cur) >= 0) sel.value = cur;
+    fillDong();
+  }
+  function fillDong() {
+    var sgg = $("sgg").value, sel = $("dong"), cur = saved.dong || "", set = {};
+    if (data && sgg) data.price.forEach(function (r) { if (r[0].split(" ")[0] === sgg) set[r[0].split(" ").slice(1).join(" ")] = true; });
+    var keys = Object.keys(set).sort();
+    sel.innerHTML = '<option value="">전체</option>' + keys.map(function (k) { return '<option value="' + J.esc(k) + '">' + J.esc(k) + '</option>'; }).join("");
+    if (keys.indexOf(cur) >= 0) sel.value = cur; else sel.value = "";
+    sel.disabled = !keys.length;
+  }
+
+  function run() {
+    persist();
+    if (!data) return;
+    var minp = J.num($("minp").value) || 0, maxp = J.num($("maxp").value) || Infinity;
+    var sgg = $("sgg").value, dong = $("dong").value, minUnits = Number($("minUnits").value), minYear = Number($("minYear").value), sort = $("sort").value;
+    var rows = [];
+    data.price.forEach(function (r) {
+      var dk = r[0];
+      if (sgg && dk.split(" ")[0] !== sgg) return;
+      if (dong && dk.split(" ").slice(1).join(" ") !== dong) return;
+      var apt = data.aptIndex.get(dk + "|" + r[1]) || null;
+      var units = apt ? apt[3] : null, bld = apt ? apt[4] : null, year = r[3] || (apt ? apt[5] : 0);
+      if (minUnits && (units == null || units < minUnits)) return;
+      if (minYear && (!year || year < minYear)) return;
+      var areas = r[4].filter(function (a) { return state.band === "all" || bandOf(a[0]) === state.band; });
+      if (!areas.length) return;
+      var inB = areas.filter(function (a) { return a[2] >= minp && a[2] <= maxp; });
+      if (!inB.length) return;
+      var trades = areas.reduce(function (s, a) { return s + a[1]; }, 0);
+      rows.push({ r: r, apt: apt, units: units, bld: bld, year: year, areas: areas, inB: inB, minPrice: Math.min.apply(null, inB.map(function (a) { return a[2]; })), trades: trades });
+    });
+    rows.sort(function (a, b) {
+      if (sort === "units") return (b.units || 0) - (a.units || 0);
+      if (sort === "year") return (b.year || 0) - (a.year || 0);
+      if (sort === "trades") return b.trades - a.trades;
+      return a.minPrice - b.minPrice;
+    });
+    state.rows = rows; state.shown = 0;
+    $("results").innerHTML = "";
+    if (!rows.length) { $("results").innerHTML = '<div class="empty"><h3>조건에 맞는 단지가 없습니다</h3><p>최대 집값을 올리거나 세대수·준공 조건을 풀어 보세요. 1년간 거래가 없던 단지는 나오지 않습니다.</p></div>'; $("more-wrap").hidden = true; $("status").textContent = ""; return; }
+    $("status").textContent = rows.length.toLocaleString("ko-KR") + "개 단지가 조건에 맞습니다.";
+    showMore();
+  }
+  function showMore() {
+    var slice = state.rows.slice(state.shown, state.shown + 40); state.shown += slice.length;
+    var pinned = {}; J.candidates.items.forEach(function (c) { if (c.addr) pinned[c.addr.dongKey + "|" + c.addr.jibun] = true; });
+    $("results").insertAdjacentHTML("beforeend", slice.map(function (x) {
+      var r = x.r, key = r[0] + "|" + r[1];
+      var minp = J.num($("minp").value) || 0, maxp = J.num($("maxp").value) || Infinity;
+      var lines = x.areas.map(function (a) {
+        var ok = a[2] >= minp && a[2] <= maxp;
+        return '<span class="' + (ok ? "in" : "out") + '">' + a[0] + '㎡ <span class="muted">' + J.pyeong(a[0]) + '평형</span> <b>' + J.fmtEok(a[2], 1) + '</b> <span class="muted small">' + a[1] + '건 · ' + a[5].slice(0, 4) + "." + a[5].slice(4) + '</span></span>';
+      }).join("");
+      var chips = "";
+      if (x.units != null) chips += '<span class="chip">' + x.units.toLocaleString("ko-KR") + '세대</span>';
+      if (x.bld != null) chips += '<span class="chip">' + x.bld + '개동</span>';
+      if (x.year) chips += '<span class="chip">' + x.year + '년 준공</span>';
+      if (pinned[key]) chips += '<span class="chip accent">핀에 담김</span>';
+      return '<article class="row-card" data-key="' + J.esc(key) + '">' +
+        '<div class="title"><h3>' + J.esc(r[2]) + '</h3><span class="small muted">' + J.esc(r[0]) + ' ' + J.esc(r[1]) + '</span></div>' +
+        '<div class="chips">' + chips + '</div>' +
+        '<div class="price-line">' + lines + '</div>' +
+        '<div class="actions end"><a class="btn sm" href="https://new.land.naver.com/search?sk=' + encodeURIComponent(r[2]) + '" target="_blank" rel="noopener">네이버부동산</a>' +
+        '<a class="btn sm" href="https://hogangnono.com/search?q=' + encodeURIComponent(r[2]) + '" target="_blank" rel="noopener">호갱노노</a>' +
+        '<button type="button" class="btn sm primary" data-pin="' + J.esc(key) + '"' + (pinned[key] ? " disabled" : "") + '>' + (pinned[key] ? "담았음" : "핀으로 담기") + '</button></div>' +
+        '</article>';
+    }).join(""));
+    $("more-wrap").hidden = state.shown >= state.rows.length;
+  }
+  $("more").addEventListener("click", showMore);
+
+  $("results").addEventListener("click", function (e) {
+    var btn = e.target.closest("button[data-pin]"); if (!btn) return;
+    var x = state.rows.find(function (y) { return y.r[0] + "|" + y.r[1] === btn.dataset.pin; }); if (!x) return;
+    var r = x.r, minp = J.num($("minp").value) || 0, maxp = J.num($("maxp").value) || Infinity;
+    var pick = x.inB.slice().sort(function (a, b) { return b[1] - a[1]; })[0];
+    var rec = {
+      id: J.uid("c"), name: r[2], area: J.SIDO_NAME[data.code] + " " + r[0], status: "후보", memo: "후보 찾기에서 담음",
+      price: pick ? pick[2] : null, units: x.units, buildings: x.bld, year: x.year,
+      sizes: x.areas.map(function (a) { return a[0] + "㎡"; }).join("·"), redev: "",
+      addr: { code: data.code, dongKey: r[0], jibun: r[1], loose: false }, jibunAddr: J.SIDO_NAME[data.code] + " " + expandDongKey(data.code, r[0]) + " " + r[1],
+      order: J.candidates.items.length, createdAt: Date.now(), updatedAt: Date.now()
+    };
+    Object.keys(rec).forEach(function (k) { if (rec[k] === null) delete rec[k]; });
+    J.candidates.save(rec).then(function () { btn.textContent = "담았음"; btn.disabled = true; $("status").textContent = r[2] + "을(를) 핀에 담았습니다. 지도·핀 페이지에서 위치가 자동으로 잡힙니다."; });
+  });
+
+  ["minp", "maxp"].forEach(function (k) { $(k).addEventListener("input", run); });
+  ["minUnits", "minYear", "sort"].forEach(function (k) { $(k).addEventListener("change", run); });
+  $("sgg").addEventListener("change", function () { saved.dong = ""; fillDong(); run(); });
+  $("dong").addEventListener("change", run);
+  sidoSel.addEventListener("change", function () { saved.sgg = ""; saved.dong = ""; loadSido(sidoSel.value).then(run); });
+  loadSido(sidoSel.value).then(run);
+})();
+</script>
+</body>
+</html>

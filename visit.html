@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>집터 · 임장</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<header class="topbar"><div class="topbar-inner"></div></header>
+
+<main class="page">
+  <div class="page-head">
+    <span class="eyebrow">Step 4</span>
+    <h1>직접 가서 보고, 기록하고, 비교하기</h1>
+    <p class="lead">현장에서 체크리스트를 하나씩 채우고 항목별 점수를 매기면, 단지끼리 한 표에서 비교됩니다.</p>
+  </div>
+
+  <details class="card quiet" id="guide">
+    <summary><b>처음이라면: 임장 순서와 준비물</b></summary>
+    <ol class="steps">
+      <li><div><b>후보 정하기</b><span>후보 찾기에서 예산에 맞는 단지를 고르고 핀으로 담습니다. 같은 생활권 2~3곳을 묶으면 비교가 쉽습니다.</span></div></li>
+      <li><div><b>동선 그리기</b><span>지도·핀에서 갈 순서를 정합니다. 역 → 단지 → 초등학교 → 상권 → 다음 단지.</span></div></li>
+      <li><div><b>역에서 단지까지 직접 걷기</b><span>표기 도보 시간과 실제 시간, 경사, 횡단보도 수를 기록합니다. 가장 중요한 체감 항목입니다.</span></div></li>
+      <li><div><b>단지 한 바퀴</b><span>관리 상태, 주차, 동 배치, 소음원, 앞동 거리. 동·라인별로 사진을 남깁니다.</span></div></li>
+      <li><div><b>중개사무소 2~3곳</b><span>호가·급매·전세 매물 수를 묻고 분위기를 비교합니다. 한 곳 말만 믿지 않습니다.</span></div></li>
+      <li><div><b>세대 내부</b><span>향·일조·결로·소음·수리 상태. 창문을 열어 보고 욕실 천장과 창틀을 봅니다.</span></div></li>
+      <li><div><b>당일 기록, 야간 재방문</b><span>기억이 남아 있을 때 바로 적습니다. 주차와 치안은 저녁에 다시 봅니다.</span></div></li>
+    </ol>
+    <div class="linkgroups">
+      <div class="linkgroup">
+        <h3>시세·실거래</h3>
+        <a href="https://rt.molit.go.kr" target="_blank" rel="noopener"><b>국토교통부 실거래가</b><span>공식 원본</span></a>
+        <a href="https://land.naver.com" target="_blank" rel="noopener"><b>네이버 부동산</b><span>호가·매물 수</span></a>
+        <a href="https://hogangnono.com" target="_blank" rel="noopener"><b>호갱노노</b><span>실거래 추이·이야기</span></a>
+        <a href="https://asil.kr" target="_blank" rel="noopener"><b>아실</b><span>입주물량·갭·학군</span></a>
+        <a href="https://kbland.kr" target="_blank" rel="noopener"><b>KB부동산</b><span>KB시세</span></a>
+      </div>
+      <div class="linkgroup">
+        <h3>공적장부·규제</h3>
+        <a href="https://www.iros.go.kr" target="_blank" rel="noopener"><b>인터넷등기소</b><span>등기부등본</span></a>
+        <a href="https://www.gov.kr" target="_blank" rel="noopener"><b>정부24</b><span>건축물대장</span></a>
+        <a href="https://www.eum.go.kr" target="_blank" rel="noopener"><b>토지이음</b><span>용도지역·규제</span></a>
+        <a href="https://cleanup.seoul.go.kr" target="_blank" rel="noopener"><b>정비사업 정보몽땅</b><span>서울 재개발·재건축</span></a>
+        <a href="https://www.schoolinfo.go.kr" target="_blank" rel="noopener"><b>학교알리미</b><span>학교 정보</span></a>
+      </div>
+      <div class="linkgroup">
+        <h3>중개사에게 물어볼 것</h3>
+        <ul class="qlist small">
+          <li>최근 3개월 실거래가와 지금 호가 차이는?</li>
+          <li>급매가 있나요? 있다면 이유는?</li>
+          <li>매매·전세 매물이 각각 몇 개, 전세는 얼마 만에 나가나요?</li>
+          <li>선호 동·라인과 그 이유는?</li>
+          <li>관리비 평균과 장기수선충당금 적립 현황은?</li>
+          <li>주차는 세대당 몇 대, 저녁에 자리가 있나요?</li>
+          <li>재건축·리모델링은 어디까지 진행됐나요?</li>
+          <li>등기상 특이사항(근저당, 임차인)이 있나요?</li>
+        </ul>
+      </div>
+    </div>
+  </details>
+
+  <div class="seg" id="tabs">
+    <button type="button" data-v="list" aria-pressed="true">임장 기록</button>
+    <button type="button" data-v="compare" aria-pressed="false">비교표</button>
+  </div>
+
+  <section id="view-list" class="block">
+    <div id="visits-list" class="block">
+      <div class="card-head">
+        <p class="muted small" id="visits-count"></p>
+        <button class="btn primary" id="btn-new">+ 새 임장</button>
+      </div>
+      <div class="list" id="cards"></div>
+    </div>
+
+    <form id="editor" class="block" hidden>
+      <div class="card-head">
+        <h2 id="editor-title">새 임장</h2>
+        <button type="button" class="btn ghost" id="btn-cancel-top">목록으로</button>
+      </div>
+      <div class="card">
+        <h3>기본 정보</h3>
+        <div class="grid">
+          <div class="field span-all"><label for="f-name">단지명 (필수)</label><input id="f-name" required placeholder="예: 래미안 OO 2차"></div>
+          <div class="field"><label for="f-area">지역</label><input id="f-area" placeholder="예: 성남 분당구 서현동"></div>
+          <div class="field"><label for="f-type">유형</label>
+            <select id="f-type"><option>아파트</option><option>오피스텔</option><option>빌라·다세대</option><option>단독·다가구</option><option>상가</option><option>토지</option></select></div>
+          <div class="field"><label for="f-date">방문일</label><input id="f-date" type="date"></div>
+          <div class="field"><label for="f-time">시간대</label>
+            <select id="f-time"><option>평일 낮</option><option>평일 저녁</option><option>주말 낮</option><option>주말 저녁</option></select></div>
+          <div class="field"><label for="f-year">준공년도</label><input id="f-year" type="number" inputmode="numeric"></div>
+          <div class="field"><label for="f-units">세대수</label><input id="f-units" type="number" inputmode="numeric"></div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>가격 <span class="small muted">단위: 만원</span></h3>
+        <div class="grid">
+          <div class="field"><label for="f-price">호가 (매매)</label><input id="f-price" type="number" inputmode="numeric"></div>
+          <div class="field"><label for="f-trade">최근 실거래가</label><input id="f-trade" type="number" inputmode="numeric"></div>
+          <div class="field"><label for="f-jeonse">전세가</label><input id="f-jeonse" type="number" inputmode="numeric"></div>
+          <div class="field"><label for="f-size">전용면적 (㎡)</label><input id="f-size" type="number" inputmode="decimal"></div>
+        </div>
+        <div class="chips" id="derived"></div>
+      </div>
+      <div id="checklist" class="block"></div>
+      <div class="card">
+        <h3>메모</h3>
+        <div class="grid">
+          <div class="field"><label for="f-pros">장점</label><textarea id="f-pros" placeholder="역까지 실제 7분, 초품아, 관리 깔끔"></textarea></div>
+          <div class="field"><label for="f-cons">단점</label><textarea id="f-cons" placeholder="이중주차 심함, 앞동 가까움"></textarea></div>
+          <div class="field span-all"><label for="f-agent">중개사 코멘트</label><textarea id="f-agent" placeholder="A공인: 급매 1건 11.2억, 전세 3건"></textarea></div>
+          <div class="field span-all"><label for="f-memo">기타</label><textarea id="f-memo" placeholder="야간 재방문 필요"></textarea></div>
+        </div>
+        <label class="check"><input type="checkbox" id="f-revisit"> 재방문 예정</label>
+      </div>
+      <div class="form-actions">
+        <span class="status" id="form-status"></span>
+        <button type="button" class="btn" id="btn-cancel">취소</button>
+        <button type="submit" class="btn primary" id="btn-save">저장</button>
+      </div>
+    </form>
+  </section>
+
+  <section id="view-compare" class="block" hidden>
+    <p class="lead">총점 순. 항목당 5점, 총점 35점. 항목별 최고 점수는 형광펜으로 표시합니다.</p>
+    <div class="tablewrap" id="compare-wrap"></div>
+    <p class="small muted">전세가율 = 전세가 ÷ 호가. 갭 = 호가 − 전세가.</p>
+  </section>
+</main>
+
+<script src="assets/app.js"></script>
+<script>
+(function () {
+  var J = window.JT, $ = J.$, esc = J.esc, num = J.num, fmtEok = J.fmtEok;
+  J.renderNav("visit");
+  var store = J.visits, cstore = J.candidates;
+
+  var CATS = [
+    { key: "transit", name: "입지·교통", items: ["지하철역까지 실제 도보 시간을 재봤다 (지도 표기와 비교)", "출퇴근 시간대 버스·지하철 혼잡도를 확인했다", "주요 업무지구까지 통근 시간을 확인했다", "단지 진입로 경사와 보행 환경(횡단보도, 인도 폭)을 봤다", "예정된 교통 호재의 실제 진행 단계(착공·개통 시기)를 확인했다"] },
+    { key: "school", name: "학군·교육", items: ["배정 초등학교까지 도보 경로와 큰길 횡단 여부를 봤다 (초품아 여부)", "중·고등학교 배정과 학업성취도를 확인했다", "학원가 위치·규모와 셔틀버스 운행을 봤다", "어린이집·유치원이 단지 안 또는 바로 옆에 있다"] },
+    { key: "life", name: "생활편의", items: ["마트·슈퍼·편의점까지 거리를 확인했다", "병원(소아과·내과)과 약국이 가까이 있다", "공원·산책로·하천 등 녹지 접근성을 봤다", "상권 업종 구성(생활형인지 유흥형인지)을 확인했다"] },
+    { key: "complex", name: "단지 상태", items: ["외벽·복도·계단 관리 상태와 청결도를 봤다", "세대당 주차대수와 저녁 시간대 이중주차 여부를 확인했다", "엘리베이터 상태와 대기 시간을 확인했다", "조경·놀이터·커뮤니티 시설 상태를 봤다", "관리비 수준과 장기수선충당금 적립 현황을 물어봤다", "재건축·리모델링 추진 현황을 확인했다"] },
+    { key: "unit", name: "세대 내부", items: ["향과 실제 일조 시간을 확인했다", "층수, 앞동과의 거리, 조망·개방감을 봤다", "결로·곰팡이·누수 흔적(창틀, 천장, 욕실)을 확인했다", "수리 상태(샷시, 보일러, 배관)와 예상 수리비를 가늠했다", "구조(판상형·타워형)와 환기·통풍을 확인했다", "창문을 열고 외부 소음(도로, 철도)을 확인했다"] },
+    { key: "risk", name: "환경·리스크", items: ["혐오시설(소각장, 송전탑, 유흥가, 공장)이 인근에 있는지 봤다", "침수·급경사·축대 등 지형 리스크를 확인했다", "밤 시간대 가로등·유동인구·치안 분위기를 봤다", "주변 개발로 조망·일조가 막힐 가능성을 봤다", "등기부등본(근저당·가압류)과 건축물대장(위반건축물)을 확인했다"] },
+    { key: "market", name: "시세·중개", items: ["중개사무소 2~3곳을 방문해 호가와 분위기를 비교했다", "최근 실거래가와 호가 차이, 급매 여부를 물어봤다", "매매·전세 매물 수와 소진 속도를 확인했다", "인근 입주 예정 물량(2~3년)을 확인했다"] }
+  ];
+  var MAX_SCORE = CATS.length * 5;
+  function totalScore(rec) { var s = 0; CATS.forEach(function (c) { s += Number((rec.scores || {})[c.key] || 0); }); return s; }
+  function checkedCount(rec) { var n = 0, ch = rec.checks || {}; Object.keys(ch).forEach(function (k) { if (ch[k]) n++; }); return n; }
+  function totalItems() { return CATS.reduce(function (a, c) { return a + c.items.length; }, 0); }
+  function jeonseRatio(rec) { var p = num(rec.price), j = num(rec.jeonse); return p && j ? j / p : null; }
+  function ratioClass(r) { if (r == null) return ""; return r >= 0.7 ? "good" : r >= 0.55 ? "warn" : "bad"; }
+  function sortVisits(arr) { return arr.slice().sort(function (a, b) { return (b.date || "").localeCompare(a.date || "") || (b.createdAt || 0) - (a.createdAt || 0); }); }
+
+  // 탭
+  function showTab(v) { $("view-list").hidden = v !== "list"; $("view-compare").hidden = v !== "compare"; $("tabs").querySelectorAll("button").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.v === v)); }); }
+  $("tabs").addEventListener("click", function (e) { var b = e.target.closest("button[data-v]"); if (b) showTab(b.dataset.v); });
+
+  // 목록
+  var pendingDelete = null;
+  function renderList(visits) {
+    var wrap = $("cards"), list = sortVisits(visits);
+    $("visits-count").textContent = list.length ? list.length + "곳 기록됨" : "아직 기록이 없습니다";
+    if (!list.length) { wrap.innerHTML = '<div class="empty"><h3>첫 임장을 기록해 보세요</h3><p>단지명과 방문일만 적어도 저장됩니다. 체크리스트와 점수는 현장에서 하나씩 채우면 됩니다.</p><button type="button" class="btn primary" id="btn-new-empty">+ 새 임장</button></div>'; $("btn-new-empty").addEventListener("click", function () { openEditor(null); }); return; }
+    wrap.innerHTML = list.map(function (r) {
+      var total = totalScore(r), ratio = jeonseRatio(r);
+      var chips = '<span class="chip">' + esc(r.type || "아파트") + '</span>' + (r.time ? '<span class="chip">' + esc(r.time) + '</span>' : "") +
+        (ratio != null ? '<span class="chip ' + ratioClass(ratio) + '">전세가율 ' + Math.round(ratio * 100) + '%</span>' : "") + (r.revisit ? '<span class="chip mark">재방문 예정</span>' : "");
+      var minis = [];
+      if (num(r.price) != null) minis.push("호가 <b>" + fmtEok(num(r.price)) + "</b>");
+      if (num(r.trade) != null) minis.push("실거래 <b>" + fmtEok(num(r.trade)) + "</b>");
+      if (num(r.jeonse) != null) minis.push("전세 <b>" + fmtEok(num(r.jeonse)) + "</b>");
+      if (num(r.year) != null) minis.push("준공 <b>" + esc(r.year) + "</b>");
+      if (num(r.units) != null) minis.push("<b>" + Number(r.units).toLocaleString("ko-KR") + "</b>세대");
+      minis.push("체크 <b>" + checkedCount(r) + "/" + totalItems() + "</b>");
+      var pc = (r.pros || r.cons) ? '<div class="proscons">' + (r.pros ? '<div class="pro">' + esc(r.pros) + '</div>' : "") + (r.cons ? '<div class="con">' + esc(r.cons) + '</div>' : "") + '</div>' : "";
+      var actions = pendingDelete === r.id
+        ? '<span class="confirm">이 기록을 삭제할까요? <button type="button" class="btn sm danger" data-act="confirm-delete" data-id="' + esc(r.id) + '">삭제</button><button type="button" class="btn sm ghost" data-act="cancel-delete">취소</button></span>'
+        : (r.candidateId ? '<a class="btn sm" href="map.html?focus=' + encodeURIComponent(r.candidateId) + '">지도</a>' : "") + '<button type="button" class="btn sm ghost" data-act="delete" data-id="' + esc(r.id) + '">삭제</button><button type="button" class="btn sm" data-act="edit" data-id="' + esc(r.id) + '">편집</button>';
+      return '<article class="row-card"><div class="title"><div><h3>' + esc(r.name) + '</h3><p class="muted small">' + esc(r.area || "") + (r.date ? ' · ' + esc(r.date) : "") + '</p></div><div class="chips">' + chips + '</div></div>' +
+        '<div class="scorebar"><span>총점</span><div class="track"><div class="fill" style="width:' + (total / MAX_SCORE * 100) + '%"></div></div><span class="num"><b>' + total + '</b>/' + MAX_SCORE + '</span></div>' +
+        '<div class="price-line small">' + minis.map(function (m) { return "<span>" + m + "</span>"; }).join("") + '</div>' + pc + '<div class="actions end">' + actions + '</div></article>';
+    }).join("");
+  }
+  $("cards").addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-act]"); if (!b) return;
+    var act = b.dataset.act, id = b.dataset.id;
+    if (act === "edit") openEditor(store.get(id));
+    else if (act === "delete") { pendingDelete = id; renderList(store.items); }
+    else if (act === "cancel-delete") { pendingDelete = null; renderList(store.items); }
+    else if (act === "confirm-delete") store.remove(id).then(function () { pendingDelete = null; });
+  });
+
+  // 비교
+  function renderCompare(visits) {
+    var wrap = $("compare-wrap"), list = visits.slice().sort(function (a, b) { return totalScore(b) - totalScore(a); });
+    if (!list.length) { wrap.innerHTML = '<div class="empty" style="border:0"><p>기록이 2곳 이상 쌓이면 나란히 비교할 수 있습니다.</p></div>'; return; }
+    var best = {}; CATS.forEach(function (c) { best[c.key] = Math.max.apply(null, list.map(function (r) { return Number((r.scores || {})[c.key] || 0); })); });
+    var head = '<tr><th>단지</th><th>지역</th><th>방문일</th><th class="n">호가</th><th class="n">전세가</th><th class="n">전세가율</th><th class="n">갭</th>' + CATS.map(function (c) { return '<th class="n">' + esc(c.name) + '</th>'; }).join("") + '<th class="n">총점</th></tr>';
+    var rows = list.map(function (r, i) {
+      var p = num(r.price), j = num(r.jeonse), ratio = jeonseRatio(r);
+      return '<tr' + (i === 0 ? ' class="best"' : "") + '><td><b>' + esc(r.name) + '</b></td><td>' + esc(r.area || "") + '</td><td>' + esc(r.date || "") + '</td><td class="n">' + fmtEok(p) + '</td><td class="n">' + fmtEok(j) + '</td><td class="n">' + (ratio != null ? Math.round(ratio * 100) + "%" : "–") + '</td><td class="n">' + (p != null && j != null ? fmtEok(p - j) : "–") + '</td>' +
+        CATS.map(function (c) { var s = Number((r.scores || {})[c.key] || 0); return '<td class="n' + (s && s === best[c.key] && list.length > 1 ? " top" : "") + '">' + (s || "–") + '</td>'; }).join("") + '<td class="n"><b>' + totalScore(r) + '</b></td></tr>';
+    }).join("");
+    wrap.innerHTML = "<table><thead>" + head + "</thead><tbody>" + rows + "</tbody></table>";
+  }
+
+  // 편집
+  var editing = null, draft = { scores: {}, checks: {}, candidateId: null };
+  $("checklist").innerHTML = CATS.map(function (c) {
+    return '<div class="card" data-cat="' + c.key + '"><h3>' + esc(c.name) + ' <span class="small muted" data-count></span></h3><div class="checks">' +
+      c.items.map(function (it, i) { var id = c.key + "_" + i; return '<label><input type="checkbox" data-check="' + id + '" id="c-' + id + '"><span>' + esc(it) + '</span></label>'; }).join("") + '</div>' +
+      '<div class="score-row"><span>점수 (1 아쉬움 · 5 매우 좋음)</span><div class="seg mark" role="group">' + [1, 2, 3, 4, 5].map(function (n) { return '<button type="button" data-score="' + c.key + '" data-val="' + n + '" aria-pressed="false">' + n + '</button>'; }).join("") + '</div></div></div>';
+  }).join("");
+  $("checklist").addEventListener("click", function (e) { var b = e.target.closest("button[data-score]"); if (!b) return; var key = b.dataset.score, val = Number(b.dataset.val); draft.scores[key] = draft.scores[key] === val ? 0 : val; paintScores(); });
+  $("checklist").addEventListener("change", function (e) { var cb = e.target; if (!cb.dataset || !cb.dataset.check) return; draft.checks[cb.dataset.check] = cb.checked; paintCounts(); });
+  function paintScores() { document.querySelectorAll("button[data-score]").forEach(function (b) { b.setAttribute("aria-pressed", String(Number(b.dataset.val) === (draft.scores[b.dataset.score] || 0))); }); }
+  function paintCounts() { CATS.forEach(function (c) { var n = c.items.filter(function (_, i) { return draft.checks[c.key + "_" + i]; }).length; document.querySelector('[data-cat="' + c.key + '"] [data-count]').textContent = n + "/" + c.items.length; }); }
+  function paintDerived() {
+    var p = num($("f-price").value), t = num($("f-trade").value), j = num($("f-jeonse").value), sz = num($("f-size").value), out = [];
+    if (p != null && j != null) { out.push("전세가율 " + Math.round(j / p * 100) + "%"); out.push("갭 " + fmtEok(p - j)); }
+    if (p != null && t != null) { var d = p - t; out.push("호가−실거래 " + (d >= 0 ? "+" : "−") + fmtEok(Math.abs(d))); }
+    if (p != null && sz) out.push("평당 " + fmtEok(Math.round(p / (sz / 3.3058))));
+    $("derived").innerHTML = out.length ? out.map(function (s) { return '<span class="chip accent">' + s + '</span>'; }).join("") : '<span class="small muted">호가와 전세가를 넣으면 전세가율과 갭이 계산됩니다.</span>';
+  }
+  ["f-price", "f-trade", "f-jeonse", "f-size"].forEach(function (id) { $(id).addEventListener("input", paintDerived); });
+  function openEditor(rec, prefill) {
+    editing = rec || null; var src = rec || prefill || {};
+    draft = { scores: Object.assign({}, src.scores || {}), checks: Object.assign({}, src.checks || {}), candidateId: src.candidateId || null };
+    $("editor-title").textContent = rec ? "임장 편집" : "새 임장";
+    $("f-name").value = src.name || ""; $("f-area").value = src.area || ""; $("f-type").value = src.type || "아파트";
+    $("f-date").value = src.date ? src.date : new Date().toISOString().slice(0, 10); $("f-time").value = src.time || "평일 낮";
+    ["year", "units", "price", "trade", "jeonse", "size"].forEach(function (k) { $("f-" + k).value = src[k] != null ? src[k] : ""; });
+    ["pros", "cons", "agent", "memo"].forEach(function (k) { $("f-" + k).value = src[k] || ""; });
+    $("f-revisit").checked = !!src.revisit;
+    document.querySelectorAll("input[data-check]").forEach(function (cb) { cb.checked = !!draft.checks[cb.dataset.check]; });
+    paintScores(); paintCounts(); paintDerived();
+    $("form-status").textContent = ""; $("form-status").className = "status";
+    $("visits-list").hidden = true; $("editor").hidden = false; showTab("list"); window.scrollTo(0, 0); $("f-name").focus();
+  }
+  function closeEditor() { $("editor").hidden = true; $("visits-list").hidden = false; editing = null; window.scrollTo(0, 0); }
+  $("btn-new").addEventListener("click", function () { openEditor(null); });
+  $("btn-cancel").addEventListener("click", closeEditor); $("btn-cancel-top").addEventListener("click", closeEditor);
+  $("editor").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var name = $("f-name").value.trim();
+    if (!name) { $("form-status").textContent = "단지명을 입력해 주세요."; $("form-status").className = "status err"; $("f-name").focus(); return; }
+    var rec = {
+      id: editing ? editing.id : J.uid("v"), name: name, area: $("f-area").value.trim(), type: $("f-type").value, date: $("f-date").value, time: $("f-time").value,
+      year: num($("f-year").value), units: num($("f-units").value), price: num($("f-price").value), trade: num($("f-trade").value), jeonse: num($("f-jeonse").value), size: num($("f-size").value),
+      scores: draft.scores, checks: draft.checks, pros: $("f-pros").value.trim(), cons: $("f-cons").value.trim(), agent: $("f-agent").value.trim(), memo: $("f-memo").value.trim(),
+      revisit: $("f-revisit").checked, candidateId: draft.candidateId, createdAt: editing && editing.createdAt || Date.now(), updatedAt: Date.now()
+    };
+    Object.keys(rec).forEach(function (k) { if (rec[k] === null) delete rec[k]; });
+    store.save(rec).then(function () {
+      closeEditor();
+      var cand = rec.candidateId && cstore.get(rec.candidateId);
+      if (cand && cand.status !== "임장 완료") cstore.save(Object.assign({}, cand, { status: "임장 완료" }));
+    });
+  });
+
+  store.onChange(function (v) { renderList(v); renderCompare(v); });
+  // 지도·핀에서 넘어온 경우
+  var q = new URLSearchParams(location.search);
+  if (q.get("new")) {
+    var c = q.get("candidate") ? cstore.get(q.get("candidate")) : null;
+    openEditor(null, c ? { name: c.name, area: c.area, price: c.price, year: c.year, units: c.units, candidateId: c.id } : {});
+    history.replaceState(null, "", "visit.html");
+  }
+})();
+</script>
+</body>
+</html>

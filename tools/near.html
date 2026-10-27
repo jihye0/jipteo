@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>집터 · 단지 주변 시설 찾기 (관리용)</title>
+<style>body{font-family:system-ui,sans-serif;max-width:720px;margin:2rem auto;padding:0 1rem;line-height:1.5}pre{background:#f4f4f4;padding:.6rem;white-space:pre-wrap}button{padding:.5rem 1rem}</style>
+</head>
+<body>
+<h1>단지 주변 시설 찾기</h1>
+<p>data/price-&lt;시도&gt;.json 의 좌표가 있는 단지마다 카카오 장소 검색으로 가장 가까운 지하철역(1.5km 안)과 초등학교(1km 안)를 찾습니다. 결과는 window.NEAR.out 에 쌓입니다.</p>
+<p><label>시도 <select id="sido"><option value="seoul">서울</option><option value="gyeonggi">경기</option><option value="incheon">인천</option></select></label> <button id="go">시작</button></p>
+<pre id="log">대기 중</pre>
+<script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=37e04196393a74fd4c0faa01f2042f84&autoload=false&libraries=services"></script>
+<script>
+(function () {
+  var log = document.getElementById("log");
+  window.NEAR = { code: null, rows: 0, done: 0, out: [], running: false };
+  function cat(ps, code, lat, lng, radius) {
+    return new Promise(function (resolve) {
+      ps.categorySearch(code, function (data, status) {
+        if (status === kakao.maps.services.Status.OK && data.length) {
+          data.sort(function (a, b) { return Number(a.distance) - Number(b.distance); });
+          resolve(data);
+        } else resolve([]);
+      }, { location: new kakao.maps.LatLng(lat, lng), radius: radius, sort: kakao.maps.services.SortBy.DISTANCE });
+    });
+  }
+  function clean(n) { return String(n || "").replace(/\s*\d+호선.*$/, "").replace(/\s+/g, " ").trim(); }
+  function near(r) {
+    var p = r[5]; if (!p) return Promise.resolve(null);
+    var ps = new kakao.maps.services.Places();
+    return cat(ps, "SW8", p[0], p[1], 1500).then(function (st) {
+      var s = st[0] ? [clean(st[0].place_name), Number(st[0].distance), (function (x) { var m = /(\d+호선|[가-힣A-Za-z]+선)/.exec(x.place_name + " " + x.category_name); return m ? m[1] : ""; })(st[0])] : null;
+      return cat(ps, "SC4", p[0], p[1], 1000).then(function (sc) {
+        var el = sc.find(function (x) { return /초등학교/.test(x.place_name) && !/병설|부설유치원|유치원/.test(x.place_name); });
+        return [s, el ? [el.place_name.replace(/\s+/g, " ").trim(), Number(el.distance)] : null];
+      });
+    });
+  }
+  function run(code) {
+    var N = window.NEAR; N.code = code; N.out = []; N.done = 0; N.running = true;
+    fetch("../data/price-" + code + ".json").then(function (r) { return r.json(); }).then(function (rows) {
+      N.rows = rows.length; N.out = new Array(rows.length).fill(null);
+      var i = 0, active = 0, CONC = 3;
+      function tick() {
+        while (active < CONC && i < rows.length) {
+          (function (idx) {
+            active++;
+            near(rows[idx]).then(function (p) { N.out[idx] = p; }).catch(function () {}).then(function () {
+              active--; N.done++;
+              if (N.done % 50 === 0 || N.done === rows.length) log.textContent = code + ": " + N.done + "/" + rows.length;
+              if (N.done === rows.length) { N.running = false; log.textContent += "\n완료"; } else setTimeout(tick, 40);
+            });
+          })(i++);
+        }
+      }
+      tick();
+    }).catch(function (e) { log.textContent = "데이터 로드 실패: " + e; N.running = false; });
+  }
+  document.getElementById("go").addEventListener("click", function () { var code = document.getElementById("sido").value; kakao.maps.load(function () { run(code); }); });
+  window.NEAR.start = function (code) { kakao.maps.load(function () { run(code); }); };
+})();
+</script>
+</body>
+</html>

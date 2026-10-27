@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>집터 · 내 예산</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
 <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
@@ -14,18 +14,18 @@
   <div class="page-head">
     <span class="eyebrow">Step 1</span>
     <h1>내 예산부터 정하기</h1>
-    <p class="lead">가진 현금과 소득을 넣으면 지금 규정(LTV·DSR·대출 한도)으로 살 수 있는 집값 범위를 계산합니다. 취득세와 중개보수 같은 부대비용도 뺀 값입니다. 결과는 이 브라우저에 저장되어 후보 찾기에서 바로 쓰입니다.</p>
+    <p class="lead">현금과 소득을 넣으면 지금 규정으로 살 수 있는 집값이 나옵니다. 취득세·중개보수까지 뺀 값이고, 결과는 후보 찾기로 이어집니다.</p>
   </div>
 
   <div class="two-col">
     <section class="block">
       <div class="card">
-        <h2>돈</h2>
+        <h2>가진 돈과 소득</h2>
         <div class="grid">
           <div class="field span-all">
             <label for="cash">집 사는 데 쓸 수 있는 현금</label>
             <div class="unit"><input id="cash" type="number" inputmode="numeric" placeholder="예: 20000"><span>만원</span></div>
-            <span class="hint">예금·적금·주식 처분액·부모님 증여 등 실제로 꺼낼 수 있는 돈. 2억이면 20000.</span>
+            <span class="hint">2억이면 20000. 증여받을 돈까지 포함.</span>
           </div>
           <div class="field">
             <label for="income">연소득 (세전, 부부 합산)</label>
@@ -34,7 +34,7 @@
           <div class="field">
             <label for="debt">기존 대출 월 상환액</label>
             <div class="unit"><input id="debt" type="number" inputmode="numeric" placeholder="0"><span>만원</span></div>
-            <span class="hint">학자금·신용·자동차 할부 등 매달 갚는 돈. 전세대출 이자는 무주택자면 넣지 않아도 됩니다.</span>
+            <span class="hint">신용·학자금·할부 등. 무주택자의 전세대출 이자는 제외.</span>
           </div>
         </div>
       </div>
@@ -57,7 +57,7 @@
               <button type="button" data-v="metro" aria-pressed="false">수도권 비규제</button>
               <button type="button" data-v="nonmetro" aria-pressed="false">지방</button>
             </div>
-            <span class="hint">규제지역: 서울 전체와 경기 과천·광명·성남(분당·수정·중원)·수원(영통·장안·팔달)·안양 동안·용인(수지·기흥)·의왕·하남·화성 동탄·구리. 인천과 나머지 경기는 수도권 비규제.</span>
+            <span class="hint">규제지역은 서울 전체와 경기 15곳(과천·광명·분당·수지·동탄 등). 인천과 나머지 경기는 수도권 비규제.</span>
           </div>
         </div>
       </div>
@@ -68,14 +68,14 @@
           <div class="field">
             <label for="rate">금리</label>
             <div class="unit"><input id="rate" type="number" step="0.1" inputmode="decimal" value="4.5"><span>%</span></div>
-            <span class="hint">2026년 10월 은행 주담대 4.4~6.6%</span>
+            <span class="hint">요즘 은행 주담대 4.4~6.6%</span>
           </div>
           <div class="field">
             <label for="term">만기</label>
             <select id="term"><option value="20">20년</option><option value="30" selected>30년</option><option value="40">40년 (지방만)</option></select>
           </div>
           <div class="field span-all">
-            <label>금리 유형 <span class="muted">(스트레스 DSR 반영 비율이 달라집니다)</span></label>
+            <label>금리 유형</label>
             <div class="seg" id="loanType">
               <button type="button" data-v="variable" aria-pressed="true">변동</button>
               <button type="button" data-v="mixed" aria-pressed="false">혼합 (5년 고정)</button>
@@ -88,7 +88,7 @@
       </div>
 
       <details class="card quiet">
-        <summary><b>용어가 낯설다면</b></summary>
+        <summary>용어가 낯설다면</summary>
         <dl class="kv">
           <dt>LTV</dt><dd>집값 대비 대출 비율. 규제지역 40%, 생애최초는 70%. 10억 집이면 각각 4억·7억까지.</dd>
           <dt>DSR</dt><dd>연소득 대비 모든 대출의 연간 원리금 비율. 은행은 40%까지. 연소득 7천만이면 1년에 2,800만원(월 233만원)까지만 갚을 수 있게 빌려줍니다.</dd>
@@ -100,7 +100,7 @@
     </section>
 
     <aside class="block sticky">
-      <div class="card" id="result">
+      <div class="card panel" id="result">
         <div class="hero-number">
           <span class="label">이 조건이면 살 수 있는 집값은</span>
           <span class="value"><span id="r-price">–</span><small>까지</small></span>

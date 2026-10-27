@@ -197,7 +197,7 @@
     });
     state.rows = rows; state.shown = 0;
     $("results").innerHTML = "";
-    if (!rows.length) { $("results").innerHTML = '<div class="empty"><h3>조건에 맞는 단지가 없습니다</h3><p>최대 집값을 올리거나 세대수·준공 조건을 풀어 보세요. 1년간 거래가 없던 단지는 나오지 않습니다.</p></div>'; $("more-wrap").hidden = true; $("status").textContent = ""; return; }
+    if (!rows.length) { $("results").innerHTML = '<div class="empty"><h3>조건에 맞는 단지가 없습니다</h3><p>최대 집값을 올리거나 세대수·준공·출퇴근 거리 조건을 풀어 보세요. 1년간 거래가 없던 단지는 나오지 않습니다.</p></div>'; $("more-wrap").hidden = true; $("status").textContent = ""; return; }
     $("status").textContent = rows.length.toLocaleString("ko-KR") + "개 단지가 조건에 맞습니다.";
     showMore();
   }

@@ -32,4 +32,5 @@ jobs:
           git add data
           if git diff --cached --quiet; then echo "변경 없음"; exit 0; fi
           git commit -m "실거래 데이터 갱신 $(date -u +%Y-%m-%d)"
+          git pull --rebase origin main
           git push

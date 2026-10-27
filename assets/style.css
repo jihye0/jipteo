@@ -262,3 +262,27 @@ dfn[data-t]:hover { color: var(--accent); }
 .chip.commute.bad { color: var(--bad); background: color-mix(in srgb, var(--bad) 12%, transparent); }
 .pin.s-work { background: var(--ink); color: var(--bg); border-radius: 8px; width: auto; padding: 0 0.45rem; font-size: 0.78rem; }
 @media (max-width: 480px) { .commute-row { grid-template-columns: 1fr; } .commute-row .geo-results, .commute-row .hint { grid-column: 1; } }
+
+/* ---- 단지 상세 ---- */
+.detail { display: grid; gap: 0.9rem; padding: 0.9rem 0 0.3rem; border-top: 1px dashed var(--line); margin-top: 0.3rem; }
+.detail .kv { grid-template-columns: minmax(70px, 0.3fr) minmax(0, 1.7fr); }
+.detail-table th, .detail-table td { white-space: nowrap; }
+.detail-table tr.inb td { background: var(--accent-soft); }
+.tips { margin: 0; padding-left: 1.1rem; display: grid; gap: 0.3rem; font-size: 0.9rem; line-height: 1.5; }
+.tips li::marker { color: var(--accent); }
+.row-card .btn.toggle[aria-expanded="true"] { background: var(--surface-2); }
+
+/* ---- 정책 페이지 ---- */
+.three { margin: 0; padding-left: 1.3rem; display: grid; gap: 0.6rem; font-size: 1rem; line-height: 1.6; }
+.three li::marker { color: var(--accent); font-weight: 700; }
+.key { font-size: 1.05rem; line-height: 1.5; margin: 0; padding: 0.7rem 0.9rem; background: var(--surface-2); border-radius: 10px; }
+.key b { color: var(--accent); }
+.pts { margin: 0; padding-left: 1.1rem; display: grid; gap: 0.35rem; font-size: 0.93rem; line-height: 1.55; }
+.pts li::marker { color: var(--muted); }
+.more summary { cursor: pointer; font-size: 0.85rem; color: var(--muted); }
+.more[open] summary { margin-bottom: 0.6rem; }
+.more .kv { font-size: 0.86rem; }
+table.cmp th { text-align: left; white-space: nowrap; }
+table.cmp td { vertical-align: top; white-space: normal; min-width: 9rem; }
+
+.checks-row { display: flex; gap: 1.2rem; flex-wrap: wrap; }

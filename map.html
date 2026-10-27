@@ -292,6 +292,7 @@
           '<a class="btn sm" href="' + naver + '" target="_blank" rel="noopener">네이버지도</a>' +
           '<button type="button" class="btn sm" data-act="up" data-id="' + esc(c.id) + '"' + (i === 0 ? " disabled" : "") + '>위로</button>' +
           '<button type="button" class="btn sm" data-act="down" data-id="' + esc(c.id) + '"' + (i === list.length - 1 ? " disabled" : "") + '>아래로</button>' +
+          (c.addr && c.addr.code && J.PRICE_AVAILABLE.indexOf(c.addr.code) >= 0 && !c.addr.loose ? '<button type="button" class="btn sm toggle" data-act="detail" data-id="' + esc(c.id) + '" aria-expanded="false">단지 정보</button>' : "") +
           '<a class="btn sm primary" href="visit.html?new=1&candidate=' + encodeURIComponent(c.id) + '">임장 기록</a>' +
           '<button type="button" class="btn sm" data-act="edit" data-id="' + esc(c.id) + '">편집</button>' +
           '<button type="button" class="btn sm ghost" data-act="delete" data-id="' + esc(c.id) + '">삭제</button>';
@@ -312,7 +313,7 @@
         '<select class="status-sel" data-status="' + esc(c.id) + '" aria-label="상태">' + opts + '</select></div>' +
         (c.memo ? '<p class="small">' + esc(c.memo) + '</p>' : "") +
         (chips ? '<div class="chips">' + chips + '</div>' : "") +
-        '<div class="actions">' + actions + '</div></article>';
+        '<div class="actions">' + actions + '</div><div class="detail-wrap" hidden></div></article>';
     }).join("");
     var plan = list.filter(function (c) { return c.status === "임장 예정" && c.lat != null; });
     if (plan.length > 1) { var d = 0; for (var k = 1; k < plan.length; k++) d += haversine([plan[k - 1].lat, plan[k - 1].lng], [plan[k].lat, plan[k].lng]); $("route-summary").textContent = "임장 예정 " + plan.length + "곳 · 순서대로 직선거리 합 " + (d / 1000).toFixed(1) + " km"; }
@@ -324,6 +325,16 @@
   $("pins").addEventListener("click", function (e) {
     var b = e.target.closest("button[data-act]"); if (!b) return;
     var act = b.dataset.act, id = b.dataset.id, list = sortedCands(cstore.items), idx = list.findIndex(function (c) { return c.id === id; });
+    if (act === "detail") {
+      var card = b.closest(".pin-card"), wrap = card.querySelector(".detail-wrap"), open = b.getAttribute("aria-expanded") === "true", cd = cstore.get(id);
+      if (!open && !wrap.innerHTML && cd && cd.addr) {
+        wrap.innerHTML = '<p class="small muted">단지 정보를 불러오는 중</p>';
+        var bd = J.lsGet("imjang.budget", null);
+        J.detailFor(cd.addr.code, cd.addr.dongKey, cd.addr.jibun, cd.name, { maxp: bd && bd.price ? bd.price : 0 }).then(function (html) { wrap.innerHTML = html || '<p class="small muted">실거래 요약에 이 단지가 없습니다.</p>'; J.termify(wrap); }).catch(function () { wrap.innerHTML = '<p class="small muted">단지 정보를 불러오지 못했습니다.</p>'; });
+      }
+      wrap.hidden = open; b.setAttribute("aria-expanded", String(!open)); b.textContent = open ? "단지 정보" : "접기";
+      return;
+    }
     if (act === "focus") focusPin(id, true);
     else if (act === "up" && idx > 0) { var t = list[idx]; list[idx] = list[idx - 1]; list[idx - 1] = t; saveOrder(list); }
     else if (act === "down" && idx < list.length - 1) { var u = list[idx]; list[idx] = list[idx + 1]; list[idx + 1] = u; saveOrder(list); }

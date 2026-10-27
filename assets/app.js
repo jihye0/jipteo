@@ -347,6 +347,108 @@ window.JT = (function () {
     });
   }
 
+  // ---------- 단지 상세 (실거래 + 전세 + 단지 정보 + 주변 시설) ----------
+  function loadJeonse(code) { return loadJson("data/jeonse-" + code + ".json"); }
+  function walkMin(m) { return Math.max(1, Math.round(m / 67)); } // 보통 걸음 약 4km/h
+  function ageOf(year) { return year ? (new Date().getFullYear() - year) : null; }
+  // 역·학교: price 행 index 6 = [역명, 노선, 거리m, 초등학교명, 거리m] (없으면 null)
+  function nearChips(near) {
+    if (!near) return "";
+    var out = "";
+    if (near[0]) out += '<span class="chip' + (near[2] <= 500 ? " good" : near[2] <= 1000 ? "" : " warn") + '" title="' + esc(near[1] || "") + ' · 도보 약 ' + walkMin(near[2]) + '분">' + esc(near[0]) + ' ' + near[2] + 'm</span>';
+    else out += '<span class="chip warn">1.5km 안에 역 없음</span>';
+    if (near[3]) out += '<span class="chip' + (near[4] <= 300 ? " good" : "") + '" title="도보 약 ' + walkMin(near[4]) + '분">' + esc(near[3].replace(/^서울|초등학교$/g, "") + "초") + ' ' + near[4] + 'm</span>';
+    return out;
+  }
+  // 가장 거래가 많은 평형의 전세가율
+  function mainRatio(p, js) {
+    if (!p || !js) return null;
+    var best = null;
+    p[4].forEach(function (a) {
+      var j = js[4].find(function (x) { return x[0] === a[0]; });
+      if (!j || !a[2] || !j[2]) return;
+      if (!best || a[1] > best.n) best = { area: a[0], n: a[1], ratio: j[2] / a[2], sale: a[2], jeonse: j[2] };
+    });
+    return best;
+  }
+  function ratioChip(r) {
+    if (!r) return "";
+    var pct = Math.round(r.ratio * 100), cls = pct >= 70 ? " good" : pct >= 55 ? "" : " warn";
+    return '<span class="chip' + cls + '" title="' + r.area + '㎡ 기준 · 전세 ' + fmtEok(r.jeonse) + ' ÷ 매매 ' + fmtEok(r.sale) + '">전세가율 ' + pct + '%</span>';
+  }
+  // 상세 HTML. p: price 행, apt: apt 행(없으면 null), js: jeonse 행(없으면 null), opts: { code, minp, maxp, lat, lng }
+  function detailHtml(p, apt, js, opts) {
+    opts = opts || {};
+    var name = p[2], units = apt ? apt[3] : null, bld = apt ? apt[4] : null, year = p[3] || (apt ? apt[5] : 0), age = ageOf(year);
+    var near = p[6] || null, pos = p[5] || null;
+    var trades = p[4].reduce(function (s, a) { return s + a[1]; }, 0);
+    var minp = opts.minp || 0, maxp = opts.maxp || Infinity;
+    // 기본
+    var kv = [];
+    kv.push(["주소", esc((apt && apt[7]) ? apt[7] : "") + (apt && apt[7] ? " · " : "") + esc(p[0] + " " + p[1])]);
+    kv.push(["규모", (units != null ? units.toLocaleString("ko-KR") + "세대" : "세대수 모름") + (bld != null ? " · " + bld + "개동" : "") + (units >= 1000 ? " · 대단지" : units != null && units < 300 ? " · 소규모" : "")]);
+    kv.push(["준공", year ? year + "년 (" + age + "년차)" + (age >= 30 ? " · 재건축 연한 지남" : age >= 20 ? " · 구축" : age <= 7 ? " · 신축급" : "") : "모름"]);
+    kv.push(["1년 거래", trades + "건" + (units ? " · 세대의 " + (trades / units * 100).toFixed(1) + "%" : "")]);
+    var rd = p[7] || null;
+    if (rd) kv.push(["정비사업", esc(rd[1]) + " · <b>" + esc(rd[0]) + "</b> · 구역 " + esc(rd[2]) + (rd[3] ? " · 공급 예정 " + Number(rd[3]).toLocaleString("ko-KR") + "세대" : "") + ' <span class="muted small">(국토부 전국 도시정비사업 통합 데이터, 2026-05 기준)</span>']);
+    if (near) {
+      kv.push(["지하철", near[0] ? esc(near[0]) + (near[1] ? " (" + esc(near[1]) + ")" : "") + " · " + near[2] + "m · 도보 약 " + walkMin(near[2]) + "분" + (near[2] <= 500 ? " · 역세권" : near[2] > 1000 ? " · 역까지 멀어 버스·마을버스 확인" : "") : "1.5km 안에 지하철역 없음"]);
+      kv.push(["초등학교", near[3] ? esc(near[3]) + " · " + near[4] + "m · 도보 약 " + walkMin(near[4]) + "분" + (near[4] <= 300 ? " · 단지 바로 옆(초품아 가능성, 큰길 횡단 여부 확인)" : "") : "1km 안에 초등학교 없음"]);
+    }
+    // 평형 표
+    var rows = p[4].map(function (a) {
+      var j = js ? js[4].find(function (x) { return x[0] === a[0]; }) : null;
+      var ratio = j && a[2] ? j[2] / a[2] : null, inB = a[2] >= minp && a[2] <= maxp;
+      return '<tr' + (inB && opts.maxp ? ' class="inb"' : "") + '><td>' + a[0] + '㎡ <span class="muted">' + pyeong(a[0]) + '평형</span></td>' +
+        '<td class="n"><b>' + fmtEok(a[2], 1) + '</b></td><td class="n muted">' + fmtEok(a[3], 1) + '~' + fmtEok(a[4], 1) + '</td><td class="n">' + a[1] + '건</td>' +
+        '<td class="n">' + (j ? fmtEok(j[2], 1) + ' <span class="muted small">' + j[1] + '건</span>' : "–") + '</td>' +
+        '<td class="n">' + (ratio != null ? Math.round(ratio * 100) + "%" : "–") + '</td><td class="n">' + (j ? fmtEok(a[2] - j[2], 1) : "–") + '</td>' +
+        '<td class="n muted">' + Math.round(a[2] / (a[0] / 3.3058)).toLocaleString("ko-KR") + '</td><td class="muted small">' + a[5].slice(0, 4) + "." + a[5].slice(4) + '</td></tr>';
+    }).join("");
+    var table = '<div class="tablewrap"><table class="detail-table"><thead><tr><th>전용</th><th class="n">매매 중앙값</th><th class="n">1년 범위</th><th class="n">거래</th><th class="n">전세 중앙값</th><th class="n"><dfn data-t="jeonse-ratio">전세가율</dfn></th><th class="n"><dfn data-t="gap">갭</dfn></th><th class="n">평당(만)</th><th>최근</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+    // 해석
+    var tips = [], mr = mainRatio(p, js);
+    if (mr) { var pct = Math.round(mr.ratio * 100); tips.push(pct >= 75 ? "전세가율 " + pct + "%로 높습니다. 실제로 살려는 수요가 받쳐 주고, 전세 끼고 살 때 갭이 작은 단지입니다." : pct >= 55 ? "전세가율 " + pct + "%, 보통 수준입니다." : "전세가율 " + pct + "%로 낮습니다. 매매가에 미래 기대감(재건축·입지)이 많이 들어 있다는 뜻이라, 전세 수요만으로 값이 지탱되지는 않습니다."); }
+    else if (!js) tips.push("최근 1년 전세 거래가 없어 전세가율을 계산하지 못했습니다.");
+    if (rd) {
+      if (/관리처분|착공|이주|철거/.test(rd[0])) tips.push("정비사업이 " + rd[0] + " 단계입니다. 곧 이주·철거가 진행되거나 이미 진행 중이라 지금 들어가 살기엔 맞지 않을 수 있고, 조합원 지위 양도 제한도 확인해야 합니다.");
+      else if (/조합설립|사업시행/.test(rd[0])) tips.push("정비사업이 " + rd[0] + " 단계로 중간쯤 와 있습니다. 보통 준공까지 5~10년 더 걸리고 분담금이 생기니, 실거주하면서 기다릴 수 있는지 따져 보세요.");
+      else tips.push("정비사업 초기 단계(" + rd[0] + ")입니다. 기대감이 가격에 먼저 반영되는 시기라 사업이 늦어질 때의 부담을 생각해 두세요.");
+    }
+    if (age >= 30) tips.push("지은 지 " + age + "년이 지나 재건축 연한을 넘겼습니다. 추진 단계(안전진단·조합 등)와 분담금 이야기를 중개사에게 꼭 물어보세요.");
+    else if (age >= 20) tips.push("지은 지 " + age + "년 된 구축입니다. 배관·주차·엘리베이터 상태를 현장에서 확인하세요.");
+    if (units >= 1000) tips.push("1,000세대 넘는 대단지라 거래가 잦아 시세가 투명하고 되팔기 쉬운 편입니다.");
+    else if (units != null && units < 300) tips.push("300세대 미만 소규모 단지입니다. 관리비가 비싸고 매도 때 시간이 걸릴 수 있습니다.");
+    if (units && trades / units < 0.01) tips.push("1년 거래가 세대수의 1% 미만으로 드뭅니다. 호가와 실거래 차이가 클 수 있으니 중개사 여러 곳에 물어보세요.");
+    if (near && near[0] && near[2] <= 500) tips.push("역에서 " + near[2] + "m, 역세권입니다. 출퇴근 시간대에 직접 걸어 보고 열차 혼잡도를 확인하세요.");
+    if (near && (!near[0] || near[2] > 1000)) tips.push("가까운 지하철역이 멀어 버스 환승이 필요할 수 있습니다. 출퇴근 경로를 카카오맵 길찾기로 미리 확인하세요.");
+    if (opts.maxp) { var fit = p[4].filter(function (a) { return a[2] >= minp && a[2] <= maxp; }).map(function (a) { return a[0] + "㎡"; }); tips.push(fit.length ? "내 예산 안에 드는 평형: " + fit.join(", ") + " (표에서 파란 줄)" : "지금 예산으로는 들어가는 평형이 없습니다."); }
+    // 링크
+    var links = '<a class="btn sm" href="https://new.land.naver.com/search?sk=' + encodeURIComponent(name) + '" target="_blank" rel="noopener">네이버부동산</a>' +
+      '<a class="btn sm" href="https://hogangnono.com/search?q=' + encodeURIComponent(name) + '" target="_blank" rel="noopener">호갱노노</a>' +
+      (pos ? '<a class="btn sm" href="https://map.kakao.com/link/map/' + encodeURIComponent(name) + ',' + pos[0] + ',' + pos[1] + '" target="_blank" rel="noopener">카카오맵</a><a class="btn sm" href="https://map.kakao.com/link/roadview/' + pos[0] + ',' + pos[1] + '" target="_blank" rel="noopener">로드뷰</a>' : "") +
+      '<a class="btn sm" href="https://www.k-apt.go.kr/" target="_blank" rel="noopener">K-apt 관리비</a>';
+    var cm = pos ? commuteChips(pos[0], pos[1], name) : "";
+    return '<div class="detail">' +
+      '<dl class="kv">' + kv.map(function (x) { return '<dt>' + x[0] + '</dt><dd>' + x[1] + '</dd>'; }).join("") + '</dl>' +
+      (cm ? '<div class="chips">' + cm + '</div>' : "") +
+      table +
+      (tips.length ? '<ul class="tips">' + tips.map(function (t) { return "<li>" + esc(t) + "</li>"; }).join("") + '</ul>' : "") +
+      '<div class="actions">' + links + '</div>' +
+      '<p class="small muted">매매·전세: 국토교통부 실거래가(최근 1년, 평형별 중앙값, 전세는 신규 계약 우선). 역·학교: 카카오 장소 검색 직선거리. 해석은 일반적인 기준이며 단지마다 사정이 다릅니다.</p>' +
+      '</div>';
+  }
+  // 한 단지의 상세를 비동기로 만든다 (후보 찾기 밖, 예: 지도 핀에서)
+  function detailFor(code, dongKey, jibun, name, opts) {
+    if (PRICE_AVAILABLE.indexOf(code) < 0) return Promise.resolve(null);
+    return Promise.all([loadPrice(code), loadApt(code), loadJeonse(code).catch(function () { return []; })]).then(function (res) {
+      var p = priceMatch(res[0], dongKey, jibun, name); if (!p) return null;
+      var am = aptMatch(res[1], { code: code, dongKey: dongKey, jibun: jibun, loose: false }, name), apt = am.exact || am.list[0] || null;
+      var js = priceMatch(res[2], dongKey, jibun, name);
+      return detailHtml(p, apt, js, opts);
+    });
+  }
+
   // ---------- 용어 설명 팝오버 ----------
   // 페이지의 <dfn data-t="키">낱말</dfn> 을 누르면 짧은 설명이 뜬다. 용어 목록은 assets/terms.js
   function termify(root) {
@@ -379,5 +481,6 @@ window.JT = (function () {
     parseJibunAddr: parseJibunAddr, parseNominatimAddr: parseNominatimAddr, shortArea: shortArea, shortKakaoAddr: shortKakaoAddr, normName: normName, aptMatch: aptMatch, priceMatch: priceMatch, areaLabel: areaLabel, pyeong: pyeong,
     budget: budget, loanFor: loanFor, costsFor: costsFor, acquisitionTax: acquisitionTax, brokerFee: brokerFee, monthlyPayment: monthlyPayment, policyEligibility: policyEligibility, regionOf: regionOf, annuityFactor: annuityFactor,
     expandDongKey: expandDongKey, getKakaoKey: getKakaoKey, loadKakao: loadKakao, placeSearch: placeSearch,
-    getCommute: getCommute, setCommute: setCommute, commutePeople: commutePeople, commuteFor: commuteFor, commuteChips: commuteChips, commuteMinutes: commuteMinutes, haversineKm: haversineKm, kakaoRouteUrl: kakaoRouteUrl, renderCommuteSetup: renderCommuteSetup, termify: termify };
+    getCommute: getCommute, setCommute: setCommute, commutePeople: commutePeople, commuteFor: commuteFor, commuteChips: commuteChips, commuteMinutes: commuteMinutes, haversineKm: haversineKm, kakaoRouteUrl: kakaoRouteUrl, renderCommuteSetup: renderCommuteSetup, termify: termify,
+    loadJeonse: loadJeonse, nearChips: nearChips, mainRatio: mainRatio, ratioChip: ratioChip, detailHtml: detailHtml, detailFor: detailFor, walkMin: walkMin };
 })();

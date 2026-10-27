@@ -12,91 +12,211 @@
 
 <main class="page">
   <div class="page-head">
-    <span class="eyebrow">Reference</span>
-    <h1>생애 첫 집을 살 때 알아야 할 규정</h1>
-    <p class="lead">2026년 10월 27일 기준. 무주택·수도권 실수요자 관점에서 예산 계산에 쓰이는 숫자 위주로 정리했습니다. 정책은 자주 바뀌니 중요한 결정 전에는 출처 링크에서 다시 확인하세요. <span class="badge-check">확인 필요</span> 표시는 공식 원문으로 끝까지 확인하지 못한 항목입니다.</p>
+    <span class="eyebrow">2026년 10월 27일 기준</span>
+    <h1>생애 첫 집, 지금 규정 한 장 요약</h1>
+    <p class="lead">무주택·수도권 실수요자에게 적용되는 숫자만 추렸습니다. 각 항목의 "자세히·출처"를 열면 근거와 예외가 나옵니다. <span class="badge-check">확인 필요</span>는 공식 원문으로 끝까지 확인하지 못한 항목입니다.</p>
   </div>
 
-  <div class="note">큰 그림: 2025년 6·27 대책(수도권 주담대 6억 한도, 생애최초 LTV 70%)과 10·15 대책(서울 전역·경기 12곳 규제지역, LTV 40%, 집값 구간별 한도)이 골격입니다. 2026년에는 4·1 가계부채 관리방안, 7·1 경기 3곳 규제지역 추가, 8·13 금융종합대책이 더해졌고, 생애최초 실수요자에게 적용되는 LTV·한도·DSR의 핵심 수치는 2026년 들어 바뀌지 않았습니다.</div>
+  <section class="card panel">
+    <h2>세 줄 요약</h2>
+    <ol class="three">
+      <li><b>대출은 집값의 40%까지, 생애최초는 70%까지.</b> 그리고 15억 이하 집이면 아무리 커도 <b>6억</b>이 상한입니다.</li>
+      <li><b>1년에 갚는 원리금이 연소득의 40%를 넘으면 안 됩니다.</b> 심사는 실제 금리에 3%p를 더한 금리로 하니 생각보다 한도가 작게 나옵니다.</li>
+      <li><b>집값 5~6억 이하라면 정책대출부터.</b> 디딤돌·보금자리론은 은행보다 금리가 1~2%p 낮습니다.</li>
+    </ol>
+  </section>
 
-  <section class="card policy-section">
-    <h2>1. <dfn data-t="mortgage">주택담보대출</dfn> 한도 (<dfn data-t="ltv">LTV</dfn>)</h2>
-    <dl class="kv">
-      <dt>규제지역 무주택자</dt><dd><b>LTV 40%</b> (2025-10-16~). 유주택자가 추가로 사는 경우 0%.</dd>
-      <dt>생애최초</dt><dd>수도권·규제지역 <b>70%</b> (2025-06-28, 80%에서 하향). 그 밖의 지역 80%. 6개월 내 전입 의무.</dd>
-      <dt>서민실수요자 <span class="badge-check">확인 필요</span></dt><dd>부부합산 연소득 9천만 원 이하·집값 8억 이하·무주택 세대주면 규제지역 <b>60%</b>.</dd>
-      <dt>비규제지역</dt><dd>70%. 단 인천·경기 비규제도 "수도권"이라 아래 총액 한도와 만기 30년 규제는 똑같이 받습니다.</dd>
-      <dt>총액 한도 (수도권·규제지역)</dt><dd>집값(시가) <b>15억 이하 → 최대 6억</b>, 15~25억 → 4억, 25억 초과 → 2억. 생애최초도 동일.</dd>
-      <dt>그 밖에</dt><dd>수도권·규제지역 주담대 만기 30년 이내. 신용대출은 연소득 이내. 1억 초과 신용대출이 있으면 1년간 규제지역 주택 구입 제한.</dd>
-    </dl>
-    <p class="src">출처: <a href="https://www.fsc.go.kr/no010101/84824" target="_blank" rel="noopener">금융위 6·27 보도자료</a> · <a href="https://www.fsc.go.kr/no010101/85432" target="_blank" rel="noopener">금융위 10·15 보도자료</a> · <a href="https://www.fsc.go.kr/no010101/86606" target="_blank" rel="noopener">2026 가계부채 관리방안(4·1)</a> · <a href="https://www.korea.kr/news/policyNewsView.do?newsId=148950973" target="_blank" rel="noopener">정책브리핑 10·15</a></p>
+  <section class="card" id="mine-card">
+    <div class="card-head">
+      <h2>내 조건이면</h2>
+      <a class="btn sm" href="index.html">예산 페이지에서 조건 바꾸기</a>
+    </div>
+    <div id="mine"></div>
   </section>
 
   <section class="card policy-section">
-    <h2>2. <dfn data-t="regulated">규제지역</dfn>·<dfn data-t="permit-zone">토지거래허가구역</dfn></h2>
-    <dl class="kv">
-      <dt>규제지역</dt><dd><b>서울 25개 구 전역</b> + 경기 15곳: 과천, 광명, 성남(분당·수정·중원), 수원(영통·장안·팔달), 안양 동안, 용인(수지·기흥), 의왕, 하남, 화성 동탄, 구리. (기흥·동탄·구리는 2026-07-01 추가.) 인천과 지방은 비규제.</dd>
-      <dt>토지거래허가구역</dt><dd>서울 전역·경기 12곳의 아파트는 <b>2026-12-31까지</b> 허가 대상 (연장 여부 미정 <span class="badge-check">확인 필요</span>). 동탄·기흥·구리는 2027-12-31까지. 허가 후 4개월 내 입주, <b>2년 실거주</b>, 임대 불가. 세입자가 있는 집은 2026-05-12 이후 계속 무주택자에 한해 임대차 종료까지 입주 유예(신청 2027-12-31까지).</dd>
-    </dl>
-    <p class="src">출처: <a href="https://www.korea.kr/news/policyNewsView.do?newsId=148950973" target="_blank" rel="noopener">정책브리핑 10·15</a> · <a href="https://biz.heraldcorp.com/article/10792229" target="_blank" rel="noopener">7·1 추가 지정 보도</a> · <a href="https://www.hankyung.com/article/202609171006i" target="_blank" rel="noopener">실거주 유예 연장(2026-09-17)</a></p>
+    <h2>1. 대출 한도 <span class="muted">(<dfn data-t="ltv">LTV</dfn>)</span></h2>
+    <p class="key">집값의 <b>40%</b> · 생애최초 <b>70%</b> · 15억 이하 집은 최대 <b>6억</b></p>
+    <ul class="pts">
+      <li>규제지역(서울 전체, 경기 15곳) 무주택자: 집값의 <b>40%</b>.</li>
+      <li><dfn data-t="first-time">생애최초</dfn>: 수도권·규제지역 <b>70%</b>, 그 밖의 지역 80%. 6개월 안에 전입해야 합니다.</li>
+      <li>부부합산 소득 9천만 이하·집값 8억 이하 무주택 세대주(서민실수요자): 규제지역 <b>60%</b> <span class="badge-check">확인 필요</span></li>
+      <li>비규제지역(인천, 나머지 경기): 70%.</li>
+      <li><b>총액 상한</b>: 집값 15억 이하 → 6억, 15~25억 → 4억, 25억 초과 → 2억. 수도권 전체에 적용되고 생애최초도 같습니다.</li>
+      <li>만기는 30년까지. 1억 넘는 신용대출이 있으면 1년간 규제지역 집을 살 수 없습니다.</li>
+    </ul>
+    <details class="more"><summary>자세히 · 출처</summary>
+      <dl class="kv">
+        <dt>규제지역 무주택자</dt><dd>LTV 40% (2025-10-16~). 유주택자가 추가로 사는 경우 0%.</dd>
+        <dt>생애최초</dt><dd>수도권·규제지역 70% (2025-06-28, 80%에서 하향). 그 밖의 지역 80%. 6개월 내 전입 의무.</dd>
+        <dt>서민실수요자</dt><dd>부부합산 연소득 9천만 원 이하·집값 8억 이하·무주택 세대주면 규제지역 60%.</dd>
+        <dt>비규제지역</dt><dd>70%. 단 인천·경기 비규제도 "수도권"이라 총액 한도와 만기 30년 규제는 똑같이 받습니다.</dd>
+        <dt>그 밖에</dt><dd>수도권·규제지역 주담대 만기 30년 이내. 신용대출은 연소득 이내. 1억 초과 신용대출이 있으면 1년간 규제지역 주택 구입 제한.</dd>
+      </dl>
+      <p class="src">출처: <a href="https://www.fsc.go.kr/no010101/84824" target="_blank" rel="noopener">금융위 6·27 보도자료</a> · <a href="https://www.fsc.go.kr/no010101/85432" target="_blank" rel="noopener">금융위 10·15 보도자료</a> · <a href="https://www.fsc.go.kr/no010101/86606" target="_blank" rel="noopener">2026 가계부채 관리방안(4·1)</a> · <a href="https://www.korea.kr/news/policyNewsView.do?newsId=148950973" target="_blank" rel="noopener">정책브리핑 10·15</a></p>
+    </details>
   </section>
 
   <section class="card policy-section">
-    <h2>3. <dfn data-t="dsr">DSR</dfn> (소득 대비 상환 능력)</h2>
-    <dl class="kv">
-      <dt>기준</dt><dd>총대출 1억 초과 시 연간 원리금이 연소득의 <b>40%(은행)</b> / 50%(2금융권) 이내.</dd>
-      <dt>스트레스 DSR 3단계</dt><dd>2025-07-01~. 수도권·규제지역 주담대는 실제 금리에 <b>가산 3.0%p</b>를 더해 심사(2025-10-16~). 지방은 0.75%p(2026-12-31까지 유예 연장). 변동금리 100% 반영, 혼합형(5년 고정) 80%, 주기형 40%, 순수고정 미반영 <span class="badge-check">확인 필요</span>.</dd>
-      <dt>전세대출</dt><dd>무주택자의 전세대출은 DSR에 안 들어갑니다. 1주택자가 수도권·규제지역에서 받는 전세대출은 이자분만 반영(2025-10-29~).</dd>
-      <dt>계산 가정</dt><dd>주담대는 실제 만기(DSR 산정 상한 40년), 신용대출은 5년 만기로 계산. 원리금균등: 월 상환액 = 대출금 × r ÷ (1 − (1+r)^−n), r = 연이율 ÷ 12.</dd>
-    </dl>
-    <p class="src">출처: <a href="https://www.fsc.go.kr/no010101/84617" target="_blank" rel="noopener">스트레스 DSR 3단계 시행방안</a> · <a href="https://www.fsc.go.kr/no010101/85432" target="_blank" rel="noopener">10·15 보도자료</a> · <a href="https://www.fnnews.com/news/202606301437527182" target="_blank" rel="noopener">지방 유예 연장(2026-06)</a> · <a href="https://kbthink.com/loan-guide/stressdsr.html" target="_blank" rel="noopener">KB 스트레스 DSR 안내</a></p>
+    <h2>2. <dfn data-t="regulated">규제지역</dfn>과 <dfn data-t="permit-zone">토지거래허가구역</dfn></h2>
+    <p class="key">서울 전체 + 경기 15곳 · 사면 <b>2년 직접 살아야</b> 합니다</p>
+    <ul class="pts">
+      <li>규제지역: 서울 25개 구 전부, 경기 과천·광명·성남(분당·수정·중원)·수원(영통·장안·팔달)·안양 동안·용인(수지·기흥)·의왕·하남·화성 동탄·구리. 인천과 지방은 아닙니다.</li>
+      <li>이 지역 아파트는 토지거래허가 대상이라 구청 허가를 받고, 4개월 안에 입주해 <b>2년 실거주</b>해야 합니다. 전세를 놓을 수 없습니다.</li>
+      <li>허가제 기한은 <b>2026-12-31</b>(동탄·기흥·구리는 2027-12-31). 연장될지는 미정 <span class="badge-check">확인 필요</span></li>
+      <li>세입자가 사는 집을 사면 임대차가 끝날 때까지 입주를 미룰 수 있습니다(계속 무주택자, 2026-05-12 이후, 신청 2027-12-31까지).</li>
+    </ul>
+    <details class="more"><summary>자세히 · 출처</summary>
+      <dl class="kv">
+        <dt>규제지역</dt><dd>서울 25개 구 전역 + 경기 15곳. 기흥·동탄·구리는 2026-07-01 추가.</dd>
+        <dt>토지거래허가구역</dt><dd>서울 전역·경기 12곳의 아파트는 2026-12-31까지 허가 대상. 동탄·기흥·구리는 2027-12-31까지. 허가 후 4개월 내 입주, 2년 실거주, 임대 불가. 세입자가 있는 집은 2026-05-12 이후 계속 무주택자에 한해 임대차 종료까지 입주 유예(신청 2027-12-31까지).</dd>
+      </dl>
+      <p class="src">출처: <a href="https://www.korea.kr/news/policyNewsView.do?newsId=148950973" target="_blank" rel="noopener">정책브리핑 10·15</a> · <a href="https://biz.heraldcorp.com/article/10792229" target="_blank" rel="noopener">7·1 추가 지정 보도</a> · <a href="https://www.hankyung.com/article/202609171006i" target="_blank" rel="noopener">실거주 유예 연장(2026-09-17)</a></p>
+    </details>
   </section>
 
   <section class="card policy-section">
-    <h2>4. <dfn data-t="policy-loan">정책대출</dfn> (은행보다 금리가 낮은 정부 대출)</h2>
-    <dl class="kv">
-      <dt>디딤돌대출</dt><dd>무주택 세대주, 부부합산 6천만(생애최초·2자녀 7천만, 신혼 8.5천만) 이하, 순자산 5.11억 이하. 집값 5억(신혼·2자녀 6억) 이하, 전용 85㎡ 이하. 한도 2억(생애최초 2.4억, 신혼·2자녀 3.2억). 금리 <b>연 2.85~4.15%</b>(2026-10 공시), 생애최초 신혼 −0.3%p. 1개월 내 전입·2년 실거주.</dd>
-      <dt>보금자리론</dt><dd>집값 6억 이하, 부부합산 7천만(신혼 8.5천만, 1자녀 9천만, 다자녀 1억) 이하. 한도 3.6억(생애최초 4.2억). 아파트 LTV 70%(규제지역 일반 60%, 생애최초·실수요자는 70%). 금리 고정 <b>약 4.9~5.3%</b>(2026-10), 규제지역 +0.2%p, 우대 최대 1.0%p.</dd>
-      <dt>신생아 특례 <span class="badge-check">확인 필요</span></dt><dd>2년 내 출산·입양(2023년생 이후), 부부합산 1.3억(맞벌이 2억) 이하, 집값 9억·85㎡ 이하. 한도 4억, 금리 1.8~4.5% 5년 특례.</dd>
-      <dt>신혼·생애최초</dt><dd>별도 상품이 아니라 위 두 상품의 소득 상한·한도·금리 우대로 적용됩니다.</dd>
-    </dl>
-    <p class="src">출처: <a href="https://nhuf.molit.go.kr/FP/FP05/FP0503/FP05030101.jsp" target="_blank" rel="noopener">주택도시기금 디딤돌</a> · <a href="https://www.hf.go.kr/ko/sub01/sub01_01_01.do" target="_blank" rel="noopener">주택금융공사 보금자리론</a> · <a href="https://www.hf.go.kr/ko/sub01/sub01_02_03.do" target="_blank" rel="noopener">금리표</a> · <a href="https://kbthink.com/loan-guide/newborn-special.html" target="_blank" rel="noopener">신생아 특례 안내(KB)</a></p>
+    <h2>3. 갚을 수 있는 만큼만 <span class="muted">(<dfn data-t="dsr">DSR</dfn>)</span></h2>
+    <p class="key">1년 원리금 ≤ 연소득의 <b>40%</b> · 심사 금리는 실제 금리 <b>+3%p</b></p>
+    <ul class="pts">
+      <li>모든 대출의 1년 원리금 합이 연소득의 <b>40%</b>(은행) 안이어야 합니다. 연소득 7천만이면 1년에 2,800만, 한 달 233만까지.</li>
+      <li><dfn data-t="stress-dsr">스트레스 금리</dfn>: 수도권 주담대는 실제 금리에 <b>3.0%p</b>를 더해 심사합니다. 변동금리는 100% 반영, 5년 혼합 80%, 주기형 40%, 순수 고정은 0 <span class="badge-check">확인 필요</span></li>
+      <li>그래서 고정·주기형 금리를 고르면 한도가 늘어납니다. 소득이 낮으면 LTV보다 먼저 여기에 걸립니다.</li>
+      <li>무주택자의 <dfn data-t="jeonse-loan">전세대출</dfn>은 DSR에 안 들어갑니다.</li>
+    </ul>
+    <details class="more"><summary>자세히 · 출처</summary>
+      <dl class="kv">
+        <dt>기준</dt><dd>총대출 1억 초과 시 연간 원리금이 연소득의 40%(은행) / 50%(2금융권) 이내.</dd>
+        <dt>스트레스 DSR 3단계</dt><dd>2025-07-01~. 수도권·규제지역 주담대는 실제 금리에 가산 3.0%p를 더해 심사(2025-10-16~). 지방은 0.75%p(2026-12-31까지 유예 연장). 변동금리 100% 반영, 혼합형(5년 고정) 80%, 주기형 40%, 순수고정 미반영.</dd>
+        <dt>전세대출</dt><dd>무주택자의 전세대출은 DSR에 안 들어갑니다. 1주택자가 수도권·규제지역에서 받는 전세대출은 이자분만 반영(2025-10-29~).</dd>
+        <dt>계산 가정</dt><dd>주담대는 실제 만기(DSR 산정 상한 40년), 신용대출은 5년 만기로 계산. 원리금균등: 월 상환액 = 대출금 × r ÷ (1 − (1+r)^−n), r = 연이율 ÷ 12.</dd>
+      </dl>
+      <p class="src">출처: <a href="https://www.fsc.go.kr/no010101/84617" target="_blank" rel="noopener">스트레스 DSR 3단계 시행방안</a> · <a href="https://www.fsc.go.kr/no010101/85432" target="_blank" rel="noopener">10·15 보도자료</a> · <a href="https://www.fnnews.com/news/202606301437527182" target="_blank" rel="noopener">지방 유예 연장(2026-06)</a> · <a href="https://kbthink.com/loan-guide/stressdsr.html" target="_blank" rel="noopener">KB 스트레스 DSR 안내</a></p>
+    </details>
+  </section>
+
+  <section class="card policy-section">
+    <h2>4. <dfn data-t="policy-loan">정책대출</dfn> <span class="muted">(은행보다 싼 정부 대출)</span></h2>
+    <p class="key">집값 <b>5억</b> 이하면 디딤돌, <b>6억</b> 이하면 보금자리론, 아기가 있으면 <b>9억</b>까지 신생아 특례</p>
+    <div class="tablewrap">
+      <table class="cmp">
+        <thead><tr><th></th><th>디딤돌대출</th><th>보금자리론</th><th>신생아 특례 <span class="badge-check">확인 필요</span></th></tr></thead>
+        <tbody>
+          <tr><th>집값</th><td>5억 이하 (신혼·2자녀 6억)</td><td>6억 이하</td><td>9억 이하</td></tr>
+          <tr><th>부부합산 소득</th><td>6천만 이하 (생애최초·2자녀 7천, 신혼 8.5천)</td><td>7천만 이하 (신혼 8.5천, 1자녀 9천, 다자녀 1억)</td><td>1.3억 이하 (맞벌이 2억)</td></tr>
+          <tr><th>한도</th><td>2억 (생애최초 2.4억, 신혼·2자녀 3.2억)</td><td>3.6억 (생애최초 4.2억)</td><td>4억</td></tr>
+          <tr><th>금리</th><td><b>2.85~4.15%</b></td><td>고정 <b>약 4.9~5.3%</b></td><td><b>1.8~4.5%</b> (5년 특례)</td></tr>
+          <tr><th>조건</th><td>무주택 세대주, 전용 85㎡ 이하, 순자산 5.11억 이하, 1개월 내 전입·2년 실거주</td><td>아파트 LTV 70% (규제지역 일반 60%)</td><td>2년 내 출산·입양(2023년생 이후), 85㎡ 이하</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="small muted">신혼·생애최초는 별도 상품이 아니라 위 상품의 소득 상한·한도·금리 우대로 적용됩니다. 이 집값 기준보다 싼 집을 고르면 조건이 열리니, 예산 상한보다 조금 낮춰 보는 것도 방법입니다.</p>
+    <details class="more"><summary>자세히 · 출처</summary>
+      <dl class="kv">
+        <dt>디딤돌대출</dt><dd>무주택 세대주, 부부합산 6천만(생애최초·2자녀 7천만, 신혼 8.5천만) 이하, 순자산 5.11억 이하. 집값 5억(신혼·2자녀 6억) 이하, 전용 85㎡ 이하. 한도 2억(생애최초 2.4억, 신혼·2자녀 3.2억). 금리 연 2.85~4.15%(2026-10 공시), 생애최초 신혼 −0.3%p. 1개월 내 전입·2년 실거주.</dd>
+        <dt>보금자리론</dt><dd>집값 6억 이하, 부부합산 7천만(신혼 8.5천만, 1자녀 9천만, 다자녀 1억) 이하. 한도 3.6억(생애최초 4.2억). 아파트 LTV 70%(규제지역 일반 60%, 생애최초·실수요자는 70%). 금리 고정 약 4.9~5.3%(2026-10), 규제지역 +0.2%p, 우대 최대 1.0%p.</dd>
+        <dt>신생아 특례</dt><dd>2년 내 출산·입양(2023년생 이후), 부부합산 1.3억(맞벌이 2억) 이하, 집값 9억·85㎡ 이하. 한도 4억, 금리 1.8~4.5% 5년 특례.</dd>
+      </dl>
+      <p class="src">출처: <a href="https://nhuf.molit.go.kr/FP/FP05/FP0503/FP05030101.jsp" target="_blank" rel="noopener">주택도시기금 디딤돌</a> · <a href="https://www.hf.go.kr/ko/sub01/sub01_01_01.do" target="_blank" rel="noopener">주택금융공사 보금자리론</a> · <a href="https://www.hf.go.kr/ko/sub01/sub01_02_03.do" target="_blank" rel="noopener">금리표</a> · <a href="https://kbthink.com/loan-guide/newborn-special.html" target="_blank" rel="noopener">신생아 특례 안내(KB)</a></p>
+    </details>
   </section>
 
   <section class="card policy-section">
     <h2>5. <dfn data-t="acq-tax">취득세</dfn></h2>
-    <dl class="kv">
-      <dt>1주택 세율</dt><dd>6억 이하 <b>1%</b> · 6~9억 <b>1~3% 누진</b>(세율 = (집값×2/3억 − 3)÷100) · 9억 초과 <b>3%</b>. 지방교육세는 취득세율의 10%가 더 붙고, 전용 85㎡ 초과면 농어촌특별세 0.2% 추가. 실효세율 6억 이하 1.1%(85㎡ 초과 1.3%), 9억 초과 3.3%(3.5%).</dd>
-      <dt>생애최초 감면</dt><dd>본인·배우자 모두 집 보유 이력이 없고 실거주 목적, 집값 12억 이하면 취득세 <b>200만 원까지 면제</b>. 일몰 2028-12-31. 3년 내 팔거나 세 주면 추징.</dd>
-      <dt>예정 <span class="badge-check">미시행</span></dt><dd>행안부 개편안(2026-08-26): 40세 미만 청년 감면 한도 300만 원, 주거용 오피스텔 포함. 국회 통과 전.</dd>
-    </dl>
-    <p class="src">출처: <a href="https://www.law.go.kr/lsLawLinkInfo.do?lsJoLnkSeq=1000225659&chrClsCd=010202" target="_blank" rel="noopener">지방세법 제11조</a> · <a href="https://www.law.go.kr/lsLinkProc.do?lsNm=%EC%A7%80%EB%B0%A9%EC%84%B8%ED%8A%B9%EB%A1%80%EC%A0%9C%ED%95%9C%EB%B2%95&joNo=003603001&mode=10" target="_blank" rel="noopener">지방세특례제한법 제36조의3</a> · <a href="https://www.khan.co.kr/article/202608262114005" target="_blank" rel="noopener">개편안 보도</a></p>
+    <p class="key">6억 이하 <b>1%</b> · 6~9억 <b>1~3%</b> · 9억 초과 <b>3%</b> · 생애최초는 <b>200만 원</b> 깎아 줍니다</p>
+    <div class="tablewrap"><table class="cmp" id="acq-table"></table></div>
+    <ul class="pts">
+      <li>표의 금액은 지방교육세(취득세의 10%)까지 더한 값입니다. 전용 85㎡를 넘으면 농어촌특별세 0.2%가 더 붙습니다.</li>
+      <li>생애최초 감면은 집값 12억 이하·실거주 조건이고, 3년 안에 팔거나 세를 주면 다시 내야 합니다. 2028-12-31까지.</li>
+      <li>잔금 치른 날부터 60일 안에 냅니다. 보통 법무사가 등기와 함께 처리합니다.</li>
+    </ul>
+    <details class="more"><summary>자세히 · 출처</summary>
+      <dl class="kv">
+        <dt>1주택 세율</dt><dd>6억 이하 1% · 6~9억 1~3% 누진(세율 = (집값×2/3억 − 3)÷100) · 9억 초과 3%. 지방교육세는 취득세율의 10%가 더 붙고, 전용 85㎡ 초과면 농어촌특별세 0.2% 추가. 실효세율 6억 이하 1.1%(85㎡ 초과 1.3%), 9억 초과 3.3%(3.5%).</dd>
+        <dt>생애최초 감면</dt><dd>본인·배우자 모두 집 보유 이력이 없고 실거주 목적, 집값 12억 이하면 취득세 200만 원까지 면제. 일몰 2028-12-31. 3년 내 팔거나 세 주면 추징.</dd>
+        <dt>예정 <span class="badge-check">미시행</span></dt><dd>행안부 개편안(2026-08-26): 40세 미만 청년 감면 한도 300만 원, 주거용 오피스텔 포함. 국회 통과 전.</dd>
+      </dl>
+      <p class="src">출처: <a href="https://www.law.go.kr/lsLawLinkInfo.do?lsJoLnkSeq=1000225659&chrClsCd=010202" target="_blank" rel="noopener">지방세법 제11조</a> · <a href="https://www.law.go.kr/lsLinkProc.do?lsNm=%EC%A7%80%EB%B0%A9%EC%84%B8%ED%8A%B9%EB%A1%80%EC%A0%9C%ED%95%9C%EB%B2%95&joNo=003603001&mode=10" target="_blank" rel="noopener">지방세특례제한법 제36조의3</a> · <a href="https://www.khan.co.kr/article/202608262114005" target="_blank" rel="noopener">개편안 보도</a></p>
+    </details>
   </section>
 
   <section class="card policy-section">
-    <h2>6. <dfn data-t="broker-fee">중개보수</dfn>·<dfn data-t="misc-cost">부대비용</dfn></h2>
-    <dl class="kv">
-      <dt>중개보수 상한 (매매)</dt><dd>5천만 미만 0.6%(25만 한도) · 2억 미만 0.5%(80만 한도) · 2~9억 <b>0.4%</b> · 9~12억 0.5% · 12~15억 0.6% · 15억 이상 0.7%. 상한 안에서 협의, 부가세 10% 별도.</dd>
-      <dt>그 밖에</dt><dd>법무사 보수 50~70만, 인지세 15만(1억 초과~10억), 등기수수료 1.5만, 국민주택채권 할인손실 약 30만(5억 기준). 합쳐서 대략 <b>100~180만 원</b>. 이사비·입주청소·가전은 별도.</dd>
-      <dt>자금조달계획서</dt><dd>규제지역은 금액과 관계없이 제출(투기과열지구는 증빙 첨부), 비규제는 6억 이상. 계약 후 30일 내.</dd>
-    </dl>
-    <p class="src">출처: <a href="https://www.myhome.go.kr/hws/portal/cont/selectHouseBrokerageFeeView.do" target="_blank" rel="noopener">마이홈 중개보수</a> · <a href="https://kbthink.com/house/costs.html" target="_blank" rel="noopener">KB 부대비용 안내</a> · <a href="https://kbthink.com/house/funding-plan.html" target="_blank" rel="noopener">자금조달계획서 안내</a></p>
+    <h2>6. <dfn data-t="broker-fee">중개보수</dfn>와 <dfn data-t="misc-cost">그 밖의 비용</dfn></h2>
+    <p class="key">중개보수는 집값의 <b>0.4~0.7%</b> 안에서 협의 · 등기·법무사 등 <b>100~180만 원</b> 별도</p>
+    <div class="tablewrap"><table class="cmp" id="broker-table"></table></div>
+    <ul class="pts">
+      <li>표는 법정 상한이고 그 안에서 깎을 수 있습니다. 부가세 10%가 따로 붙습니다.</li>
+      <li>법무사 보수 50~70만, 인지세 15만(1억 초과~10억), 국민주택채권 할인손실 약 30만(5억 기준). 이사·청소·가전은 별도.</li>
+      <li>규제지역에서는 집값과 관계없이 계약 후 30일 안에 자금조달계획서를 내야 합니다(비규제는 6억 이상).</li>
+    </ul>
+    <details class="more"><summary>자세히 · 출처</summary>
+      <dl class="kv">
+        <dt>중개보수 상한 (매매)</dt><dd>5천만 미만 0.6%(25만 한도) · 2억 미만 0.5%(80만 한도) · 2~9억 0.4% · 9~12억 0.5% · 12~15억 0.6% · 15억 이상 0.7%. 상한 안에서 협의, 부가세 10% 별도.</dd>
+        <dt>그 밖에</dt><dd>법무사 보수 50~70만, 인지세 15만(1억 초과~10억), 등기수수료 1.5만, 국민주택채권 할인손실 약 30만(5억 기준). 합쳐서 대략 100~180만 원.</dd>
+        <dt>자금조달계획서</dt><dd>규제지역은 금액과 관계없이 제출(투기과열지구는 증빙 첨부), 비규제는 6억 이상. 계약 후 30일 내.</dd>
+      </dl>
+      <p class="src">출처: <a href="https://www.myhome.go.kr/hws/portal/cont/selectHouseBrokerageFeeView.do" target="_blank" rel="noopener">마이홈 중개보수</a> · <a href="https://kbthink.com/house/costs.html" target="_blank" rel="noopener">KB 부대비용 안내</a> · <a href="https://kbthink.com/house/funding-plan.html" target="_blank" rel="noopener">자금조달계획서 안내</a></p>
+    </details>
   </section>
 
   <section class="card policy-section">
-    <h2>7. 지금 <dfn data-t="rate-type">금리</dfn> (2026-10 기준)</h2>
-    <dl class="kv">
-      <dt>기준금리</dt><dd>한국은행 3.00% (10월 22일 동결).</dd>
-      <dt>은행 주담대</dt><dd>5년 고정(혼합) 4.61~6.65%, 변동 4.42~6.48% (5대 은행, 10월 27일). 예산 계산기 기본값은 변동 4.5%입니다.</dd>
-    </dl>
-    <p class="src">출처: <a href="https://www.fnnews.com/news/202610270605559385" target="_blank" rel="noopener">주담대 금리 보도(2026-10-27)</a> · <a href="https://www.fntimes.com/html/view.php?ud=202610220949143753179ad43907_18" target="_blank" rel="noopener">기준금리 동결 보도</a></p>
+    <h2>7. 지금 <dfn data-t="rate-type">금리</dfn></h2>
+    <p class="key">기준금리 <b>3.00%</b> · 은행 주담대 <b>4.4~6.7%</b> (2026-10-27)</p>
+    <ul class="pts">
+      <li>5대 은행 주담대: 5년 고정(혼합) 4.61~6.65%, 변동 4.42~6.48%. 예산 계산기 기본값은 변동 4.5%입니다.</li>
+      <li>한국은행 기준금리 3.00% (10월 22일 동결).</li>
+    </ul>
+    <details class="more"><summary>출처</summary>
+      <p class="src"><a href="https://www.fnnews.com/news/202610270605559385" target="_blank" rel="noopener">주담대 금리 보도(2026-10-27)</a> · <a href="https://www.fntimes.com/html/view.php?ud=202610220949143753179ad43907_18" target="_blank" rel="noopener">기준금리 동결 보도</a></p>
+    </details>
   </section>
 
+  <div class="note">큰 그림: 2025년 6·27 대책(수도권 주담대 6억 한도, 생애최초 LTV 70%)과 10·15 대책(서울 전역·경기 12곳 규제지역, LTV 40%, 집값 구간별 한도)이 골격입니다. 2026년에는 4·1 가계부채 관리방안, 7·1 경기 3곳 규제지역 추가, 8·13 금융종합대책이 더해졌고, 생애최초 실수요자에게 적용되는 핵심 수치는 2026년 들어 바뀌지 않았습니다.</div>
   <p class="small muted">이 페이지는 공개 자료를 정리한 참고용이며 법률·금융 자문이 아닙니다. 실제 대출 조건은 은행 상담으로 확인하세요.</p>
 </main>
 
 <script src="assets/terms.js"></script>
 <script src="assets/app.js"></script>
-<script>window.JT.renderNav("policy");</script>
+<script>
+(function () {
+  var J = window.JT, $ = J.$, esc = J.esc, P = J.P;
+  J.renderNav("policy");
+
+  // 내 조건이면
+  var inp = J.lsGet("imjang.budgetInputs", null), b = J.lsGet("imjang.budget", null), el = $("mine");
+  if (!inp || inp.income == null) {
+    el.innerHTML = '<p class="muted">예산 페이지에서 현금·소득·상황을 넣으면, 여기에 내게 적용되는 숫자만 나옵니다.</p>';
+  } else {
+    var region = { regulated: "규제지역(서울·경기 15곳)", metro: "수도권 비규제(인천·나머지 경기)", nonmetro: "지방" }[inp.region] || inp.region;
+    var ltv = J.loanFor(b && b.price ? b.price : 50000, inp).ltv;
+    var stress = inp.region === "nonmetro" ? P.dsr.stressNonmetro : P.dsr.stressMetro * (P.dsr.ratio[inp.loanType] != null ? P.dsr.ratio[inp.loanType] : 1);
+    var dsrYear = Math.max(0, inp.income * P.dsr.bank - (inp.debtMonthly || 0) * 12);
+    var rows = [
+      ["적용 지역", region + (inp.firstTime ? " · 생애최초" : "")],
+      ["LTV", "집값의 <b>" + Math.round(ltv * 100) + "%</b>까지" + (inp.region !== "nonmetro" ? " · 총액 상한 " + (b && b.price > 150000 ? (b.price > 250000 ? "2억" : "4억") : "6억") : "")],
+      ["DSR", "1년 원리금 <b>" + J.fmtEok(dsrYear) + "</b>(월 " + J.fmtMan(Math.round(dsrYear / 12)) + ")까지 · 심사 금리 " + inp.rate + "% + " + (stress * 100).toFixed(2).replace(/\.?0+$/, "") + "%p"],
+      ["취득세 감면", inp.firstTime ? "생애최초 <b>200만 원</b> 면제 (12억 이하)" : "해당 없음"]
+    ];
+    if (b && b.price) rows.push(["계산된 최대 집값", "<b>" + J.fmtEok(b.price) + "</b> (대출 " + J.fmtEok(b.loan) + ") · 걸린 조건: " + ({ ltv: "LTV", cap: "총액 상한", dsr: "DSR" }[b.binding] || b.binding || "–")]);
+    var pol = J.policyEligibility(inp, b && b.price ? b.price : 0).map(function (p) { return '<span class="chip' + (p.ok ? " good" : "") + '">' + esc(p.name) + (p.ok ? " 가능" : " 조건 밖") + '</span>'; }).join("");
+    rows.push(["정책대출", '<span class="chips">' + pol + '</span><span class="small muted"> 계산된 집값 기준. 더 싼 집이면 열릴 수 있습니다.</span>']);
+    el.innerHTML = '<dl class="kv">' + rows.map(function (r) { return "<dt>" + r[0] + "</dt><dd>" + r[1] + "</dd>"; }).join("") + "</dl>";
+  }
+
+  // 취득세 표
+  var prices = [40000, 50000, 60000, 70000, 80000, 90000, 100000, 120000];
+  $("acq-table").innerHTML = '<thead><tr><th>집값</th><th class="n">세율</th><th class="n">내는 돈 (85㎡ 이하)</th><th class="n">생애최초면</th></tr></thead><tbody>' + prices.map(function (p) {
+    var a = J.acquisitionTax(p, false, false), f = J.acquisitionTax(p, true, false);
+    return "<tr><td>" + J.fmtEok(p) + '</td><td class="n">' + (a.rate * 100).toFixed(2).replace(/\.?0+$/, "") + '%</td><td class="n">' + J.fmtMan(Math.round(a.total)) + '</td><td class="n">' + J.fmtMan(Math.round(f.total)) + "</td></tr>";
+  }).join("") + "</tbody>";
+
+  // 중개보수 표
+  var br = [[30000, "5천만~2억"], [60000, "2억~9억"], [100000, "9억~12억"], [130000, "12억~15억"], [200000, "15억 이상"]];
+  $("broker-table").innerHTML = '<thead><tr><th>집값</th><th class="n">상한 요율</th><th class="n">예시</th></tr></thead><tbody>' + br.map(function (x) {
+    var f = J.brokerFee(x[0]);
+    return "<tr><td>" + x[1] + '</td><td class="n">' + (f.rate * 100).toFixed(1) + '%</td><td class="n">' + J.fmtEok(x[0]) + " 집 → " + J.fmtMan(Math.round(f.fee)) + " + 부가세</td></tr>";
+  }).join("") + "</tbody>";
+})();
+</script>
 </body>
 </html>

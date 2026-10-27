@@ -108,14 +108,21 @@ def main():
     for sido in SIDOS:
         if args.sido and sido != args.sido:
             continue
-        # 기존 price 행(좌표·역·학교·정비사업 보존용) 색인
+        # 기존 price 행(좌표·역·학교·정비사업 보존용) 색인 + 누적 보관 파일(enrich-<sido>.json: 창 밖으로 나갔다 돌아와도 유지)
         old_price = load_json(os.path.join(DATA, "price-%s.json" % sido), [])
+        epath = os.path.join(DATA, "enrich-%s.json" % sido)
+        enrich = load_json(epath, {})
         by_key, by_sgg_jb_name, by_sgg_name = {}, {}, {}
         for r in old_price:
             by_key[r[0] + "|" + r[1]] = r
             sgg = r[0].split(" ")[0]
             by_sgg_jb_name.setdefault(sgg + "|" + r[1] + "|" + norm_name(r[2]), r)
             by_sgg_name.setdefault(sgg + "|" + norm_name(r[2]), r)
+            ex = [r[5] if len(r) > 5 else None, r[6] if len(r) > 6 else None, r[7] if len(r) > 7 else None]
+            if any(ex):
+                enrich[r[0] + "|" + r[1]] = ex
+                enrich.setdefault(sgg + "|" + r[1] + "|" + norm_name(r[2]), ex)
+        save_json(epath, enrich)
 
         sggs = sorted((c, v[1]) for c, v in codes.items() if v[0] == sido)
         only = [x.strip() for x in args.sgg.split(",") if x.strip()]
@@ -199,12 +206,10 @@ def main():
                             j = areas_j.setdefault(int(area), {"vals": [], "nn": 0, "last": ""})
                             j["vals"].extend([medj] * nj); j["nn"] += njn; j["last"] = max(j["last"], ym)
                 if areas_s:
-                    old = by_key.get(k)
                     row = [dong_key, jibun, h["n"], h["b"], [[a, len(s["vals"]), median(s["vals"]), s["lo"], s["hi"], s["last"]] for a, s in sorted(areas_s.items())]]
-                    extra = old[5:8] if old else []
-                    while len(extra) < 3:
-                        extra.append(None)
-                    row.extend(extra[:3] if (old and len(old) > 7) else extra[:2])
+                    sgg_name = dong_key.split(" ")[0]
+                    ex = enrich.get(k) or enrich.get(sgg_name + "|" + jibun + "|" + norm_name(h["n"])) or [None, None, None]
+                    row.extend(ex[:3] if ex[2] else ex[:2])
                     price.append(row)
                 if areas_j:
                     jeonse.append([dong_key, jibun, h["n"], h["b"], [[a, len(j["vals"]), median(j["vals"]), j["last"], j["nn"]] for a, j in sorted(areas_j.items())]])

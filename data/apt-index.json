@@ -1,0 +1,162 @@
+{
+ "source": "한국부동산원 공동주택 단지 식별정보_기본정보 (공공데이터포털, 2026-08-31 기준)",
+ "fields": [
+  "name",
+  "dongKey",
+  "jibun",
+  "households",
+  "buildings",
+  "year",
+  "kind(1아파트 2연립 3다세대)",
+  "roadAddress"
+ ],
+ "sido": {
+  "서울특별시": [
+   "seoul",
+   "서울"
+  ],
+  "부산광역시": [
+   "busan",
+   "부산"
+  ],
+  "대구광역시": [
+   "daegu",
+   "대구"
+  ],
+  "인천광역시": [
+   "incheon",
+   "인천"
+  ],
+  "광주광역시": [
+   "gwangju",
+   "광주"
+  ],
+  "대전광역시": [
+   "daejeon",
+   "대전"
+  ],
+  "울산광역시": [
+   "ulsan",
+   "울산"
+  ],
+  "세종특별자치시": [
+   "sejong",
+   "세종"
+  ],
+  "경기도": [
+   "gyeonggi",
+   "경기"
+  ],
+  "강원특별자치도": [
+   "gangwon",
+   "강원"
+  ],
+  "강원도": [
+   "gangwon",
+   "강원"
+  ],
+  "충청북도": [
+   "chungbuk",
+   "충북"
+  ],
+  "충청남도": [
+   "chungnam",
+   "충남"
+  ],
+  "전북특별자치도": [
+   "jeonbuk",
+   "전북"
+  ],
+  "전라북도": [
+   "jeonbuk",
+   "전북"
+  ],
+  "전라남도": [
+   "jeonnam",
+   "전남"
+  ],
+  "경상북도": [
+   "gyeongbuk",
+   "경북"
+  ],
+  "경상남도": [
+   "gyeongnam",
+   "경남"
+  ],
+  "제주특별자치도": [
+   "jeju",
+   "제주"
+  ]
+ },
+ "files": {
+  "seoul": {
+   "count": 9594,
+   "bytes": 811512
+  },
+  "busan": {
+   "count": 4820,
+   "bytes": 417096
+  },
+  "daegu": {
+   "count": 2095,
+   "bytes": 177571
+  },
+  "incheon": {
+   "count": 2288,
+   "bytes": 195008
+  },
+  "gwangju": {
+   "count": 1335,
+   "bytes": 111700
+  },
+  "daejeon": {
+   "count": 1074,
+   "bytes": 88670
+  },
+  "ulsan": {
+   "count": 1671,
+   "bytes": 136207
+  },
+  "sejong": {
+   "count": 252,
+   "bytes": 21563
+  },
+  "gyeonggi": {
+   "count": 8728,
+   "bytes": 802135
+  },
+  "chungbuk": {
+   "count": 1316,
+   "bytes": 117992
+  },
+  "chungnam": {
+   "count": 1545,
+   "bytes": 138723
+  },
+  "jeonnam": {
+   "count": 1508,
+   "bytes": 131377
+  },
+  "gyeongbuk": {
+   "count": 2963,
+   "bytes": 259842
+  },
+  "gyeongnam": {
+   "count": 3721,
+   "bytes": 330640
+  },
+  "jeju": {
+   "count": 1199,
+   "bytes": 102574
+  },
+  "gangwon": {
+   "count": 1394,
+   "bytes": 118078
+  },
+  "jeonbuk": {
+   "count": 1478,
+   "bytes": 128118
+  }
+ },
+ "total": 46981
+}

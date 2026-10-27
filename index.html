@@ -1,3 +1,9 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>집터</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap">
@@ -858,6 +864,8 @@ td.top { background: color-mix(in srgb, var(--mark) 35%, transparent); font-weig
 }
 </style>
 
+</head>
+<body>
 <header class="top">
   <div class="top-inner">
     <div class="brand">
@@ -975,7 +983,7 @@ td.top { background: color-mix(in srgb, var(--mark) 35%, transparent); font-weig
           <div id="geo-results" class="geo-results" hidden></div>
           <div id="map" class="map"></div>
           <div id="map-blocked" class="map-blocked" hidden><span id="map-blocked-text"></span></div>
-          <p class="small muted">지도를 클릭하면 그 자리에 핀을 추가할 수 있습니다. 카카오맵 키가 없으면 OpenStreetMap(© OpenStreetMap contributors)으로 표시됩니다.</p>
+          <p class="small muted">지도를 클릭하면 그 자리에 핀을 추가할 수 있습니다. 카카오맵 키가 없으면 OpenStreetMap(© OpenStreetMap contributors)으로 표시됩니다. 세대수·동수·준공년도는 한국부동산원 공시대상 공동주택 자료(2026-08-31 기준, 아파트 46,981단지)에서 자동으로 채워지며, 그 이후 준공한 신축은 없을 수 있습니다.</p>
           <details class="mapcfg" id="mapcfg">
             <summary>지도 설정 · <span id="map-provider">준비 중</span></summary>
             <div class="field">
@@ -996,6 +1004,19 @@ td.top { background: color-mix(in srgb, var(--mark) 35%, transparent); font-weig
                 <select id="pf-status"><option>후보</option><option>임장 예정</option><option>임장 완료</option><option>제외</option></select></div>
               <div class="field"><label for="pf-price">호가 (만원)</label><input id="pf-price" type="number" inputmode="numeric" placeholder="예: 120000"></div>
               <div class="field" style="grid-column: 1 / -1;"><label for="pf-memo">메모</label><input id="pf-memo" placeholder="예: 역 도보 10분 표기, 전세가율 65%"></div>
+            </div>
+            <div class="field">
+              <label for="pf-aptq">단지 정보 찾기 <span class="muted">(공공데이터, 핀을 찍으면 자동으로 찾습니다)</span></label>
+              <div class="search"><input id="pf-aptq" autocomplete="off" placeholder="단지명으로 다시 찾기"><button type="button" class="btn" id="pf-aptsearch">찾기</button></div>
+              <div id="pf-aptresults" class="geo-results" hidden></div>
+              <p class="hint" id="pf-aptstatus"></p>
+            </div>
+            <div class="grid">
+              <div class="field"><label for="pf-units">세대수</label><input id="pf-units" type="number" inputmode="numeric"></div>
+              <div class="field"><label for="pf-bld">동수</label><input id="pf-bld" type="number" inputmode="numeric"></div>
+              <div class="field"><label for="pf-year">준공(사용승인) 년도</label><input id="pf-year" type="number" inputmode="numeric"></div>
+              <div class="field"><label for="pf-sizes">평형·전용면적</label><input id="pf-sizes" placeholder="예: 59·84·114㎡ (손품으로 확인)"></div>
+              <div class="field" style="grid-column: 1 / -1;"><label for="pf-redev">재건축·재개발 진행 상황</label><input id="pf-redev" placeholder="예: 추진위 구성, 안전진단 통과, 조합설립 인가 등"></div>
             </div>
             <p class="small muted" id="pf-coords"></p>
             <div class="card-actions">
@@ -1227,11 +1248,6 @@ td.top { background: color-mix(in srgb, var(--mark) 35%, transparent); font-weig
   document.querySelectorAll(".tab").forEach(function (t) {
     t.addEventListener("click", function () { showView(t.dataset.view); window.scrollTo(0, 0); });
   });
-  (function () {
-    var h = (location.hash || "").replace("#", "");
-    var remembered = null; try { remembered = localStorage.getItem("imjang.view"); } catch (e) {}
-    showView(VIEWS.indexOf(h) >= 0 ? h : (remembered || "prep"));
-  })();
 
   // ---------- list rendering ----------
   var pendingDelete = null;
@@ -1418,10 +1434,10 @@ td.top { background: color-mix(in srgb, var(--mark) 35%, transparent); font-weig
   var KAKAO_KEY = "37e04196393a74fd4c0faa01f2042f84";
   var STATUS = ["후보", "임장 예정", "임장 완료", "제외"];
   var STATUS_CLASS = { "후보": "s-cand", "임장 예정": "s-plan", "임장 완료": "s-done", "제외": "s-out" };
-  var backend = null, mapReady = false;
+  var backend = null, mapReady = false, kakaoFailWhy = "";
   var pinEditing = null, pinPending = null, pinDelete = null;
 
-  function getKakaoKey() { var k = ""; try { k = localStorage.getItem("imjang.kakaoKey") || ""; } catch (e) {} return (k || KAKAO_KEY).trim(); }
+  function getKakaoKey() { var k = ""; try { k = localStorage.getItem("imjang.kakaoKey") || ""; } catch (e) {} return String(k || KAKAO_KEY || "").trim(); }
   function haversine(a, b) {
     var R = 6371000, toR = Math.PI / 180, dLat = (b[0] - a[0]) * toR, dLng = (b[1] - a[1]) * toR;
     var h = Math.pow(Math.sin(dLat / 2), 2) + Math.cos(a[0] * toR) * Math.cos(b[0] * toR) * Math.pow(Math.sin(dLng / 2), 2);
@@ -1430,11 +1446,12 @@ td.top { background: color-mix(in srgb, var(--mark) 35%, transparent); font-weig
   function sortedCands(items) {
     return items.slice().sort(function (a, b) { return (a.order || 0) - (b.order || 0) || (a.createdAt || 0) - (b.createdAt || 0); });
   }
-  function setMapNotice(msg) { var b = $("map-blocked"); b.hidden = !msg; $("map-blocked-text").textContent = msg || ""; }
+  var noticeKind = "";
+  function setMapNotice(msg, kind) { var b = $("map-blocked"); b.hidden = !msg; $("map-blocked-text").textContent = msg || ""; noticeKind = msg ? (kind || "") : ""; }
   function setProvider(text) { $("map-provider").textContent = text; }
   function loadView() { try { return JSON.parse(localStorage.getItem("imjang.mapview") || "null") || { lat: 37.5665, lng: 126.978, z: 11 }; } catch (e) { return { lat: 37.5665, lng: 126.978, z: 11 }; } }
   function saveView() { if (!backend) return; try { localStorage.setItem("imjang.mapview", JSON.stringify(backend.getView())); } catch (e) {} }
-  function mapClicked(lat, lng) { startPin(lat, lng, "", ""); }
+  function mapClicked(lat, lng) { startPin(lat, lng, "", "", null); }
   function pinHtml(n, status) { return '<div class="pin ' + (STATUS_CLASS[status] || "s-cand") + '">' + n + '</div>'; }
 
   // --- backend 1: OpenStreetMap (Leaflet). 키가 없을 때의 기본 지도.
@@ -1444,9 +1461,9 @@ td.top { background: color-mix(in srgb, var(--mark) 35%, transparent); font-weig
       var self = this;
       this.map = L.map(el).setView([view.lat, view.lng], view.z);
       var tiles = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "&copy; OpenStreetMap contributors" }).addTo(this.map);
-      tiles.on("tileload", function () { self.tilesOk = true; setMapNotice(""); });
+      tiles.on("tileload", function () { self.tilesOk = true; if (noticeKind === "tiles") setMapNotice(""); });
       tiles.on("tileerror", function () {
-        if (!self.tilesOk) setMapNotice("이 화면에서는 지도 타일이 차단되어 지도가 보이지 않습니다. https://jihye0.github.io/jipteo/ 에서 열면 지도가 나타납니다. 핀 목록과 카카오맵 링크는 여기서도 동작합니다.");
+        if (!self.tilesOk && !noticeKind) setMapNotice("이 화면에서는 지도 타일이 차단되어 지도가 보이지 않습니다. https://jihye0.github.io/jipteo/ 에서 열면 지도가 나타납니다. 핀 목록과 카카오맵 링크는 여기서도 동작합니다.", "tiles");
       });
       this.map.on("moveend", saveView);
       this.map.on("click", function (e) { mapClicked(e.latlng.lat, e.latlng.lng); });
@@ -1522,11 +1539,11 @@ td.top { background: color-mix(in srgb, var(--mark) 35%, transparent); font-weig
         var ps = new kakao.maps.services.Places();
         ps.keywordSearch(q, function (data, status) {
           if (status === kakao.maps.services.Status.OK) {
-            return resolve(data.slice(0, 8).map(function (d) { return { name: d.place_name, area: shortAddr(d.address_name), lat: Number(d.y), lng: Number(d.x), detail: d.road_address_name || d.address_name }; }));
+            return resolve(data.slice(0, 8).map(function (d) { return { name: d.place_name, area: shortAddr(d.address_name), lat: Number(d.y), lng: Number(d.x), detail: d.road_address_name || d.address_name, addr: parseJibunAddr(d.address_name) }; }));
           }
           if (status === kakao.maps.services.Status.ZERO_RESULT) {
             new kakao.maps.services.Geocoder().addressSearch(q, function (rows, st) {
-              if (st === kakao.maps.services.Status.OK) resolve(rows.slice(0, 8).map(function (d) { return { name: d.address_name, area: shortAddr(d.address_name), lat: Number(d.y), lng: Number(d.x), detail: d.road_address ? d.road_address.address_name : "" }; }));
+              if (st === kakao.maps.services.Status.OK) resolve(rows.slice(0, 8).map(function (d) { return { name: d.address_name, area: shortAddr(d.address_name), lat: Number(d.y), lng: Number(d.x), detail: d.road_address ? d.road_address.address_name : "", addr: parseJibunAddr(d.address_name) }; }));
               else resolve([]);
             });
             return;
@@ -1542,12 +1559,22 @@ td.top { background: color-mix(in srgb, var(--mark) 35%, transparent); font-weig
       if (window.kakao && window.kakao.maps && window.kakao.maps.Map) return resolve();
       var done = false, s = document.createElement("script");
       s.src = "https://dapi.kakao.com/v2/maps/sdk.js?appkey=" + encodeURIComponent(key) + "&autoload=false&libraries=services";
+      var onErr = function (ev) { if (ev && ev.message && /kakao/i.test(ev.message + (ev.filename || ""))) { done = true; reject(ev.message); } };
+      window.addEventListener("error", onErr);
       s.onload = function () {
         if (window.kakao && window.kakao.maps && typeof window.kakao.maps.load === "function") {
           window.kakao.maps.load(function () { done = true; if (window.kakao.maps.Map) resolve(); else reject("키 또는 사이트 도메인 설정을 확인해 주세요"); });
         } else { done = true; reject("SDK가 초기화되지 않았습니다. JavaScript 키가 맞는지, 플랫폼 Web 도메인과 카카오맵 사용 설정이 켜져 있는지 확인해 주세요"); }
       };
-      s.onerror = function () { done = true; reject("SDK 스크립트를 불러오지 못했습니다 (차단 또는 네트워크 오류)"); };
+      s.onerror = function () {
+        done = true;
+        fetch(s.src).then(function (r) { return r.text(); }).then(function (body) {
+          var m = /"message"\s*:\s*"([^"]+)"/.exec(body || "");
+          var msg = m ? m[1] : "";
+          if (/domain mismatched/i.test(msg)) msg = "등록되지 않은 도메인입니다 (" + location.origin + "). 카카오 개발자 사이트 > 플랫폼 > Web 사이트 도메인에 이 주소를 등록해 주세요";
+          reject(msg || "SDK 스크립트를 불러오지 못했습니다 (키 오류, 도메인 미등록, 또는 네트워크 차단)");
+        }).catch(function () { reject("SDK 스크립트를 불러오지 못했습니다 (키 오류, 도메인 미등록, 또는 네트워크 차단)"); });
+      };
       document.head.appendChild(s);
       setTimeout(function () { if (!done) reject("응답 시간 초과"); }, 8000);
     });
@@ -1557,7 +1584,7 @@ td.top { background: color-mix(in srgb, var(--mark) 35%, transparent); font-weig
     backend = b;
     $("map").innerHTML = "";
     b.init($("map"), loadView());
-    setProvider(b.name === "kakao" ? "카카오맵 사용 중" : "OpenStreetMap 사용 중" + (getKakaoKey() ? " (카카오맵 로드 실패)" : ""));
+    setProvider(b.name === "kakao" ? "카카오맵 사용 중" : "OpenStreetMap 사용 중" + (kakaoFailWhy ? " · 카카오맵 실패: " + kakaoFailWhy : ""));
     paintPins(cstore.items);
   }
   function initMap() {
@@ -1567,7 +1594,8 @@ td.top { background: color-mix(in srgb, var(--mark) 35%, transparent); font-weig
     if (key) {
       setProvider("카카오맵 불러오는 중");
       loadKakao(key).then(function () { startBackend(kakaoBackend); }, function (why) {
-        setMapNotice("카카오맵을 불러오지 못했습니다: " + why + ". OpenStreetMap으로 대신 표시합니다.");
+        kakaoFailWhy = String(why);
+        setMapNotice("카카오맵을 불러오지 못했습니다: " + why + ". OpenStreetMap으로 대신 표시합니다. 카카오 개발자 사이트에서 플랫폼 Web 도메인(" + location.origin + ")과 카카오맵 사용 설정을 확인해 주세요.", "kakao");
         startOsm();
       });
     } else startOsm();
@@ -1632,6 +1660,11 @@ td.top { background: color-mix(in srgb, var(--mark) 35%, transparent); font-weig
       var chips = "";
       if (visited) chips += '<span class="chip good">임장 기록 있음</span>';
       if (num(c.price) != null) chips += '<span class="chip">호가 ' + fmtEok(num(c.price)) + '</span>';
+      if (num(c.units) != null) chips += '<span class="chip">' + Number(c.units).toLocaleString("ko-KR") + '세대</span>';
+      if (num(c.buildings) != null) chips += '<span class="chip">' + c.buildings + '개동</span>';
+      if (num(c.year) != null) chips += '<span class="chip">' + c.year + '년 준공</span>';
+      if (c.sizes) chips += '<span class="chip">' + esc(c.sizes) + '</span>';
+      if (c.redev) chips += '<span class="chip mark">' + esc(c.redev) + '</span>';
       return '<article class="card pin-card" data-id="' + esc(c.id) + '">' +
         '<div class="card-head"><div class="pin-title"><span class="pin ' + cls + '">' + (i + 1) + '</span><div><h3>' + esc(c.name) + '</h3><p class="muted small">' + esc(c.area || "") + '</p></div></div>' +
         '<select class="status-sel" data-status="' + esc(c.id) + '" aria-label="상태">' + opts + '</select></div>' +
@@ -1665,7 +1698,7 @@ td.top { background: color-mix(in srgb, var(--mark) 35%, transparent); font-weig
     else if (act === "down" && idx < list.length - 1) { var u = list[idx]; list[idx] = list[idx + 1]; list[idx + 1] = u; saveOrder(list); }
     else if (act === "visit") {
       var c = list[idx];
-      showView("visits"); openEditor(null, { name: c.name, area: c.area, price: c.price, candidateId: c.id });
+      showView("visits"); openEditor(null, { name: c.name, area: c.area, price: c.price, year: c.year, units: c.units, candidateId: c.id });
     }
     else if (act === "edit") { pinEditing = list[idx]; pinPending = { lat: pinEditing.lat, lng: pinEditing.lng }; openPinForm(pinEditing, "핀 편집"); }
     else if (act === "delete") { pinDelete = id; renderPins(cstore.items); }
@@ -1678,16 +1711,153 @@ td.top { background: color-mix(in srgb, var(--mark) 35%, transparent); font-weig
     cstore.save(Object.assign({}, c, { status: sel.value })).catch(function () { renderPins(cstore.items); });
   });
 
+  // ---------- 단지 데이터 (한국부동산원 공시대상 공동주택, 아파트 46,981단지) ----------
+  var APT_SIDO = {
+    "서울": "seoul", "서울시": "seoul", "서울특별시": "seoul", "부산": "busan", "부산시": "busan", "부산광역시": "busan",
+    "대구": "daegu", "대구시": "daegu", "대구광역시": "daegu", "인천": "incheon", "인천시": "incheon", "인천광역시": "incheon",
+    "광주": "gwangju", "광주시": "gwangju", "광주광역시": "gwangju", "대전": "daejeon", "대전시": "daejeon", "대전광역시": "daejeon",
+    "울산": "ulsan", "울산시": "ulsan", "울산광역시": "ulsan", "세종": "sejong", "세종시": "sejong", "세종특별자치시": "sejong",
+    "경기": "gyeonggi", "경기도": "gyeonggi", "강원": "gangwon", "강원도": "gangwon", "강원특별자치도": "gangwon",
+    "충북": "chungbuk", "충청북도": "chungbuk", "충남": "chungnam", "충청남도": "chungnam",
+    "전북": "jeonbuk", "전라북도": "jeonbuk", "전북특별자치도": "jeonbuk", "전남": "jeonnam", "전라남도": "jeonnam",
+    "경북": "gyeongbuk", "경상북도": "gyeongbuk", "경남": "gyeongnam", "경상남도": "gyeongnam", "제주": "jeju", "제주도": "jeju", "제주특별자치도": "jeju"
+  };
+  var aptCache = {};
+  function aptLoad(code) {
+    if (!code) return Promise.reject("sido");
+    if (aptCache[code]) return Promise.resolve(aptCache[code]);
+    return fetch("data/apt-" + code + ".json").then(function (r) { if (!r.ok) throw new Error("http " + r.status); return r.json(); })
+      .then(function (rows) { aptCache[code] = rows; return rows; });
+  }
+  // 지번 주소 "경기 성남시 분당구 서현동 83" -> { code, dongKey, jibun }
+  function parseJibunAddr(a) {
+    var t = String(a || "").trim().split(/\s+/); if (t.length < 2) return null;
+    var code = APT_SIDO[t[0]]; if (!code) return null;
+    var jibun = /^(산)?\d+(-\d+)?$/.test(t[t.length - 1]) ? t[t.length - 1] : "";
+    var mid = t.slice(1, jibun ? -1 : undefined);
+    // 데이터는 "성남시 분당구"를 "성남분당구"로 적는다
+    if (mid.length >= 2 && /시$/.test(mid[0]) && /구$/.test(mid[1])) mid = [mid[0].slice(0, -1) + mid[1]].concat(mid.slice(2));
+    return { code: code, dongKey: mid.join(" "), jibun: jibun, loose: false };
+  }
+  // Nominatim display_name "서현동, 분당구, 성남시, 경기도, 13591, 대한민국" -> { code, dongKey(동 이름만), loose }
+  function parseNominatimAddr(displayName) {
+    var parts = String(displayName || "").split(",").map(function (s) { return s.trim(); });
+    var code = null, dong = "";
+    parts.forEach(function (p) { if (!code && APT_SIDO[p]) code = APT_SIDO[p]; });
+    for (var i = 0; i < parts.length; i++) { if (/(동|읍|면|리|가)$/.test(parts[i]) && !/\d/.test(parts[i]) && parts[i].length <= 6) { dong = parts[i]; break; } }
+    return code ? { code: code, dongKey: dong, jibun: "", loose: true } : null;
+  }
+  function normName(s) { return String(s || "").toLowerCase().replace(/\(.*?\)/g, "").replace(/아파트|apt|단지|\s+/g, ""); }
+  function inDong(row, addr) {
+    if (!addr || !addr.dongKey) return true;
+    if (addr.loose) return row[1] === addr.dongKey || row[1].slice(-addr.dongKey.length - 1) === " " + addr.dongKey;
+    return row[1] === addr.dongKey;
+  }
+  function aptMatch(rows, addr, name) {
+    var out = { exact: null, list: [] };
+    var same = rows.filter(function (r) { return inDong(r, addr); });
+    if (addr && addr.jibun && !addr.loose) {
+      var j = same.filter(function (r) { return r[2] === addr.jibun; });
+      if (j.length === 1) { out.exact = j[0]; return out; }
+      if (j.length > 1) { out.list = j; }
+    }
+    var q = normName(name);
+    if (q) {
+      var scored = (same.length ? same : rows).map(function (r) {
+        var n = normName(r[0]), s = 0;
+        if (n === q) s = 100; else if (n.indexOf(q) >= 0 || q.indexOf(n) >= 0) s = 60 + Math.min(n.length, q.length);
+        else { var hit = 0; q.replace(/[\uac00-\ud7a3a-z0-9]{2}/g, function (bg) { if (n.indexOf(bg) >= 0) hit++; return bg; }); s = hit * 4; }
+        return { r: r, s: s };
+      }).filter(function (x) { return x.s >= 8; }).sort(function (a, b) { return b.s - a.s || b.r[3] - a.r[3]; });
+      if (scored.length && scored[0].s >= 100 && (scored.length === 1 || scored[1].s < 100)) { out.exact = scored[0].r; return out; }
+      if (!out.list.length) out.list = scored.slice(0, 8).map(function (x) { return x.r; });
+    }
+    if (!out.list.length && same.length && same.length <= 12) out.list = same.slice().sort(function (a, b) { return b[3] - a[3]; });
+    return out;
+  }
+  function aptFill(row) {
+    $("pf-units").value = row[3] || ""; $("pf-bld").value = row[4] || ""; $("pf-year").value = row[5] || "";
+    if (!$("pf-name").value.trim()) $("pf-name").value = row[0];
+    $("pf-aptstatus").textContent = "공공데이터 일치: " + row[0] + " · " + row[3].toLocaleString("ko-KR") + "세대 · " + (row[5] || "?") + "년 사용승인" + (row[7] ? " · " + row[7] : "");
+    $("pf-aptresults").hidden = true;
+  }
+  function aptShowList(list, label) {
+    var box = $("pf-aptresults");
+    if (!list.length) { box.hidden = true; return; }
+    box.hidden = false;
+    box.innerHTML = list.map(function (r, i) {
+      return '<button type="button" data-apt="' + i + '"><b>' + esc(r[0]) + '</b> <span class="muted small">' + esc(r[1]) + " " + esc(r[2]) + " · " + r[3].toLocaleString("ko-KR") + "세대 · " + (r[5] || "?") + "년</span></button>";
+    }).join("");
+    box.onclick = function (ev) { var b = ev.target.closest("button[data-apt]"); if (!b) return; aptFill(list[Number(b.dataset.apt)]); };
+    $("pf-aptstatus").textContent = label || "일치하는 단지를 골라 주세요.";
+  }
+  var pinAddr = null; // 현재 핀의 주소 정보
+  function aptAutoFill(addr, name) {
+    pinAddr = addr || pinAddr;
+    if (!pinAddr) { $("pf-aptstatus").textContent = "주소를 알 수 없어 자동 검색을 못 했습니다. 단지명으로 찾아 주세요."; return; }
+    $("pf-aptstatus").textContent = "공공데이터에서 단지를 찾는 중";
+    aptLoad(pinAddr.code).then(function (rows) {
+      var m = aptMatch(rows, pinAddr, name);
+      if (m.exact) aptFill(m.exact);
+      else if (m.list.length) aptShowList(m.list, "비슷한 단지입니다. 맞는 것을 골라 주세요.");
+      else if (!normName(name)) $("pf-aptstatus").textContent = "단지명을 적고 '찾기'를 누르면 이 동네 아파트에서 세대수·준공년도를 찾아 줍니다.";
+      else $("pf-aptstatus").textContent = "공공데이터에 일치하는 단지가 없습니다 (2025년 이후 신축이거나 아파트가 아닐 수 있음). 아래에 직접 적어 주세요.";
+    }).catch(function () { $("pf-aptstatus").textContent = "단지 데이터를 불러오지 못했습니다. 아래에 직접 적어 주세요."; });
+  }
+  $("pf-aptsearch").addEventListener("click", function () {
+    var q = $("pf-aptq").value.trim() || $("pf-name").value.trim();
+    if (!q) { $("pf-aptstatus").textContent = "찾을 단지명을 적어 주세요."; return; }
+    if (!pinAddr) { $("pf-aptstatus").textContent = "어느 시도인지 알 수 없습니다. 지도에서 검색해 핀을 찍으면 자동으로 정해집니다."; return; }
+    aptLoad(pinAddr.code).then(function (rows) {
+      var m = aptMatch(rows, pinAddr, q);
+      var list = m.exact ? [m.exact] : m.list;
+      if (!list.length) { // 동 범위에서 못 찾으면 시도 전체에서
+        m = aptMatch(rows, { code: pinAddr.code, dongKey: "", jibun: "", loose: true }, q); list = m.exact ? [m.exact] : m.list;
+      }
+      if (list.length) aptShowList(list, list.length === 1 ? "하나 찾았습니다. 눌러서 채워 넣으세요." : "맞는 단지를 골라 주세요."); else $("pf-aptstatus").textContent = "찾지 못했습니다. 다른 이름으로 다시 찾거나 직접 적어 주세요.";
+    }).catch(function () { $("pf-aptstatus").textContent = "단지 데이터를 불러오지 못했습니다."; });
+  });
+  // 지도 클릭처럼 주소가 없는 핀: 좌표로 주소를 알아낸다
+  function resolveAddress(lat, lng) {
+    if (backend && backend.name === "kakao") {
+      return new Promise(function (resolve) {
+        new kakao.maps.services.Geocoder().coord2Address(lng, lat, function (res, status) {
+          if (status === kakao.maps.services.Status.OK && res[0] && res[0].address) resolve({ addr: parseJibunAddr(res[0].address.address_name), area: shortKakaoAddr(res[0].address.address_name) });
+          else resolve(null);
+        });
+      });
+    }
+    return fetch("https://nominatim.openstreetmap.org/reverse?format=jsonv2&accept-language=ko&lat=" + lat + "&lon=" + lng)
+      .then(function (r) { return r.json(); })
+      .then(function (d) { return d && d.display_name ? { addr: parseNominatimAddr(d.display_name), area: shortArea(d.display_name) } : null; })
+      .catch(function () { return null; });
+  }
+  function shortKakaoAddr(a) { var t = String(a || "").split(" "), out = []; for (var i = 0; i < t.length; i++) { if (/\d/.test(t[i])) break; out.push(t[i]); } return out.slice(0, 4).join(" "); }
+
   // 핀 입력창
-  function startPin(lat, lng, name, area) {
-    pinEditing = null; pinPending = { lat: lat, lng: lng };
+  function startPin(lat, lng, name, area, addr) {
+    pinEditing = null; pinPending = { lat: lat, lng: lng }; pinAddr = addr || null;
     if (backend) backend.setTemp(lat, lng);
     openPinForm({ name: name, area: area, status: "후보", memo: "", price: "" }, "새 핀");
+    if (addr) aptAutoFill(addr, name);
+    else {
+      $("pf-aptstatus").textContent = "주소를 확인하는 중";
+      var mine = pinPending;
+      resolveAddress(lat, lng).then(function (res) {
+        if (pinPending !== mine) return;
+        if (res && res.area && !$("pf-area").value.trim()) $("pf-area").value = res.area;
+        aptAutoFill(res && res.addr, $("pf-name").value.trim());
+      });
+    }
   }
   function openPinForm(c, title) {
     $("pin-form-title").textContent = title;
     $("pf-name").value = c.name || ""; $("pf-area").value = c.area || ""; $("pf-status").value = c.status || "후보";
     $("pf-price").value = c.price != null ? c.price : ""; $("pf-memo").value = c.memo || "";
+    $("pf-units").value = c.units != null ? c.units : ""; $("pf-bld").value = c.buildings != null ? c.buildings : "";
+    $("pf-year").value = c.year != null ? c.year : ""; $("pf-sizes").value = c.sizes || ""; $("pf-redev").value = c.redev || "";
+    $("pf-aptq").value = ""; $("pf-aptresults").hidden = true; $("pf-aptstatus").textContent = "";
+    if (c.id && c.addr) pinAddr = c.addr;
     $("pf-coords").textContent = "위치 " + pinPending.lat.toFixed(5) + ", " + pinPending.lng.toFixed(5) + (pinEditing ? "" : " · 다른 자리를 클릭하면 위치가 바뀝니다");
     $("pin-status").textContent = ""; $("pin-status").className = "status";
     $("pin-form").hidden = false; $("pin-form").scrollIntoView({ block: "nearest" }); $("pf-name").focus();
@@ -1705,10 +1875,12 @@ td.top { background: color-mix(in srgb, var(--mark) 35%, transparent); font-weig
     var rec = {
       id: pinEditing ? pinEditing.id : uid(), name: name, area: $("pf-area").value.trim(), status: $("pf-status").value,
       memo: $("pf-memo").value.trim(), price: num($("pf-price").value), lat: pinPending.lat, lng: pinPending.lng,
+      units: num($("pf-units").value), buildings: num($("pf-bld").value), year: num($("pf-year").value),
+      sizes: $("pf-sizes").value.trim(), redev: $("pf-redev").value.trim(), addr: pinAddr || null,
       order: pinEditing ? (pinEditing.order || 0) : cstore.items.length,
       createdAt: pinEditing && pinEditing.createdAt || Date.now(), updatedAt: Date.now()
     };
-    if (rec.price === null) delete rec.price;
+    ["price", "units", "buildings", "year", "addr"].forEach(function (k) { if (rec[k] === null) delete rec[k]; });
     var btn = $("pf-save"); btn.disabled = true;
     cstore.save(rec).then(function () { btn.disabled = false; closePinForm(); })
       .catch(function () { btn.disabled = false; $("pin-status").textContent = "저장하지 못했습니다. 다시 시도해 주세요."; $("pin-status").className = "status err"; });
@@ -1724,7 +1896,7 @@ td.top { background: color-mix(in srgb, var(--mark) 35%, transparent); font-weig
   function searchNominatim(q) {
     return fetch("https://nominatim.openstreetmap.org/search?format=jsonv2&limit=6&countrycodes=kr&accept-language=ko&q=" + encodeURIComponent(q))
       .then(function (r) { return r.json(); })
-      .then(function (rows) { return rows.map(function (r) { return { name: r.name || r.display_name.split(",")[0], area: shortArea(r.display_name), lat: Number(r.lat), lng: Number(r.lon), detail: r.display_name }; }); });
+      .then(function (rows) { return rows.map(function (r) { return { name: r.name || r.display_name.split(",")[0], area: shortArea(r.display_name), lat: Number(r.lat), lng: Number(r.lon), detail: r.display_name, addr: parseNominatimAddr(r.display_name) }; }); });
   }
   $("geo-form").addEventListener("submit", function (e) {
     e.preventDefault();
@@ -1740,7 +1912,7 @@ td.top { background: color-mix(in srgb, var(--mark) 35%, transparent); font-weig
         var b = ev.target.closest("button[data-i]"); if (!b) return;
         var r = rows[Number(b.dataset.i)];
         if (backend) backend.flyTo(r.lat, r.lng, true);
-        startPin(r.lat, r.lng, r.name, r.area);
+        startPin(r.lat, r.lng, r.name, r.area, r.addr || null);
         box.hidden = true;
       };
     }).catch(function (why) {
@@ -1752,5 +1924,14 @@ td.top { background: color-mix(in srgb, var(--mark) 35%, transparent); font-weig
   store.onChange(function (visits) { renderList(visits); renderCompare(visits); renderPins(cstore.items); });
   cstore.onChange(function (cands) { renderPins(cands); });
   initStore();
+  // 첫 화면: 주소의 #탭 이름 > 마지막으로 보던 탭 > 준비 (모든 정의가 끝난 뒤에 연다)
+  (function () {
+    var h = (location.hash || "").replace("#", "");
+    var remembered = null; try { remembered = localStorage.getItem("imjang.view"); } catch (e) {}
+    showView(VIEWS.indexOf(h) >= 0 ? h : (remembered || "prep"));
+  })();
 })();
 </script>
+
+</body>
+</html>

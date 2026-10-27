@@ -274,7 +274,7 @@ window.JT = (function () {
     q = String(q || "").trim(); if (!q) return Promise.resolve([]);
     return loadKakao().then(function () {
       return new Promise(function (resolve) {
-        var opt = bias ? { location: new kakao.maps.LatLng(bias.lat, bias.lng), radius: bias.radius || 20000 } : undefined;
+        var opt = bias ? { location: new kakao.maps.LatLng(bias.lat, bias.lng), radius: Math.min(20000, bias.radius || 20000) } : undefined; // 카카오 반경 상한 20km
         new kakao.maps.services.Places().keywordSearch(q, function (data, status) {
           if (status === kakao.maps.services.Status.OK) return resolve(data.slice(0, 8).map(function (d) { return { name: d.place_name, area: shortKakaoAddr(d.address_name), lat: Number(d.y), lng: Number(d.x), detail: d.road_address_name || d.address_name, addr: parseJibunAddr(d.address_name) }; }));
           new kakao.maps.services.Geocoder().addressSearch(q, function (rows, st) {
@@ -341,8 +341,9 @@ window.JT = (function () {
     function next() {
       if (i >= names.length) return Promise.resolve({ stops: out, miss: miss });
       var n = names[i++];
-      return placeSearch(n, { lat: 37.4, lng: 127.05, radius: 80000 }).then(function (list) {
-        if (list[0]) out.push({ n: n, lat: list[0].lat, lng: list[0].lng }); else miss.push(n);
+      return placeSearch(n).then(function (list) {
+        var hit = list.find(function (d) { return d.addr && ["seoul", "gyeonggi", "incheon"].indexOf(d.addr.code) >= 0; }) || null; // 수도권 결과만
+        if (hit) out.push({ n: n, lat: hit.lat, lng: hit.lng }); else miss.push(n);
         if (onProgress) onProgress(i, names.length);
         return new Promise(function (r) { setTimeout(r, 60); }).then(next);
       });

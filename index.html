@@ -175,7 +175,7 @@
     var inp = readInputs();
     if (!inp.cash && !inp.income) { $("r-price").textContent = "–"; $("r-sub").textContent = "현금과 소득을 입력하면 계산됩니다."; $("r-stats").innerHTML = ""; $("r-binding").hidden = true; $("r-policy").innerHTML = ""; last = null; return; }
     var r = J.budget(inp); last = { inputs: inp, result: r };
-    if (r.price) J.lsSet("imjang.budget", { price: r.price, loan: r.loan.loan, region: inp.region, asOf: Date.now() });
+    if (r.price) J.lsSet("imjang.budget", { price: r.price, loan: r.loan.loan, binding: r.loan.binding, region: inp.region, asOf: Date.now() });
     var price = r.price, loan = r.loan.loan, cost = r.costs.total, total = price + cost;
     $("r-price").textContent = J.fmtEok(price, 1);
     $("r-sub").textContent = price ? "현금 " + J.fmtEok(r.cashUsed) + " + 대출 " + J.fmtEok(loan) + " = 집값 " + J.fmtEok(price) + " + 부대비용 " + J.fmtEok(cost) : "이 조건으로는 부대비용을 빼면 살 수 있는 집이 없습니다. 현금이나 소득을 확인해 주세요.";
@@ -204,7 +204,7 @@
   FIELDS.forEach(function (k) { $(k).addEventListener("input", recalc); $(k).addEventListener("change", recalc); });
   CHECKS.forEach(function (k) { $(k).addEventListener("change", recalc); });
   $("go-find").addEventListener("click", function () {
-    if (last && last.result.price) J.lsSet("imjang.budget", { price: last.result.price, loan: last.result.loan.loan, region: last.inputs.region, asOf: Date.now() });
+    if (last && last.result.price) J.lsSet("imjang.budget", { price: last.result.price, loan: last.result.loan.loan, binding: last.result.loan.binding, region: last.inputs.region, asOf: Date.now() });
     location.href = "find.html";
   });
   restore(); recalc();

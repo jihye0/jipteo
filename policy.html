@@ -211,7 +211,7 @@
   }).join("") + "</tbody>";
 
   // 중개보수 표
-  var br = [[30000, "5천만~2억"], [60000, "2억~9억"], [100000, "9억~12억"], [130000, "12억~15억"], [200000, "15억 이상"]];
+  var br = [[10000, "5천만~2억"], [60000, "2억~9억"], [100000, "9억~12억"], [130000, "12억~15억"], [200000, "15억 이상"]];
   $("broker-table").innerHTML = '<thead><tr><th>집값</th><th class="n">상한 요율</th><th class="n">예시</th></tr></thead><tbody>' + br.map(function (x) {
     var f = J.brokerFee(x[0]);
     return "<tr><td>" + x[1] + '</td><td class="n">' + (f.rate * 100).toFixed(1) + '%</td><td class="n">' + J.fmtEok(x[0]) + " 집 → " + J.fmtMan(Math.round(f.fee)) + " + 부가세</td></tr>";

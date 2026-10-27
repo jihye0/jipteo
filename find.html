@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>집터 · 후보 찾기</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
-<link rel="stylesheet" href="assets/style.css?v=20261027f">
+<link rel="stylesheet" href="assets/style.css?v=20261027g">
 </head>
 <body>
 <header class="topbar"><div class="topbar-inner"></div></header>
@@ -81,7 +81,7 @@
 
   <details class="card quiet" id="commute-card">
     <summary><b>출퇴근 기준</b> · <span id="commute-summary"></span></summary>
-    <p class="small muted">두 사람의 직장을 넣으면 단지마다 직선거리와 대략의 대중교통 시간이 붙습니다. 시간은 어림값이니 정확한 값은 칩을 눌러 카카오맵 길찾기로 확인하세요.</p>
+    <p class="small muted">두 사람의 직장을 넣으면 단지마다 직선거리와 대략의 대중교통 시간이 붙습니다. 회사 셔틀을 타는 사람은 "회사 셔틀 정류장"을 골라 정류장 목록을 붙여 넣으면, 가장 가까운 정류장까지 걷는 거리로 계산합니다. 거리 필터("둘 다 N km 이내")에서 셔틀 쪽은 고른 도보 거리 이내가 조건입니다. 시간은 어림값이니 정확한 값은 칩을 눌러 카카오맵 길찾기로 확인하세요.</p>
     <div id="commute-setup"></div>
   </details>
 
@@ -91,8 +91,8 @@
   <p class="small muted">실거래가·전세: 국토교통부 실거래가 공개시스템, 2025-10-28 ~ 2026-10-27 계약분(해제 거래 제외). 평형별 값은 그 기간 거래가의 <dfn data-t="median">중앙값</dfn>이고, 전세가율은 가장 거래가 많은 평형 기준입니다. 역·초등학교 거리는 카카오 장소 검색 직선거리입니다. 추천순은 출퇴근(30) · 지하철(15) · 전세가율(15) · 세대수(10) · 연식(10) · 예산 여유(10) · 초등학교(5) · 거래 활발(5)을 더한 점수이고, 자료가 없는 항목은 빼고 100점으로 환산합니다. 각 단지 "자세히"에 근거가 나옵니다. 단지 정보: 한국부동산원 공시대상 공동주택(2026-08-31 기준). 거래가 없던 단지는 목록에 나오지 않습니다.</p>
 </main>
 
-<script src="assets/terms.js?v=20261027f"></script>
-<script src="assets/app.js?v=20261027f"></script>
+<script src="assets/terms.js?v=20261027g"></script>
+<script src="assets/app.js?v=20261027g"></script>
 <script>
 window.addEventListener("error", function (e) { var s = document.getElementById("status"); if (s) { s.textContent = "오류가 났습니다. Ctrl+F5(강력 새로고침)로 다시 열어 보세요. " + (e.message || ""); s.className = "status err"; } });
 (function () {
@@ -119,7 +119,7 @@ window.addEventListener("error", function (e) { var s = document.getElementById(
   // 출퇴근 기준
   function commuteSummary() {
     var ps = J.commutePeople();
-    $("commute-summary").textContent = ps.length ? ps.map(function (p) { return p.label + ": " + p.name; }).join(" · ") : "직장을 넣으면 단지마다 거리가 붙습니다";
+    $("commute-summary").textContent = ps.length ? ps.map(function (p) { return p.label + ": " + (J.isShuttle(p) ? "셔틀 정류장 " + p.stops.length + "곳" : p.name); }).join(" · ") : "직장을 넣으면 단지마다 거리가 붙습니다";
     $("maxKm").disabled = !ps.length; $("sort").querySelector('[value="commute"]').disabled = !ps.length;
   }
   J.renderCommuteSetup($("commute-setup"), function () { commuteSummary(); run(); });
@@ -201,7 +201,7 @@ window.addEventListener("error", function (e) { var s = document.getElementById(
       if (!inB.length) return;
       var trades = areas.reduce(function (s, a) { return s + a[1]; }, 0);
       var pos = r[5] || null, cm = pos ? J.commuteFor(pos[0], pos[1], r[2]) : [];
-      if (maxKm && (!pos || cm.some(function (c) { return c.km > maxKm; }))) return;
+      if (maxKm && (!pos || cm.some(function (c) { return c.mode === "shuttle" ? c.m > c.maxWalk : c.km > maxKm; }))) return;
       var kmSum = cm.length ? cm.reduce(function (s, c) { return s + c.km; }, 0) : Infinity;
       var row = { r: r, apt: apt, js: js, units: units, bld: bld, year: year, mixed: mixed, redev: redev, areas: areas, inB: inB, minPrice: Math.min.apply(null, inB.map(function (a) { return a[2]; })), trades: trades, pos: pos, kmSum: kmSum };
       row.score = J.scoreRow(row, { maxp: isFinite(maxp) ? maxp : 0 });

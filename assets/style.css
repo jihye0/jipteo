@@ -294,3 +294,11 @@ table.cmp td { vertical-align: top; white-space: normal; min-width: 9rem; }
 .score-parts li { display: grid; grid-template-columns: 5rem 3.6rem 1fr; gap: 0.5rem; align-items: baseline; }
 .score-parts b { font-variant-numeric: tabular-nums; }
 @media (max-width: 480px) { .score-parts li { grid-template-columns: 5rem 3.6rem; } .score-parts li .muted { grid-column: 1 / -1; } }
+
+/* ---- 셔틀 정류장 ---- */
+.commute-body { display: grid; gap: 0.45rem; }
+.seg.sm button { padding: 0.25rem 0.6rem; font-size: 0.82rem; }
+.commute-row textarea.stops { width: 100%; font-size: 0.85rem; }
+.commute-row .maxwalk { max-width: 12rem; }
+.stop-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--ink); border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,0.25); opacity: 0.85; }
+.leaflet-div-icon { background: transparent; border: 0; }

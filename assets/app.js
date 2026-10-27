@@ -270,16 +270,17 @@ window.JT = (function () {
     return kakaoPromise;
   }
   // 장소·주소 검색: 카카오가 되면 카카오, 아니면 OpenStreetMap(Nominatim)
-  function placeSearch(q) {
+  function placeSearch(q, bias) {
     q = String(q || "").trim(); if (!q) return Promise.resolve([]);
     return loadKakao().then(function () {
       return new Promise(function (resolve) {
+        var opt = bias ? { location: new kakao.maps.LatLng(bias.lat, bias.lng), radius: bias.radius || 20000 } : undefined;
         new kakao.maps.services.Places().keywordSearch(q, function (data, status) {
           if (status === kakao.maps.services.Status.OK) return resolve(data.slice(0, 8).map(function (d) { return { name: d.place_name, area: shortKakaoAddr(d.address_name), lat: Number(d.y), lng: Number(d.x), detail: d.road_address_name || d.address_name, addr: parseJibunAddr(d.address_name) }; }));
           new kakao.maps.services.Geocoder().addressSearch(q, function (rows, st) {
             resolve(st === kakao.maps.services.Status.OK ? rows.slice(0, 8).map(function (d) { return { name: d.address_name, area: shortKakaoAddr(d.address_name), lat: Number(d.y), lng: Number(d.x), detail: d.road_address ? d.road_address.address_name : "", addr: parseJibunAddr(d.address_name) }; }) : []);
           });
-        });
+        }, opt);
       });
     }, function () {
       return fetch("https://nominatim.openstreetmap.org/search?format=jsonv2&limit=8&countrycodes=kr&accept-language=ko&q=" + encodeURIComponent(q)).then(function (r) { return r.json(); })
@@ -303,34 +304,96 @@ window.JT = (function () {
   function kakaoRouteUrl(fromName, fromLat, fromLng, toName, toLat, toLng) {
     return "https://map.kakao.com/link/from/" + encodeURIComponent(fromName) + "," + fromLat + "," + fromLng + "/to/" + encodeURIComponent(toName) + "," + toLat + "," + toLng;
   }
-  function commutePeople() { return getCommute().people.filter(function (p) { return p.lat != null && p.lng != null; }); }
-  // 단지 좌표 -> [{label, km, min, url}] (직장이 설정된 사람만)
+  // 사람: { label, mode: "point"|"shuttle", name, lat, lng, stops: [{ n, lat, lng }], maxWalk(m) }
+  function isShuttle(p) { return p.mode === "shuttle"; }
+  function personReady(p) { return isShuttle(p) ? !!(p.stops && p.stops.length) : (p.lat != null && p.lng != null); }
+  function commutePeople() { return getCommute().people.filter(personReady); }
+  function nearestStop(p, lat, lng) {
+    var best = null;
+    (p.stops || []).forEach(function (s) { var m = haversineKm(lat, lng, s.lat, s.lng) * 1000; if (!best || m < best.m) best = { n: s.n, lat: s.lat, lng: s.lng, m: Math.round(m) }; });
+    return best;
+  }
+  // 단지 좌표 -> 사람별 출퇴근 정보. 직장 모드: 직선거리·어림 시간. 셔틀 모드: 가장 가까운 정류장까지 거리·도보 시간
   function commuteFor(lat, lng, fromName) {
     if (lat == null || lng == null) return [];
     return commutePeople().map(function (p) {
+      if (isShuttle(p)) {
+        var s = nearestStop(p, lat, lng), maxWalk = p.maxWalk || 1000;
+        return { label: p.label, mode: "shuttle", stop: s.n, m: s.m, km: s.m / 1000, min: walkMin(s.m), maxWalk: maxWalk, ok: s.m <= maxWalk, url: kakaoRouteUrl(fromName || "집", lat, lng, s.n, s.lat, s.lng) };
+      }
       var km = haversineKm(lat, lng, p.lat, p.lng);
-      return { label: p.label, name: p.name, km: km, min: commuteMinutes(km), url: kakaoRouteUrl(fromName || "집", lat, lng, p.name || p.label + " 직장", p.lat, p.lng) };
+      return { label: p.label, mode: "point", name: p.name, km: km, min: commuteMinutes(km), url: kakaoRouteUrl(fromName || "집", lat, lng, p.name || p.label + " 직장", p.lat, p.lng) };
     });
   }
   function commuteChips(lat, lng, fromName) {
     return commuteFor(lat, lng, fromName).map(function (c) {
+      if (c.mode === "shuttle") {
+        var cs = c.m <= 500 ? " good" : c.m <= 1000 ? "" : c.m <= 1500 ? " warn" : " bad";
+        return '<a class="chip commute' + cs + '" href="' + c.url + '" target="_blank" rel="noopener" title="가장 가까운 셔틀 정류장: ' + esc(c.stop) + ' · 카카오맵 길찾기 열기">' + esc(c.label) + ' 셔틀 ' + esc(c.stop) + ' ' + c.m + 'm · 도보 ' + c.min + '분</a>';
+      }
       var cls = c.km <= 8 ? " good" : c.km <= 15 ? "" : c.km <= 25 ? " warn" : " bad";
       return '<a class="chip commute' + cls + '" href="' + c.url + '" target="_blank" rel="noopener" title="' + esc(c.name || "") + ' · 카카오맵 길찾기 열기">' + esc(c.label) + ' ' + c.km.toFixed(1) + 'km · 약 ' + c.min + '분</a>';
     }).join("");
+  }
+  // 정류장 이름 목록 -> 좌표 (카카오 장소 검색, 수도권 안에서만). onProgress(done, total)
+  function geocodeStops(names, onProgress) {
+    var out = [], miss = [], i = 0;
+    function next() {
+      if (i >= names.length) return Promise.resolve({ stops: out, miss: miss });
+      var n = names[i++];
+      return placeSearch(n, { lat: 37.4, lng: 127.05, radius: 80000 }).then(function (list) {
+        if (list[0]) out.push({ n: n, lat: list[0].lat, lng: list[0].lng }); else miss.push(n);
+        if (onProgress) onProgress(i, names.length);
+        return new Promise(function (r) { setTimeout(r, 60); }).then(next);
+      });
+    }
+    return next();
   }
   // 출퇴근 설정 UI. el 안에 두 사람 입력칸을 그리고, 바뀌면 onChange() 호출
   function renderCommuteSetup(el, onChange) {
     var c = getCommute();
     el.innerHTML = c.people.map(function (p, i) {
+      var sh = isShuttle(p);
       return '<div class="commute-row" data-i="' + i + '">' +
         '<input class="who" value="' + esc(p.label) + '" aria-label="누구" maxlength="6">' +
-        '<div class="search"><input class="where" autocomplete="off" placeholder="직장 이름이나 주소 (예: 판교역, 테헤란로 152)" value="' + esc(p.name) + '"><button type="button" class="btn find">찾기</button>' + (p.lat != null ? '<button type="button" class="btn ghost clear">지우기</button>' : "") + '</div>' +
-        '<div class="geo-results" hidden></div><p class="hint">' + (p.lat != null ? "설정됨 · " + esc(p.name) : "아직 설정되지 않았습니다") + '</p></div>';
+        '<div class="commute-body">' +
+        '<div class="seg sm mode"><button type="button" data-m="point" aria-pressed="' + !sh + '">직장 위치</button><button type="button" data-m="shuttle" aria-pressed="' + sh + '">회사 셔틀 정류장</button></div>' +
+        (sh
+          ? '<textarea class="stops" rows="4" placeholder="정류장 이름을 한 줄에 하나씩 붙여 넣으세요 (예: 잠실역 6번출구)"></textarea>' +
+            '<div class="search"><select class="maxwalk"><option value="500">정류장 도보 500m 이내</option><option value="800">800m 이내</option><option value="1000">1km 이내</option><option value="1500">1.5km 이내</option></select><button type="button" class="btn geocode">정류장 위치 찾기</button>' + (p.stops && p.stops.length ? '<button type="button" class="btn ghost clear">지우기</button>' : "") + '</div>' +
+            '<p class="hint">' + (p.stops && p.stops.length ? "정류장 " + p.stops.length + "곳 저장됨 · 이 브라우저에만 저장되고 어디에도 보내지 않습니다" : "목록을 붙여 넣고 '정류장 위치 찾기'를 누르세요. 이 브라우저에만 저장됩니다") + '</p>' +
+            '<details class="miss" hidden><summary></summary><p class="small muted"></p></details>'
+          : '<div class="search"><input class="where" autocomplete="off" placeholder="직장 이름이나 주소 (예: 판교역, 테헤란로 152)" value="' + esc(p.name) + '"><button type="button" class="btn find">찾기</button>' + (p.lat != null ? '<button type="button" class="btn ghost clear">지우기</button>' : "") + '</div>' +
+            '<div class="geo-results" hidden></div><p class="hint">' + (p.lat != null ? "설정됨 · " + esc(p.name) : "아직 설정되지 않았습니다") + '</p>') +
+        '</div></div>';
     }).join("");
     function save() { setCommute(c); if (onChange) onChange(c); }
     el.querySelectorAll(".commute-row").forEach(function (row) {
-      var i = Number(row.dataset.i), p = c.people[i], who = row.querySelector(".who"), where = row.querySelector(".where"), box = row.querySelector(".geo-results"), hint = row.querySelector(".hint");
+      var i = Number(row.dataset.i), p = c.people[i], who = row.querySelector(".who"), hint = row.querySelector(".hint");
       who.addEventListener("change", function () { p.label = who.value.trim() || (i === 0 ? "나" : "상대"); who.value = p.label; save(); });
+      row.querySelector(".mode").addEventListener("click", function (ev) { var b = ev.target.closest("button[data-m]"); if (!b || b.dataset.m === (p.mode || "point")) return; p.mode = b.dataset.m; save(); renderCommuteSetup(el, onChange); });
+      var clr = row.querySelector(".clear");
+      if (clr) clr.addEventListener("click", function () { p.name = ""; p.lat = null; p.lng = null; p.stops = []; save(); renderCommuteSetup(el, onChange); });
+      if (isShuttle(p)) {
+        var ta = row.querySelector(".stops"), mw = row.querySelector(".maxwalk"), miss = row.querySelector(".miss");
+        mw.value = String(p.maxWalk || 1000);
+        mw.addEventListener("change", function () { p.maxWalk = Number(mw.value); save(); });
+        row.querySelector(".geocode").addEventListener("click", function () {
+          var names = ta.value.split(/\r?\n/).map(function (s) { return s.replace(/^[#■\s]+/, "").trim(); }).filter(function (s) { return s && !/^#/.test(s); });
+          names = names.filter(function (s, k) { return names.indexOf(s) === k; });
+          if (!names.length) { hint.textContent = "정류장 이름을 먼저 붙여 넣으세요."; return; }
+          hint.textContent = "정류장 위치를 찾는 중 0/" + names.length;
+          geocodeStops(names, function (d, t) { hint.textContent = "정류장 위치를 찾는 중 " + d + "/" + t; }).then(function (res) {
+            p.stops = res.stops; save();
+            hint.textContent = "정류장 " + res.stops.length + "곳 저장됨 · 못 찾음 " + res.miss.length + "곳 · 이 브라우저에만 저장됩니다";
+            if (res.miss.length) { miss.hidden = false; miss.querySelector("summary").textContent = "못 찾은 정류장 " + res.miss.length + "곳 보기"; miss.querySelector("p").textContent = res.miss.join(", "); }
+            ta.value = "";
+            setTimeout(function () { renderCommuteSetup(el, onChange); }, 2500);
+          }, function (why) { hint.textContent = "검색을 못 했습니다: " + why + " (카카오맵이 되는 사이트 주소에서 열어 주세요)"; });
+        });
+        return;
+      }
+      var where = row.querySelector(".where"), box = row.querySelector(".geo-results");
       function doSearch() {
         var q = where.value.trim(); if (!q) return;
         hint.textContent = "찾는 중"; box.hidden = true;
@@ -343,7 +406,6 @@ window.JT = (function () {
       }
       row.querySelector(".find").addEventListener("click", doSearch);
       where.addEventListener("keydown", function (ev) { if (ev.key === "Enter") { ev.preventDefault(); doSearch(); } });
-      var clr = row.querySelector(".clear"); if (clr) clr.addEventListener("click", function () { p.name = ""; p.lat = null; p.lng = null; save(); renderCommuteSetup(el, onChange); });
     });
   }
 
@@ -458,9 +520,11 @@ window.JT = (function () {
     function add(label, pts, maxPts, why) { if (pts == null) { parts.push({ label: label, pts: null, max: maxPts, why: why }); return; } pts = Math.round(pts * 10) / 10; parts.push({ label: label, pts: pts, max: maxPts, why: why }); total += pts; max += maxPts; }
     var people = commutePeople();
     if (people.length && x.pos) {
-      var cm = commuteFor(x.pos[0], x.pos[1], r[2]), mean = cm.reduce(function (s, c) { return s + c.km; }, 0) / cm.length, worst = Math.max.apply(null, cm.map(function (c) { return c.km; }));
-      var f = (1 - lin(mean, 5, 25)) * 0.7 + (1 - lin(worst, 8, 30)) * 0.3;
-      add("출퇴근", 30 * f, 30, "두 사람 평균 " + mean.toFixed(1) + "km, 먼 쪽 " + worst.toFixed(1) + "km (5km 이하가 만점)");
+      var cm = commuteFor(x.pos[0], x.pos[1], r[2]);
+      var fs = cm.map(function (c) { return c.mode === "shuttle" ? 1 - lin(c.m, 400, 1500) : 1 - lin(c.km, 5, 25); });
+      var meanF = fs.reduce(function (s, v) { return s + v; }, 0) / fs.length, minF = Math.min.apply(null, fs);
+      var f = meanF * 0.7 + minF * 0.3;
+      add("출퇴근", 30 * f, 30, cm.map(function (c) { return c.label + " " + (c.mode === "shuttle" ? "셔틀 정류장 " + c.m + "m(400m 이하 만점)" : c.km.toFixed(1) + "km(5km 이하 만점)"); }).join(", "));
     } else add("출퇴근", null, 30, people.length ? "단지 좌표가 없어 계산 못 함" : "직장을 넣으면 반영됩니다");
     var near = r[6];
     if (near) {
@@ -517,6 +581,6 @@ window.JT = (function () {
     parseJibunAddr: parseJibunAddr, parseNominatimAddr: parseNominatimAddr, shortArea: shortArea, shortKakaoAddr: shortKakaoAddr, normName: normName, aptMatch: aptMatch, priceMatch: priceMatch, areaLabel: areaLabel, pyeong: pyeong,
     budget: budget, loanFor: loanFor, costsFor: costsFor, acquisitionTax: acquisitionTax, brokerFee: brokerFee, monthlyPayment: monthlyPayment, policyEligibility: policyEligibility, regionOf: regionOf, annuityFactor: annuityFactor,
     expandDongKey: expandDongKey, getKakaoKey: getKakaoKey, loadKakao: loadKakao, placeSearch: placeSearch,
-    getCommute: getCommute, setCommute: setCommute, commutePeople: commutePeople, commuteFor: commuteFor, commuteChips: commuteChips, commuteMinutes: commuteMinutes, haversineKm: haversineKm, kakaoRouteUrl: kakaoRouteUrl, renderCommuteSetup: renderCommuteSetup, termify: termify,
+    getCommute: getCommute, setCommute: setCommute, commutePeople: commutePeople, commuteFor: commuteFor, commuteChips: commuteChips, commuteMinutes: commuteMinutes, haversineKm: haversineKm, kakaoRouteUrl: kakaoRouteUrl, renderCommuteSetup: renderCommuteSetup, nearestStop: nearestStop, isShuttle: isShuttle, termify: termify,
     loadJeonse: loadJeonse, nearChips: nearChips, mainRatio: mainRatio, ratioChip: ratioChip, detailHtml: detailHtml, detailFor: detailFor, walkMin: walkMin, scoreRow: scoreRow, scoreHtml: scoreHtml };
 })();

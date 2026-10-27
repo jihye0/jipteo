@@ -6,7 +6,7 @@
 <title>집터 · 지도·핀</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
-<link rel="stylesheet" href="assets/style.css?v=20261027f">
+<link rel="stylesheet" href="assets/style.css?v=20261027g">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 </head>
 <body>
@@ -80,8 +80,8 @@
   </div>
 </main>
 
-<script src="assets/terms.js?v=20261027f"></script>
-<script src="assets/app.js?v=20261027f"></script>
+<script src="assets/terms.js?v=20261027g"></script>
+<script src="assets/app.js?v=20261027g"></script>
 <script>
 (function () {
   var J = window.JT, $ = J.$, esc = J.esc, num = J.num, fmtEok = J.fmtEok;
@@ -256,6 +256,10 @@
       backend.setMarker(c.id, c.lat, c.lng, pinHtml(orderNo(c), c.status), c.name, function () { focusPin(c.id, false); });
     });
     J.getCommute().people.forEach(function (p, i) {
+      if (J.isShuttle(p)) {
+        (p.stops || []).forEach(function (s, k) { var id = "stop-" + i + "-" + k; seen[id] = true; backend.setMarker(id, s.lat, s.lng, '<div class="stop-dot" title="' + esc(p.label + " 셔틀 · " + s.n) + '"></div>', s.n, function () {}); });
+        return;
+      }
       if (p.lat == null || p.lng == null) return;
       seen["work-" + i] = true;
       backend.setMarker("work-" + i, p.lat, p.lng, '<div class="pin s-work" title="' + esc(p.name) + '">' + esc(p.label) + '</div>', p.name, function () { backend.flyTo(p.lat, p.lng, true); });
@@ -477,7 +481,7 @@
 
   // --- 시작
   cstore.onChange(function (items) { renderPins(items); });
-  function commuteSummary() { var ps = J.commutePeople(); $("commute-summary").textContent = ps.length ? ps.map(function (p) { return p.label + ": " + p.name; }).join(" · ") : "직장을 넣으면 핀마다 거리가 붙습니다"; }
+  function commuteSummary() { var ps = J.commutePeople(); $("commute-summary").textContent = ps.length ? ps.map(function (p) { return p.label + ": " + (J.isShuttle(p) ? "셔틀 정류장 " + p.stops.length + "곳" : p.name); }).join(" · ") : "직장을 넣으면 핀마다 거리가 붙습니다"; }
   J.renderCommuteSetup($("commute-setup"), function () { commuteSummary(); renderPins(cstore.items); });
   commuteSummary();
   vstore.onChange(function () { renderPins(cstore.items); });

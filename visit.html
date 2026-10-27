@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>집터 · 임장</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
-<link rel="stylesheet" href="assets/style.css?v=20261027f">
+<link rel="stylesheet" href="assets/style.css?v=20261027g">
 </head>
 <body>
 <header class="topbar"><div class="topbar-inner"></div></header>
@@ -130,8 +130,8 @@
   </section>
 </main>
 
-<script src="assets/terms.js?v=20261027f"></script>
-<script src="assets/app.js?v=20261027f"></script>
+<script src="assets/terms.js?v=20261027g"></script>
+<script src="assets/app.js?v=20261027g"></script>
 <script>
 (function () {
   var J = window.JT, $ = J.$, esc = J.esc, num = J.num, fmtEok = J.fmtEok;
@@ -206,7 +206,7 @@
     var rows = list.map(function (r, i) {
       var p = num(r.price), j = num(r.jeonse), ratio = jeonseRatio(r);
       return '<tr' + (i === 0 ? ' class="best"' : "") + '><td><b>' + esc(r.name) + '</b></td><td>' + esc(r.area || "") + '</td><td>' + esc(r.date || "") + '</td><td class="n">' + fmtEok(p) + '</td><td class="n">' + fmtEok(j) + '</td><td class="n">' + (ratio != null ? Math.round(ratio * 100) + "%" : "–") + '</td><td class="n">' + (p != null && j != null ? fmtEok(p - j) : "–") + '</td>' +
-        (function () { var cm = commuteOf(r); return people.map(function (_, k) { return '<td class="n">' + (cm[k] ? cm[k].km.toFixed(1) + "km · " + cm[k].min + "분" : "–") + '</td>'; }).join(""); })() +
+        (function () { var cm = commuteOf(r); return people.map(function (_, k) { return '<td class="n">' + (cm[k] ? (cm[k].mode === "shuttle" ? "정류장 " + cm[k].m + "m" : cm[k].km.toFixed(1) + "km · " + cm[k].min + "분") : "–") + '</td>'; }).join(""); })() +
         CATS.map(function (c) { var s = Number((r.scores || {})[c.key] || 0); return '<td class="n' + (s && s === best[c.key] && list.length > 1 ? " top" : "") + '">' + (s || "–") + '</td>'; }).join("") + '<td class="n"><b>' + totalScore(r) + '</b></td></tr>';
     }).join("");
     wrap.innerHTML = "<table><thead>" + head + "</thead><tbody>" + rows + "</tbody></table>";

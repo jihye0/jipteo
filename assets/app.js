@@ -329,7 +329,7 @@ window.JT = (function () {
     return commuteFor(lat, lng, fromName).map(function (c) {
       if (c.mode === "shuttle") {
         var cs = c.m <= 500 ? " good" : c.m <= 1000 ? "" : c.m <= 1500 ? " warn" : " bad";
-        return '<a class="chip commute' + cs + '" href="' + c.url + '" target="_blank" rel="noopener" title="가장 가까운 셔틀 정류장: ' + esc(c.stop) + ' · 카카오맵 길찾기 열기">' + esc(c.label) + ' 셔틀 ' + esc(c.stop) + ' ' + c.m + 'm · 도보 ' + c.min + '분</a>';
+        return '<a class="chip commute' + cs + '" href="' + c.url + '" target="_blank" rel="noopener" title="가장 가까운 셔틀 정류장: ' + esc(c.stop) + ' · 카카오맵 길찾기 열기">' + esc(c.label) + ' 셔틀 ' + esc(c.stop) + ' ' + (c.m > 2000 ? (c.m / 1000).toFixed(1) + 'km · 걷기엔 멀어요' : c.m + 'm · 도보 ' + c.min + '분') + '</a>';
       }
       var cls = c.km <= 8 ? " good" : c.km <= 15 ? "" : c.km <= 25 ? " warn" : " bad";
       return '<a class="chip commute' + cls + '" href="' + c.url + '" target="_blank" rel="noopener" title="' + esc(c.name || "") + ' · 카카오맵 길찾기 열기">' + esc(c.label) + ' ' + c.km.toFixed(1) + 'km · 약 ' + c.min + '분</a>';
@@ -525,7 +525,7 @@ window.JT = (function () {
       var fs = cm.map(function (c) { return c.mode === "shuttle" ? 1 - lin(c.m, 400, 1500) : 1 - lin(c.km, 5, 25); });
       var meanF = fs.reduce(function (s, v) { return s + v; }, 0) / fs.length, minF = Math.min.apply(null, fs);
       var f = meanF * 0.7 + minF * 0.3;
-      add("출퇴근", 30 * f, 30, cm.map(function (c) { return c.label + " " + (c.mode === "shuttle" ? "셔틀 정류장 " + c.m + "m(400m 이하 만점)" : c.km.toFixed(1) + "km(5km 이하 만점)"); }).join(", "));
+      add("출퇴근", 30 * f, 30, cm.map(function (c) { return c.label + " " + (c.mode === "shuttle" ? "셔틀 정류장 " + (c.m > 2000 ? (c.m / 1000).toFixed(1) + "km" : c.m + "m") + "(400m 이하 만점)" : c.km.toFixed(1) + "km(5km 이하 만점)"); }).join(", "));
     } else add("출퇴근", null, 30, people.length ? "단지 좌표가 없어 계산 못 함" : "직장을 넣으면 반영됩니다");
     var near = r[6];
     if (near) {

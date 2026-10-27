@@ -14,7 +14,7 @@
   <div class="page-head">
     <span class="eyebrow">Step 1</span>
     <h1>내 예산부터 정하기</h1>
-    <p class="lead">현금과 소득을 넣으면 지금 규정으로 살 수 있는 집값이 나옵니다. 취득세·중개보수까지 뺀 값이고, 결과는 후보 찾기로 이어집니다.</p>
+    <p class="lead">현금과 소득을 넣으면 지금 규정으로 살 수 있는 집값이 나옵니다. <dfn data-t="acq-tax">취득세</dfn>·<dfn data-t="broker-fee">중개보수</dfn>까지 뺀 값이고, 결과는 후보 찾기로 이어집니다.</p>
   </div>
 
   <div class="two-col">
@@ -42,7 +42,7 @@
       <div class="card">
         <h2>나의 상황</h2>
         <div class="grid">
-          <label class="check span-all"><input type="checkbox" id="firstTime" checked> 생애최초 (나와 배우자 모두 집을 가져 본 적이 없음)</label>
+          <label class="check span-all"><input type="checkbox" id="firstTime" checked> <dfn data-t="first-time">생애최초</dfn> (나와 배우자 모두 집을 가져 본 적이 없음)</label>
           <label class="check"><input type="checkbox" id="newlywed"> 신혼부부 (혼인 7년 이내)</label>
           <label class="check"><input type="checkbox" id="dualIncome"> 맞벌이</label>
           <label class="check"><input type="checkbox" id="newborn"> 2년 내 출산·입양</label>
@@ -57,7 +57,7 @@
               <button type="button" data-v="metro" aria-pressed="false">수도권 비규제</button>
               <button type="button" data-v="nonmetro" aria-pressed="false">지방</button>
             </div>
-            <span class="hint">규제지역은 서울 전체와 경기 15곳(과천·광명·분당·수지·동탄 등). 인천과 나머지 경기는 수도권 비규제.</span>
+            <span class="hint"><dfn data-t="regulated">규제지역</dfn>은 서울 전체와 경기 15곳(과천·광명·분당·수지·동탄 등). 인천과 나머지 경기는 수도권 비규제.</span>
           </div>
         </div>
       </div>
@@ -75,7 +75,7 @@
             <select id="term"><option value="20">20년</option><option value="30" selected>30년</option><option value="40">40년 (지방만)</option></select>
           </div>
           <div class="field span-all">
-            <label>금리 유형</label>
+            <label><dfn data-t="rate-type">금리 유형</dfn></label>
             <div class="seg" id="loanType">
               <button type="button" data-v="variable" aria-pressed="true">변동</button>
               <button type="button" data-v="mixed" aria-pressed="false">혼합 (5년 고정)</button>
@@ -83,18 +83,18 @@
               <button type="button" data-v="fixed" aria-pressed="false">순수 고정</button>
             </div>
           </div>
-          <label class="check span-all"><input type="checkbox" id="over85"> 전용 85㎡(34평형) 넘는 집을 볼 예정 (농어촌특별세 0.2% 추가)</label>
+          <label class="check span-all"><input type="checkbox" id="over85"> <dfn data-t="area">전용 85㎡</dfn>(34평형) 넘는 집을 볼 예정 (농어촌특별세 0.2% 추가)</label>
         </div>
       </div>
 
       <details class="card quiet">
-        <summary>용어가 낯설다면</summary>
+        <summary>용어가 낯설다면 (점선 낱말을 누르면 설명, 전체는 <a href="terms.html">용어</a> 페이지)</summary>
         <dl class="kv">
-          <dt>LTV</dt><dd>집값 대비 대출 비율. 규제지역 40%, 생애최초는 70%. 10억 집이면 각각 4억·7억까지.</dd>
-          <dt>DSR</dt><dd>연소득 대비 모든 대출의 연간 원리금 비율. 은행은 40%까지. 연소득 7천만이면 1년에 2,800만원(월 233만원)까지만 갚을 수 있게 빌려줍니다.</dd>
-          <dt>스트레스 DSR</dt><dd>DSR을 계산할 때 실제 금리에 가산금리(수도권 3%p)를 더해 더 보수적으로 봅니다. 변동금리면 100% 반영, 고정이면 덜 반영.</dd>
-          <dt>대출 한도</dt><dd>수도권·규제지역은 집값이 15억 이하여도 주담대가 최대 6억. 15~25억은 4억, 25억 초과는 2억.</dd>
-          <dt>부대비용</dt><dd>취득세(1~3% + 지방교육세), 중개보수(0.4~0.7% + 부가세), 법무사·인지세 등 약 150만원.</dd>
+          <dt><dfn data-t="ltv">LTV</dfn></dt><dd>집값 대비 대출 비율. 규제지역 40%, 생애최초는 70%. 10억 집이면 각각 4억·7억까지.</dd>
+          <dt><dfn data-t="dsr">DSR</dfn></dt><dd>연소득 대비 모든 대출의 연간 원리금 비율. 은행은 40%까지. 연소득 7천만이면 1년에 2,800만원(월 233만원)까지만 갚을 수 있게 빌려줍니다.</dd>
+          <dt><dfn data-t="stress-dsr">스트레스 DSR</dfn></dt><dd>DSR을 계산할 때 실제 금리에 가산금리(수도권 3%p)를 더해 더 보수적으로 봅니다. 변동금리면 100% 반영, 고정이면 덜 반영.</dd>
+          <dt><dfn data-t="loan-cap">대출 한도</dfn></dt><dd>수도권·규제지역은 집값이 15억 이하여도 주담대가 최대 6억. 15~25억은 4억, 25억 초과는 2억.</dd>
+          <dt><dfn data-t="misc-cost">부대비용</dfn></dt><dd>취득세(1~3% + 지방교육세), 중개보수(0.4~0.7% + 부가세), 법무사·인지세 등 약 150만원.</dd>
         </dl>
       </details>
     </section>
@@ -118,7 +118,7 @@
         </div>
       </div>
       <div class="card quiet">
-        <h3>정책대출 해당 여부</h3>
+        <h3><dfn data-t="policy-loan">정책대출</dfn> 해당 여부</h3>
         <p class="small muted">은행 대출보다 금리가 낮은 정부 대출입니다. 조건이 맞으면 먼저 알아보세요.</p>
         <div class="stat-list" id="r-policy"></div>
       </div>
@@ -127,6 +127,7 @@
   </div>
 </main>
 
+<script src="assets/terms.js"></script>
 <script src="assets/app.js"></script>
 <script>
 (function () {

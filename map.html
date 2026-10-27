@@ -69,12 +69,18 @@
           <button type="submit" class="btn primary" id="pf-save">핀 저장</button>
         </div>
       </form>
+      <details class="card quiet" id="commute-card">
+        <summary><b>출퇴근 기준</b> · <span id="commute-summary"></span></summary>
+        <p class="small muted">두 사람의 직장을 넣으면 지도에 표시되고, 핀마다 직선거리와 대략의 대중교통 시간이 붙습니다. 칩을 누르면 카카오맵 길찾기가 열립니다.</p>
+        <div id="commute-setup"></div>
+      </details>
       <div class="list" id="pins"></div>
       <p class="small muted" id="route-summary"></p>
     </div>
   </div>
 </main>
 
+<script src="assets/terms.js"></script>
 <script src="assets/app.js"></script>
 <script>
 (function () {
@@ -193,28 +199,7 @@
     }
   };
 
-  function loadKakao(key) {
-    return new Promise(function (resolve, reject) {
-      if (window.kakao && window.kakao.maps && window.kakao.maps.Map) return resolve();
-      var done = false, s = document.createElement("script");
-      s.src = "https://dapi.kakao.com/v2/maps/sdk.js?appkey=" + encodeURIComponent(key) + "&autoload=false&libraries=services";
-      s.onload = function () {
-        if (window.kakao && window.kakao.maps && typeof window.kakao.maps.load === "function") {
-          window.kakao.maps.load(function () { done = true; if (window.kakao.maps.Map) resolve(); else reject("키 또는 사이트 도메인 설정을 확인해 주세요"); });
-        } else { done = true; reject("SDK가 초기화되지 않았습니다. 카카오맵 사용 설정과 도메인 등록을 확인해 주세요"); }
-      };
-      s.onerror = function () {
-        done = true;
-        fetch(s.src).then(function (r) { return r.text(); }).then(function (body) {
-          var m = /"message"\s*:\s*"([^"]+)"/.exec(body || ""), msg = m ? m[1] : "";
-          if (/domain mismatched/i.test(msg)) msg = "등록되지 않은 도메인입니다 (" + location.origin + "). 카카오 개발자 사이트 > 플랫폼 > Web 사이트 도메인에 이 주소를 등록해 주세요";
-          reject(msg || "SDK 스크립트를 불러오지 못했습니다");
-        }).catch(function () { reject("SDK 스크립트를 불러오지 못했습니다 (키 오류, 도메인 미등록, 또는 네트워크 차단)"); });
-      };
-      document.head.appendChild(s);
-      setTimeout(function () { if (!done) reject("응답 시간 초과"); }, 8000);
-    });
-  }
+  var loadKakao = J.loadKakao;
   function startBackend(b) {
     backend = b; $("map").innerHTML = ""; b.init($("map"), loadView());
     setProvider(b.name === "kakao" ? "카카오맵 사용 중" : "OpenStreetMap 사용 중" + (kakaoFailWhy ? " · 카카오맵 실패: " + kakaoFailWhy : ""));
@@ -270,6 +255,11 @@
       seen[c.id] = true;
       backend.setMarker(c.id, c.lat, c.lng, pinHtml(orderNo(c), c.status), c.name, function () { focusPin(c.id, false); });
     });
+    J.getCommute().people.forEach(function (p, i) {
+      if (p.lat == null || p.lng == null) return;
+      seen["work-" + i] = true;
+      backend.setMarker("work-" + i, p.lat, p.lng, '<div class="pin s-work" title="' + esc(p.name) + '">' + esc(p.label) + '</div>', p.name, function () { backend.flyTo(p.lat, p.lng, true); });
+    });
     backend.markerIds().forEach(function (id) { if (!seen[id]) backend.removeMarker(id); });
     backend.setLine(list.filter(function (c) { return c.status === "임장 예정"; }).map(function (c) { return [c.lat, c.lng]; }));
   }
@@ -315,6 +305,8 @@
       if (num(c.year) != null) chips += '<span class="chip">' + c.year + '년 준공</span>';
       if (c.sizes) chips += '<span class="chip">' + esc(c.sizes) + '</span>';
       if (c.redev) chips += '<span class="chip mark">' + esc(c.redev) + '</span>';
+      var commute = hasPos ? J.commuteChips(c.lat, c.lng, c.name) : "";
+      if (commute) chips += commute;
       return '<article class="row-card pin-card" data-id="' + esc(c.id) + '">' +
         '<div class="title"><div class="pin-title"><span class="pin ' + cls + '">' + (i + 1) + '</span><div><h3>' + esc(c.name) + '</h3><p class="muted small">' + esc(c.area || "") + '</p></div></div>' +
         '<select class="status-sel" data-status="' + esc(c.id) + '" aria-label="상태">' + opts + '</select></div>' +
@@ -474,6 +466,9 @@
 
   // --- 시작
   cstore.onChange(function (items) { renderPins(items); });
+  function commuteSummary() { var ps = J.commutePeople(); $("commute-summary").textContent = ps.length ? ps.map(function (p) { return p.label + ": " + p.name; }).join(" · ") : "직장을 넣으면 핀마다 거리가 붙습니다"; }
+  J.renderCommuteSetup($("commute-setup"), function () { commuteSummary(); renderPins(cstore.items); });
+  commuteSummary();
   vstore.onChange(function () { renderPins(cstore.items); });
   initMap();
   var focusId = new URLSearchParams(location.search).get("focus");

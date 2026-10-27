@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>집터 · 용어</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<header class="topbar"><div class="topbar-inner"></div></header>
+
+<main class="page">
+  <div class="page-head">
+    <span class="eyebrow">처음이라면</span>
+    <h1>집 사는 순서와 용어</h1>
+    <p class="lead">모르는 말이 나오면 여기서 찾으세요. 다른 페이지에서도 점선 밑줄이 있는 낱말을 누르면 짧은 설명이 뜹니다.</p>
+  </div>
+
+  <section class="card">
+    <h2>집 사는 순서 한눈에</h2>
+    <ol class="steps">
+      <li><div><b>예산 정하기</b><span>가진 현금과 연소득으로 살 수 있는 집값의 상한을 잡습니다. 대출은 <dfn data-t="ltv">LTV</dfn>·<dfn data-t="dsr">DSR</dfn>·<dfn data-t="loan-cap">한도 상한</dfn> 중 가장 작은 값까지만 나옵니다. → 내 예산</span></div></li>
+      <li><div><b>동네와 후보 단지 고르기</b><span>두 사람 출퇴근이 모두 되는 범위에서 <dfn data-t="actual-price">실거래가</dfn>가 예산 안인 단지를 추립니다. <dfn data-t="units">세대수</dfn> 500 이상, 역 도보 10분 안쪽부터 보면 실패가 적습니다. → 후보 찾기</span></div></li>
+      <li><div><b>임장 다니기</b><span>후보 2~3곳씩 묶어 낮·저녁 두 번 갑니다. 중개사무소에서 <dfn data-t="asking-price">호가</dfn>·<dfn data-t="listing">매물</dfn> 수·<dfn data-t="urgent-sale">급매</dfn> 유무를 묻고 기록합니다. → 지도·핀, 임장</span></div></li>
+      <li><div><b>대출 사전심사</b><span>마음에 드는 집이 생기면 계약 전에 은행 2~3곳에 <dfn data-t="pre-approval">가심사</dfn>를 받습니다. <dfn data-t="policy-loan">정책대출</dfn> 조건이 되는지 먼저 확인합니다. <dfn data-t="kb-price">KB시세</dfn>가 한도 기준이 되는 경우가 많습니다.</span></div></li>
+      <li><div><b>계약</b><span><dfn data-t="registry">등기부등본</dfn>·<dfn data-t="building-ledger">건축물대장</dfn>을 확인하고 <dfn data-t="down-payment">가계약금 → 계약금 → 잔금</dfn> 순으로 냅니다. '근저당 말소', '대출 불가 시 반환' 같은 <dfn data-t="special-terms">특약</dfn>을 꼭 넣습니다.</span></div></li>
+      <li><div><b>잔금·등기·세금</b><span><dfn data-t="move-in">잔금일</dfn>에 대출이 실행되고 열쇠를 받습니다. 60일 안에 <dfn data-t="ownership-transfer">소유권 이전등기</dfn>와 <dfn data-t="acq-tax">취득세</dfn> 납부, 전입신고를 합니다.</span></div></li>
+    </ol>
+  </section>
+
+  <section class="card">
+    <div class="card-head">
+      <h2>용어 사전</h2>
+      <div class="seg" id="cats"></div>
+    </div>
+    <div class="search"><input id="q" placeholder="용어 찾기 (예: 전세가율, 취득세)" autocomplete="off"></div>
+    <dl class="terms" id="terms"></dl>
+  </section>
+</main>
+
+<script src="assets/terms.js"></script>
+<script src="assets/app.js"></script>
+<script>
+(function () {
+  var J = window.JT, $ = J.$, esc = J.esc, T = window.JT_TERMS;
+  J.renderNav("terms");
+  var CATS = ["전체", "대출", "세금", "시세", "단지", "규제", "계약"], cat = "전체";
+  $("cats").innerHTML = CATS.map(function (c) { return '<button type="button" data-v="' + c + '" aria-pressed="' + (c === cat) + '">' + c + '</button>'; }).join("");
+  $("cats").addEventListener("click", function (e) { var b = e.target.closest("button[data-v]"); if (!b) return; cat = b.dataset.v; $("cats").querySelectorAll("button").forEach(function (x) { x.setAttribute("aria-pressed", String(x.dataset.v === cat)); }); render(); });
+  $("q").addEventListener("input", render);
+  function render() {
+    var q = $("q").value.trim().toLowerCase();
+    var list = T.filter(function (t) { return (cat === "전체" || t.cat === cat) && (!q || (t.t + " " + (t.full || "") + " " + t.d).toLowerCase().indexOf(q) >= 0); });
+    $("terms").innerHTML = list.length ? list.map(function (t) {
+      return '<div class="term" id="' + esc(t.k) + '"><dt><b>' + esc(t.t) + '</b>' + (t.full ? '<span class="muted small">' + esc(t.full) + '</span>' : "") + '<span class="chip">' + esc(t.cat) + '</span></dt><dd>' + esc(t.d) + (t.eg ? '<p class="small muted">' + esc(t.eg) + '</p>' : "") + '</dd></div>';
+    }).join("") : '<p class="muted">찾는 말이 없습니다. 다른 말로 적어 보세요.</p>';
+  }
+  render();
+  if (location.hash) { var el = document.getElementById(location.hash.slice(1)); if (el) { el.scrollIntoView({ block: "center" }); el.classList.add("hit"); } }
+})();
+</script>
+</body>
+</html>

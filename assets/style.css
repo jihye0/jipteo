@@ -237,3 +237,28 @@ td.top { background: color-mix(in srgb, var(--mark) 40%, transparent); font-weig
 @media (prefers-reduced-motion: no-preference) {
   .scorebar .fill, .bar i { transition: width 0.35s ease; }
 }
+
+/* ---- 용어 (dfn 팝오버, 사전 페이지) ---- */
+dfn[data-t] { font-style: normal; cursor: help; border-bottom: 1px dotted var(--accent); color: inherit; }
+dfn[data-t]:hover { color: var(--accent); }
+.term-pop { position: absolute; z-index: 50; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 0.9rem 1rem; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12); font-size: 0.9rem; line-height: 1.5; display: grid; gap: 0.4rem; }
+.term-pop-head { display: flex; gap: 0.5rem; align-items: baseline; flex-wrap: wrap; }
+.term-pop p { margin: 0; }
+.terms { margin: 0; display: grid; }
+.terms .term { padding: 0.9rem 0; border-bottom: 1px solid var(--line); display: grid; gap: 0.3rem; }
+.terms .term.hit { background: var(--accent-soft); margin: 0 -0.6rem; padding: 0.9rem 0.6rem; border-radius: 10px; }
+.terms dt { display: flex; gap: 0.5rem; align-items: baseline; flex-wrap: wrap; }
+.terms dd { margin: 0; color: var(--ink); font-size: 0.93rem; line-height: 1.55; }
+.terms dd p { margin: 0.3rem 0 0; }
+
+/* ---- 출퇴근 ---- */
+.commute-row { display: grid; grid-template-columns: 5.5rem 1fr; gap: 0.4rem 0.6rem; align-items: start; }
+.commute-row .who { font-weight: 600; }
+.commute-row .geo-results, .commute-row .hint { grid-column: 2; }
+.commute-row + .commute-row { margin-top: 0.4rem; }
+.chip.commute { color: var(--ink); background: var(--surface-2); }
+.chip.commute.good { color: var(--good); background: color-mix(in srgb, var(--good) 12%, transparent); }
+.chip.commute.warn { color: var(--warn); background: color-mix(in srgb, var(--warn) 12%, transparent); }
+.chip.commute.bad { color: var(--bad); background: color-mix(in srgb, var(--bad) 12%, transparent); }
+.pin.s-work { background: var(--ink); color: var(--bg); border-radius: 8px; width: auto; padding: 0 0.45rem; font-size: 0.78rem; }
+@media (max-width: 480px) { .commute-row { grid-template-columns: 1fr; } .commute-row .geo-results, .commute-row .hint { grid-column: 1; } }

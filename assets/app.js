@@ -9,7 +9,8 @@ window.JT = (function () {
     { href: "find.html", key: "find", label: "후보 찾기" },
     { href: "map.html", key: "map", label: "지도·핀" },
     { href: "visit.html", key: "visit", label: "임장" },
-    { href: "policy.html", key: "policy", label: "정책" }
+    { href: "policy.html", key: "policy", label: "정책" },
+    { href: "terms.html", key: "terms", label: "용어" }
   ];
 
   // 2026-10-27 기준 규정 파라미터 (금액 단위: 만원). 출처는 policy.html 참고.
@@ -54,6 +55,7 @@ window.JT = (function () {
     var el = document.querySelector(".topbar-inner"); if (!el) return;
     el.innerHTML = '<a class="brand" href="index.html">집<span>터</span></a><nav class="nav" aria-label="주요 메뉴">' +
       PAGES.map(function (p) { return '<a href="' + p.href + '"' + (p.key === active ? ' aria-current="page"' : "") + '>' + p.label + '</a>'; }).join("") + '</nav>';
+    if (window.JT_TERMS) termify(document);
   }
 
   // ---------- 저장소 (브라우저 localStorage) ----------
@@ -230,9 +232,152 @@ window.JT = (function () {
     return "nonmetro";
   }
 
+  // ---------- 지번 키 확장 (경기 "성남분당구 서현동" -> "성남시 분당구 서현동") ----------
+  function expandDongKey(code, dongKey) {
+    var t = String(dongKey || "").split(" ");
+    if (code === "gyeonggi" && t.length >= 2 && /구$/.test(t[0]) && t[0].length >= 4) t[0] = t[0].slice(0, 2) + "시 " + t[0].slice(2); // 경기의 시·구 합친 키: 시 이름은 모두 두 글자
+    return t.join(" ");
+  }
+
+  // ---------- 카카오 SDK (지도 없이 검색만 쓸 때도 공용) ----------
+  function getKakaoKey() { var k = ""; try { k = localStorage.getItem("imjang.kakaoKey") || ""; } catch (e) {} return String(k || KAKAO_KEY || "").trim(); }
+  var kakaoPromise = null;
+  function loadKakao(key) {
+    key = key || getKakaoKey();
+    if (kakaoPromise) return kakaoPromise;
+    kakaoPromise = new Promise(function (resolve, reject) {
+      if (window.kakao && window.kakao.maps && window.kakao.maps.Map) return resolve();
+      if (!key) return reject("키 없음");
+      var done = false, s = document.createElement("script");
+      s.src = "https://dapi.kakao.com/v2/maps/sdk.js?appkey=" + encodeURIComponent(key) + "&autoload=false&libraries=services";
+      s.onload = function () {
+        if (window.kakao && window.kakao.maps && typeof window.kakao.maps.load === "function") {
+          window.kakao.maps.load(function () { done = true; if (window.kakao.maps.Map) resolve(); else reject("키 또는 사이트 도메인 설정을 확인해 주세요"); });
+        } else { done = true; reject("SDK가 초기화되지 않았습니다. 카카오맵 사용 설정과 도메인 등록을 확인해 주세요"); }
+      };
+      s.onerror = function () {
+        done = true;
+        fetch(s.src).then(function (r) { return r.text(); }).then(function (body) {
+          var m = /"message"\s*:\s*"([^"]+)"/.exec(body || ""), msg = m ? m[1] : "";
+          if (/domain mismatched/i.test(msg)) msg = "등록되지 않은 도메인입니다 (" + location.origin + "). 카카오 개발자 사이트 > 플랫폼 > Web 사이트 도메인에 이 주소를 등록해 주세요";
+          reject(msg || "SDK 스크립트를 불러오지 못했습니다");
+        }).catch(function () { reject("SDK 스크립트를 불러오지 못했습니다 (키 오류, 도메인 미등록, 또는 네트워크 차단)"); });
+      };
+      document.head.appendChild(s);
+      setTimeout(function () { if (!done) reject("응답 시간 초과"); }, 8000);
+    });
+    kakaoPromise.catch(function () { kakaoPromise = null; });
+    return kakaoPromise;
+  }
+  // 장소·주소 검색: 카카오가 되면 카카오, 아니면 OpenStreetMap(Nominatim)
+  function placeSearch(q) {
+    q = String(q || "").trim(); if (!q) return Promise.resolve([]);
+    return loadKakao().then(function () {
+      return new Promise(function (resolve) {
+        new kakao.maps.services.Places().keywordSearch(q, function (data, status) {
+          if (status === kakao.maps.services.Status.OK) return resolve(data.slice(0, 8).map(function (d) { return { name: d.place_name, area: shortKakaoAddr(d.address_name), lat: Number(d.y), lng: Number(d.x), detail: d.road_address_name || d.address_name, addr: parseJibunAddr(d.address_name) }; }));
+          new kakao.maps.services.Geocoder().addressSearch(q, function (rows, st) {
+            resolve(st === kakao.maps.services.Status.OK ? rows.slice(0, 8).map(function (d) { return { name: d.address_name, area: shortKakaoAddr(d.address_name), lat: Number(d.y), lng: Number(d.x), detail: d.road_address ? d.road_address.address_name : "", addr: parseJibunAddr(d.address_name) }; }) : []);
+          });
+        });
+      });
+    }, function () {
+      return fetch("https://nominatim.openstreetmap.org/search?format=jsonv2&limit=8&countrycodes=kr&accept-language=ko&q=" + encodeURIComponent(q)).then(function (r) { return r.json(); })
+        .then(function (rows) { return rows.map(function (d) { return { name: (d.display_name || "").split(",")[0], area: shortArea(d.display_name), lat: Number(d.lat), lng: Number(d.lon), detail: d.display_name, addr: parseNominatimAddr(d.display_name) }; }); })
+        .catch(function () { return []; });
+    });
+  }
+
+  // ---------- 출퇴근 (두 사람의 직장 좌표) ----------
+  var COMMUTE_KEY = "imjang.commute.v1";
+  function defaultCommute() { return { people: [{ label: "나", name: "", lat: null, lng: null }, { label: "상대", name: "", lat: null, lng: null }] }; }
+  function getCommute() { var c = lsGet(COMMUTE_KEY, null); if (!c || !c.people || c.people.length < 2) c = defaultCommute(); return c; }
+  function setCommute(c) { lsSet(COMMUTE_KEY, c); }
+  function haversineKm(lat1, lng1, lat2, lng2) {
+    var R = 6371, toR = Math.PI / 180, dLat = (lat2 - lat1) * toR, dLng = (lng2 - lng1) * toR;
+    var h = Math.pow(Math.sin(dLat / 2), 2) + Math.cos(lat1 * toR) * Math.cos(lat2 * toR) * Math.pow(Math.sin(dLng / 2), 2);
+    return 2 * R * Math.asin(Math.sqrt(h));
+  }
+  // 직선거리 -> 대중교통 소요시간 어림값(분). 수도권 평균 체감 속도 기준, 참고용.
+  function commuteMinutes(km) { return Math.round(km < 1.5 ? 10 + km * 5 : 12 + km * 3.4); }
+  function kakaoRouteUrl(fromName, fromLat, fromLng, toName, toLat, toLng) {
+    return "https://map.kakao.com/link/from/" + encodeURIComponent(fromName) + "," + fromLat + "," + fromLng + "/to/" + encodeURIComponent(toName) + "," + toLat + "," + toLng;
+  }
+  function commutePeople() { return getCommute().people.filter(function (p) { return p.lat != null && p.lng != null; }); }
+  // 단지 좌표 -> [{label, km, min, url}] (직장이 설정된 사람만)
+  function commuteFor(lat, lng, fromName) {
+    if (lat == null || lng == null) return [];
+    return commutePeople().map(function (p) {
+      var km = haversineKm(lat, lng, p.lat, p.lng);
+      return { label: p.label, name: p.name, km: km, min: commuteMinutes(km), url: kakaoRouteUrl(fromName || "집", lat, lng, p.name || p.label + " 직장", p.lat, p.lng) };
+    });
+  }
+  function commuteChips(lat, lng, fromName) {
+    return commuteFor(lat, lng, fromName).map(function (c) {
+      var cls = c.km <= 8 ? " good" : c.km <= 15 ? "" : c.km <= 25 ? " warn" : " bad";
+      return '<a class="chip commute' + cls + '" href="' + c.url + '" target="_blank" rel="noopener" title="' + esc(c.name || "") + ' · 카카오맵 길찾기 열기">' + esc(c.label) + ' ' + c.km.toFixed(1) + 'km · 약 ' + c.min + '분</a>';
+    }).join("");
+  }
+  // 출퇴근 설정 UI. el 안에 두 사람 입력칸을 그리고, 바뀌면 onChange() 호출
+  function renderCommuteSetup(el, onChange) {
+    var c = getCommute();
+    el.innerHTML = c.people.map(function (p, i) {
+      return '<div class="commute-row" data-i="' + i + '">' +
+        '<input class="who" value="' + esc(p.label) + '" aria-label="누구" maxlength="6">' +
+        '<div class="search"><input class="where" autocomplete="off" placeholder="직장 이름이나 주소 (예: 판교역, 테헤란로 152)" value="' + esc(p.name) + '"><button type="button" class="btn find">찾기</button>' + (p.lat != null ? '<button type="button" class="btn ghost clear">지우기</button>' : "") + '</div>' +
+        '<div class="geo-results" hidden></div><p class="hint">' + (p.lat != null ? "설정됨 · " + esc(p.name) : "아직 설정되지 않았습니다") + '</p></div>';
+    }).join("");
+    function save() { setCommute(c); if (onChange) onChange(c); }
+    el.querySelectorAll(".commute-row").forEach(function (row) {
+      var i = Number(row.dataset.i), p = c.people[i], who = row.querySelector(".who"), where = row.querySelector(".where"), box = row.querySelector(".geo-results"), hint = row.querySelector(".hint");
+      who.addEventListener("change", function () { p.label = who.value.trim() || (i === 0 ? "나" : "상대"); who.value = p.label; save(); });
+      function doSearch() {
+        var q = where.value.trim(); if (!q) return;
+        hint.textContent = "찾는 중"; box.hidden = true;
+        placeSearch(q).then(function (list) {
+          if (!list.length) { hint.textContent = "찾지 못했습니다. 역 이름이나 도로명 주소로 다시 적어 보세요."; return; }
+          box.hidden = false; hint.textContent = "맞는 곳을 고르세요";
+          box.innerHTML = list.map(function (r, k) { return '<button type="button" data-k="' + k + '"><b>' + esc(r.name) + '</b> <span class="muted small">' + esc(r.detail || r.area) + '</span></button>'; }).join("");
+          box.onclick = function (ev) { var b = ev.target.closest("button[data-k]"); if (!b) return; var r = list[Number(b.dataset.k)]; p.name = r.name; p.lat = r.lat; p.lng = r.lng; save(); renderCommuteSetup(el, onChange); };
+        });
+      }
+      row.querySelector(".find").addEventListener("click", doSearch);
+      where.addEventListener("keydown", function (ev) { if (ev.key === "Enter") { ev.preventDefault(); doSearch(); } });
+      var clr = row.querySelector(".clear"); if (clr) clr.addEventListener("click", function () { p.name = ""; p.lat = null; p.lng = null; save(); renderCommuteSetup(el, onChange); });
+    });
+  }
+
+  // ---------- 용어 설명 팝오버 ----------
+  // 페이지의 <dfn data-t="키">낱말</dfn> 을 누르면 짧은 설명이 뜬다. 용어 목록은 assets/terms.js
+  function termify(root) {
+    var T = window.JT_TERMS; if (!T) return;
+    var byKey = {}; T.forEach(function (t) { byKey[t.k] = t; });
+    var pop = document.getElementById("term-pop");
+    if (!pop) { pop = document.createElement("div"); pop.id = "term-pop"; pop.className = "term-pop"; pop.hidden = true; pop.setAttribute("role", "dialog"); document.body.appendChild(pop); }
+    function close() { pop.hidden = true; }
+    function open(dfn) {
+      var t = byKey[dfn.dataset.t]; if (!t) return;
+      pop.innerHTML = '<div class="term-pop-head"><b>' + esc(t.t) + '</b>' + (t.full ? '<span class="muted small">' + esc(t.full) + '</span>' : "") + '</div><p>' + esc(t.d) + '</p>' + (t.eg ? '<p class="small muted">' + esc(t.eg) + '</p>' : "") + '<a class="small" href="terms.html#' + esc(t.k) + '">용어 사전에서 더 보기</a>';
+      pop.hidden = false;
+      var r = dfn.getBoundingClientRect(), w = Math.min(340, window.innerWidth - 24);
+      var left = Math.max(12, Math.min(r.left + window.scrollX, window.scrollX + window.innerWidth - w - 12));
+      pop.style.width = w + "px"; pop.style.left = left + "px"; pop.style.top = (r.bottom + window.scrollY + 8) + "px";
+    }
+    (root || document).querySelectorAll("dfn[data-t]").forEach(function (d) {
+      if (d.dataset.ready) return; d.dataset.ready = "1";
+      var t = byKey[d.dataset.t]; if (!t) return;
+      d.setAttribute("tabindex", "0"); d.setAttribute("role", "button"); d.setAttribute("title", "뜻 보기: " + t.t);
+      d.addEventListener("click", function (ev) { ev.stopPropagation(); if (!pop.hidden && pop.dataset.for === d.dataset.t) return close(); pop.dataset.for = d.dataset.t; open(d); });
+      d.addEventListener("keydown", function (ev) { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); d.click(); } });
+    });
+    if (!termify.bound) { termify.bound = true; document.addEventListener("click", function (ev) { if (!pop.contains(ev.target)) close(); }); document.addEventListener("keydown", function (ev) { if (ev.key === "Escape") close(); }); }
+  }
+
   return { P: P, PAGES: PAGES, KAKAO_KEY: KAKAO_KEY, SIDO: SIDO, SIDO_NAME: SIDO_NAME, PRICE_AVAILABLE: PRICE_AVAILABLE,
     $: $, esc: esc, num: num, fmtEok: fmtEok, fmtMan: fmtMan, uid: uid, lsGet: lsGet, lsSet: lsSet, renderNav: renderNav,
     candidates: candidates, visits: visits, loadApt: loadApt, loadPrice: loadPrice,
     parseJibunAddr: parseJibunAddr, parseNominatimAddr: parseNominatimAddr, shortArea: shortArea, shortKakaoAddr: shortKakaoAddr, normName: normName, aptMatch: aptMatch, priceMatch: priceMatch, areaLabel: areaLabel, pyeong: pyeong,
-    budget: budget, loanFor: loanFor, costsFor: costsFor, acquisitionTax: acquisitionTax, brokerFee: brokerFee, monthlyPayment: monthlyPayment, policyEligibility: policyEligibility, regionOf: regionOf, annuityFactor: annuityFactor };
+    budget: budget, loanFor: loanFor, costsFor: costsFor, acquisitionTax: acquisitionTax, brokerFee: brokerFee, monthlyPayment: monthlyPayment, policyEligibility: policyEligibility, regionOf: regionOf, annuityFactor: annuityFactor,
+    expandDongKey: expandDongKey, getKakaoKey: getKakaoKey, loadKakao: loadKakao, placeSearch: placeSearch,
+    getCommute: getCommute, setCommute: setCommute, commutePeople: commutePeople, commuteFor: commuteFor, commuteChips: commuteChips, commuteMinutes: commuteMinutes, haversineKm: haversineKm, kakaoRouteUrl: kakaoRouteUrl, renderCommuteSetup: renderCommuteSetup, termify: termify };
 })();

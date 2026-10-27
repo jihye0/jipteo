@@ -14,7 +14,7 @@
   <div class="page-head">
     <span class="eyebrow">Step 2</span>
     <h1>예산 안에서 후보 단지 찾기</h1>
-    <p class="lead">최근 1년 실거래가(국토교통부)와 단지 정보(한국부동산원)를 합쳐, 예산에 맞는 평형이 있는 아파트만 추립니다. 마음에 드는 단지는 핀으로 담아 지도와 임장으로 이어집니다.</p>
+    <p class="lead">최근 1년 <dfn data-t="actual-price">실거래가</dfn>(국토교통부)와 단지 정보(한국부동산원)를 합쳐, 예산에 맞는 <dfn data-t="area">평형</dfn>이 있는 아파트만 추립니다. 마음에 드는 단지는 핀으로 담아 지도와 <dfn data-t="imjang">임장</dfn>으로 이어집니다.</p>
   </div>
 
   <div class="card">
@@ -47,19 +47,23 @@
         <select id="dong"><option value="">전체</option></select>
       </div>
       <div class="field">
-        <label for="minUnits">세대수</label>
+        <label for="minUnits"><dfn data-t="units">세대수</dfn></label>
         <select id="minUnits"><option value="0">전체</option><option value="300">300세대 이상</option><option value="500" selected>500세대 이상</option><option value="1000">1,000세대 이상</option></select>
       </div>
       <div class="field">
-        <label for="minYear">준공</label>
+        <label for="minYear"><dfn data-t="built-year">준공</dfn></label>
         <select id="minYear"><option value="0">전체</option><option value="2000">2000년 이후</option><option value="2010">2010년 이후</option><option value="2015">2015년 이후</option><option value="2020">2020년 이후</option></select>
       </div>
       <div class="field">
         <label for="sort">정렬</label>
-        <select id="sort"><option value="price">가격 낮은 순</option><option value="units">세대수 많은 순</option><option value="year">최근 준공 순</option><option value="trades">거래 많은 순</option></select>
+        <select id="sort"><option value="price">가격 낮은 순</option><option value="commute">출퇴근 가까운 순</option><option value="units">세대수 많은 순</option><option value="year">최근 준공 순</option><option value="trades">거래 많은 순</option></select>
+      </div>
+      <div class="field">
+        <label for="maxKm">출퇴근 거리</label>
+        <select id="maxKm"><option value="0">전체</option><option value="5">둘 다 5km 이내</option><option value="10">둘 다 10km 이내</option><option value="15">둘 다 15km 이내</option><option value="20">둘 다 20km 이내</option><option value="30">둘 다 30km 이내</option></select>
       </div>
       <div class="field span-all">
-        <label>평형 (전용면적)</label>
+        <label><dfn data-t="pyeong">평형</dfn> (<dfn data-t="area">전용면적</dfn>)</label>
         <div class="seg" id="band">
           <button type="button" data-v="all" aria-pressed="true">전체</button>
           <button type="button" data-v="s" aria-pressed="false">~60㎡ (18~25평형)</button>
@@ -71,12 +75,19 @@
     <p class="status" id="status"></p>
   </div>
 
+  <details class="card quiet" id="commute-card">
+    <summary><b>출퇴근 기준</b> · <span id="commute-summary"></span></summary>
+    <p class="small muted">두 사람의 직장을 넣으면 단지마다 직선거리와 대략의 대중교통 시간이 붙습니다. 시간은 어림값이니 정확한 값은 칩을 눌러 카카오맵 길찾기로 확인하세요.</p>
+    <div id="commute-setup"></div>
+  </details>
+
   <div class="note" id="data-note" hidden></div>
   <div class="list" id="results"></div>
   <div class="actions" id="more-wrap" hidden><button type="button" class="btn" id="more">더 보기</button></div>
-  <p class="small muted">실거래가: 국토교통부 실거래가 공개시스템, 2025-10-28 ~ 2026-10-27 계약분(해제 거래 제외). 평형별 값은 그 기간 거래가의 중앙값입니다. 단지 정보: 한국부동산원 공시대상 공동주택(2026-08-31 기준). 거래가 없던 단지는 목록에 나오지 않습니다.</p>
+  <p class="small muted">실거래가: 국토교통부 실거래가 공개시스템, 2025-10-28 ~ 2026-10-27 계약분(해제 거래 제외). 평형별 값은 그 기간 거래가의 <dfn data-t="median">중앙값</dfn>입니다. 단지 정보: 한국부동산원 공시대상 공동주택(2026-08-31 기준). 거래가 없던 단지는 목록에 나오지 않습니다.</p>
 </main>
 
+<script src="assets/terms.js"></script>
 <script src="assets/app.js"></script>
 <script>
 (function () {
@@ -96,7 +107,16 @@
   if (b && b.price) $("budget-line").textContent = "예산 페이지 계산: 최대 " + J.fmtEok(b.price) + " (대출 " + J.fmtEok(b.loan) + " 포함). 아래 값은 바꿔도 됩니다.";
   else $("budget-line").textContent = "아직 예산을 계산하지 않았습니다. 최대 집값을 직접 넣거나 예산 페이지에서 계산해 오세요.";
   sidoSel.value = saved.sido || "seoul";
-  ["minUnits", "minYear", "sort"].forEach(function (k) { if (saved[k] != null) $(k).value = saved[k]; });
+  ["minUnits", "minYear", "sort", "maxKm"].forEach(function (k) { if (saved[k] != null) $(k).value = saved[k]; });
+  // 출퇴근 기준
+  function commuteSummary() {
+    var ps = J.commutePeople();
+    $("commute-summary").textContent = ps.length ? ps.map(function (p) { return p.label + ": " + p.name; }).join(" · ") : "직장을 넣으면 단지마다 거리가 붙습니다";
+    $("maxKm").disabled = !ps.length; $("sort").querySelector('[value="commute"]').disabled = !ps.length;
+  }
+  J.renderCommuteSetup($("commute-setup"), function () { commuteSummary(); run(); });
+  commuteSummary();
+  if (!J.commutePeople().length) $("commute-card").open = true;
   if (saved.band) { state.band = saved.band; }
   paintBand();
 
@@ -104,15 +124,10 @@
   $("band").addEventListener("click", function (e) { var x = e.target.closest("button[data-v]"); if (!x) return; state.band = x.dataset.v; paintBand(); run(); });
 
   function persist() {
-    J.lsSet("imjang.findInputs", { minp: $("minp").value, maxp: $("maxp").value, sido: sidoSel.value, sgg: $("sgg").value, dong: $("dong").value, minUnits: $("minUnits").value, minYear: $("minYear").value, sort: $("sort").value, band: state.band });
+    J.lsSet("imjang.findInputs", { minp: $("minp").value, maxp: $("maxp").value, sido: sidoSel.value, sgg: $("sgg").value, dong: $("dong").value, minUnits: $("minUnits").value, minYear: $("minYear").value, sort: $("sort").value, maxKm: $("maxKm").value, band: state.band });
   }
   function bandOf(area) { return area < 60 ? "s" : area < 85 ? "m" : "l"; }
-  // 데이터의 "성남분당구 서현동"(경기 시·구 합침)을 지도 검색용 "성남시 분당구 서현동"으로
-  function expandDongKey(code, dongKey) {
-    var t = dongKey.split(" ");
-    if (code === "gyeonggi" && t.length >= 2 && /구$/.test(t[0]) && t[0].length >= 4) { var m = /^(.+?)(\S{2,}구)$/.exec(t[0]); if (m) t[0] = m[1] + "시 " + m[2]; }
-    return t.join(" ");
-  }
+  var expandDongKey = J.expandDongKey;
 
   var data = null; // { price: rows, apt: rows, aptIndex: Map }
   function loadSido(code) {
@@ -152,6 +167,8 @@
     if (!data) return;
     var minp = J.num($("minp").value) || 0, maxp = J.num($("maxp").value) || Infinity;
     var sgg = $("sgg").value, dong = $("dong").value, minUnits = Number($("minUnits").value), minYear = Number($("minYear").value), sort = $("sort").value;
+    var people = J.commutePeople(), maxKm = people.length ? Number($("maxKm").value) : 0;
+    if (sort === "commute" && !people.length) sort = "price";
     var rows = [];
     data.price.forEach(function (r) {
       var dk = r[0];
@@ -166,12 +183,16 @@
       var inB = areas.filter(function (a) { return a[2] >= minp && a[2] <= maxp; });
       if (!inB.length) return;
       var trades = areas.reduce(function (s, a) { return s + a[1]; }, 0);
-      rows.push({ r: r, apt: apt, units: units, bld: bld, year: year, areas: areas, inB: inB, minPrice: Math.min.apply(null, inB.map(function (a) { return a[2]; })), trades: trades });
+      var pos = r[5] || null, cm = pos ? J.commuteFor(pos[0], pos[1], r[2]) : [];
+      if (maxKm && (!pos || cm.some(function (c) { return c.km > maxKm; }))) return;
+      var kmSum = cm.length ? cm.reduce(function (s, c) { return s + c.km; }, 0) : Infinity;
+      rows.push({ r: r, apt: apt, units: units, bld: bld, year: year, areas: areas, inB: inB, minPrice: Math.min.apply(null, inB.map(function (a) { return a[2]; })), trades: trades, pos: pos, kmSum: kmSum });
     });
     rows.sort(function (a, b) {
       if (sort === "units") return (b.units || 0) - (a.units || 0);
       if (sort === "year") return (b.year || 0) - (a.year || 0);
       if (sort === "trades") return b.trades - a.trades;
+      if (sort === "commute") return a.kmSum - b.kmSum || a.minPrice - b.minPrice;
       return a.minPrice - b.minPrice;
     });
     state.rows = rows; state.shown = 0;
@@ -195,9 +216,11 @@
       if (x.bld != null) chips += '<span class="chip">' + x.bld + '개동</span>';
       if (x.year) chips += '<span class="chip">' + x.year + '년 준공</span>';
       if (pinned[key]) chips += '<span class="chip accent">핀에 담김</span>';
+      var commute = x.pos ? J.commuteChips(x.pos[0], x.pos[1], r[2]) : "";
       return '<article class="row-card" data-key="' + J.esc(key) + '">' +
         '<div class="title"><h3>' + J.esc(r[2]) + '</h3><span class="small muted">' + J.esc(r[0]) + ' ' + J.esc(r[1]) + '</span></div>' +
         '<div class="chips">' + chips + '</div>' +
+        (commute ? '<div class="chips">' + commute + '</div>' : "") +
         '<div class="price-line">' + lines + '</div>' +
         '<div class="actions end"><a class="btn sm" href="https://new.land.naver.com/search?sk=' + encodeURIComponent(r[2]) + '" target="_blank" rel="noopener">네이버부동산</a>' +
         '<a class="btn sm" href="https://hogangnono.com/search?q=' + encodeURIComponent(r[2]) + '" target="_blank" rel="noopener">호갱노노</a>' +
@@ -218,14 +241,15 @@
       price: pick ? pick[2] : null, units: x.units, buildings: x.bld, year: x.year,
       sizes: x.areas.map(function (a) { return a[0] + "㎡"; }).join("·"), redev: "",
       addr: { code: data.code, dongKey: r[0], jibun: r[1], loose: false }, jibunAddr: J.SIDO_NAME[data.code] + " " + expandDongKey(data.code, r[0]) + " " + r[1],
+      lat: x.pos ? x.pos[0] : null, lng: x.pos ? x.pos[1] : null,
       order: J.candidates.items.length, createdAt: Date.now(), updatedAt: Date.now()
     };
     Object.keys(rec).forEach(function (k) { if (rec[k] === null) delete rec[k]; });
-    J.candidates.save(rec).then(function () { btn.textContent = "담았음"; btn.disabled = true; $("status").textContent = r[2] + "을(를) 핀에 담았습니다. 지도·핀 페이지에서 위치가 자동으로 잡힙니다."; });
+    J.candidates.save(rec).then(function () { btn.textContent = "담았음"; btn.disabled = true; $("status").textContent = r[2] + "을(를) 핀에 담았습니다. 지도·핀 페이지에서 볼 수 있습니다."; });
   });
 
   ["minp", "maxp"].forEach(function (k) { $(k).addEventListener("input", run); });
-  ["minUnits", "minYear", "sort"].forEach(function (k) { $(k).addEventListener("change", run); });
+  ["minUnits", "minYear", "sort", "maxKm"].forEach(function (k) { $(k).addEventListener("change", run); });
   $("sgg").addEventListener("change", function () { saved.dong = ""; fillDong(); run(); });
   $("dong").addEventListener("change", run);
   sidoSel.addEventListener("change", function () { saved.sgg = ""; saved.dong = ""; loadSido(sidoSel.value).then(run); });

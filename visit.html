@@ -24,7 +24,7 @@
       <li><div><b>동선 그리기</b><span>지도·핀에서 갈 순서를 정합니다. 역 → 단지 → 초등학교 → 상권 → 다음 단지.</span></div></li>
       <li><div><b>역에서 단지까지 직접 걷기</b><span>표기 도보 시간과 실제 시간, 경사, 횡단보도 수를 기록합니다. 가장 중요한 체감 항목입니다.</span></div></li>
       <li><div><b>단지 한 바퀴</b><span>관리 상태, 주차, 동 배치, 소음원, 앞동 거리. 동·라인별로 사진을 남깁니다.</span></div></li>
-      <li><div><b>중개사무소 2~3곳</b><span>호가·급매·전세 매물 수를 묻고 분위기를 비교합니다. 한 곳 말만 믿지 않습니다.</span></div></li>
+      <li><div><b>중개사무소 2~3곳</b><span><dfn data-t="asking-price">호가</dfn>·<dfn data-t="urgent-sale">급매</dfn>·전세 <dfn data-t="listing">매물</dfn> 수를 묻고 분위기를 비교합니다. 한 곳 말만 믿지 않습니다.</span></div></li>
       <li><div><b>세대 내부</b><span>향·일조·결로·소음·수리 상태. 창문을 열어 보고 욕실 천장과 창틀을 봅니다.</span></div></li>
       <li><div><b>당일 기록, 야간 재방문</b><span>기억이 남아 있을 때 바로 적습니다. 주차와 치안은 저녁에 다시 봅니다.</span></div></li>
     </ol>
@@ -55,7 +55,7 @@
           <li>관리비 평균과 장기수선충당금 적립 현황은?</li>
           <li>주차는 세대당 몇 대, 저녁에 자리가 있나요?</li>
           <li>재건축·리모델링은 어디까지 진행됐나요?</li>
-          <li>등기상 특이사항(근저당, 임차인)이 있나요?</li>
+          <li>등기상 특이사항(<dfn data-t="lien">근저당</dfn>, 임차인)이 있나요?</li>
         </ul>
       </div>
     </div>
@@ -97,10 +97,10 @@
       <div class="card">
         <h3>가격 <span class="small muted">단위: 만원</span></h3>
         <div class="grid">
-          <div class="field"><label for="f-price">호가 (매매)</label><input id="f-price" type="number" inputmode="numeric"></div>
-          <div class="field"><label for="f-trade">최근 실거래가</label><input id="f-trade" type="number" inputmode="numeric"></div>
+          <div class="field"><label for="f-price"><dfn data-t="asking-price">호가</dfn> (매매)</label><input id="f-price" type="number" inputmode="numeric"></div>
+          <div class="field"><label for="f-trade">최근 <dfn data-t="actual-price">실거래가</dfn></label><input id="f-trade" type="number" inputmode="numeric"></div>
           <div class="field"><label for="f-jeonse">전세가</label><input id="f-jeonse" type="number" inputmode="numeric"></div>
-          <div class="field"><label for="f-size">전용면적 (㎡)</label><input id="f-size" type="number" inputmode="decimal"></div>
+          <div class="field"><label for="f-size"><dfn data-t="area">전용면적</dfn> (㎡)</label><input id="f-size" type="number" inputmode="decimal"></div>
         </div>
         <div class="chips" id="derived"></div>
       </div>
@@ -126,10 +126,11 @@
   <section id="view-compare" class="block" hidden>
     <p class="lead">총점 순. 항목당 5점, 총점 35점. 항목별 최고 점수는 형광펜으로 표시합니다.</p>
     <div class="tablewrap" id="compare-wrap"></div>
-    <p class="small muted">전세가율 = 전세가 ÷ 호가. 갭 = 호가 − 전세가.</p>
+    <p class="small muted"><dfn data-t="jeonse-ratio">전세가율</dfn> = 전세가 ÷ 호가. <dfn data-t="gap">갭</dfn> = 호가 − 전세가. 출퇴근은 핀의 위치와 출퇴근 기준(후보 찾기·지도 페이지)으로 계산한 직선거리·어림 시간입니다.</p>
   </section>
 </main>
 
+<script src="assets/terms.js"></script>
 <script src="assets/app.js"></script>
 <script>
 (function () {
@@ -167,7 +168,7 @@
     wrap.innerHTML = list.map(function (r) {
       var total = totalScore(r), ratio = jeonseRatio(r);
       var chips = '<span class="chip">' + esc(r.type || "아파트") + '</span>' + (r.time ? '<span class="chip">' + esc(r.time) + '</span>' : "") +
-        (ratio != null ? '<span class="chip ' + ratioClass(ratio) + '">전세가율 ' + Math.round(ratio * 100) + '%</span>' : "") + (r.revisit ? '<span class="chip mark">재방문 예정</span>' : "");
+        (ratio != null ? '<span class="chip ' + ratioClass(ratio) + '">전세가율 ' + Math.round(ratio * 100) + '%</span>' : "") + (r.revisit ? '<span class="chip mark">재방문 예정</span>' : "") + commuteChipsFor(r);
       var minis = [];
       if (num(r.price) != null) minis.push("호가 <b>" + fmtEok(num(r.price)) + "</b>");
       if (num(r.trade) != null) minis.push("실거래 <b>" + fmtEok(num(r.trade)) + "</b>");
@@ -194,14 +195,18 @@
   });
 
   // 비교
+  function candOf(r) { return r.candidateId ? J.candidates.get(r.candidateId) : null; }
+  function commuteOf(r) { var c = candOf(r); return c && c.lat != null ? J.commuteFor(c.lat, c.lng, r.name) : []; }
+  function commuteChipsFor(r) { var c = candOf(r); return c && c.lat != null ? J.commuteChips(c.lat, c.lng, r.name) : ""; }
   function renderCompare(visits) {
-    var wrap = $("compare-wrap"), list = visits.slice().sort(function (a, b) { return totalScore(b) - totalScore(a); });
+    var wrap = $("compare-wrap"), list = visits.slice().sort(function (a, b) { return totalScore(b) - totalScore(a); }), people = J.commutePeople();
     if (!list.length) { wrap.innerHTML = '<div class="empty" style="border:0"><p>기록이 2곳 이상 쌓이면 나란히 비교할 수 있습니다.</p></div>'; return; }
     var best = {}; CATS.forEach(function (c) { best[c.key] = Math.max.apply(null, list.map(function (r) { return Number((r.scores || {})[c.key] || 0); })); });
-    var head = '<tr><th>단지</th><th>지역</th><th>방문일</th><th class="n">호가</th><th class="n">전세가</th><th class="n">전세가율</th><th class="n">갭</th>' + CATS.map(function (c) { return '<th class="n">' + esc(c.name) + '</th>'; }).join("") + '<th class="n">총점</th></tr>';
+    var head = '<tr><th>단지</th><th>지역</th><th>방문일</th><th class="n">호가</th><th class="n">전세가</th><th class="n">전세가율</th><th class="n">갭</th>' + people.map(function (p) { return '<th class="n">' + esc(p.label) + ' 출퇴근</th>'; }).join("") + CATS.map(function (c) { return '<th class="n">' + esc(c.name) + '</th>'; }).join("") + '<th class="n">총점</th></tr>';
     var rows = list.map(function (r, i) {
       var p = num(r.price), j = num(r.jeonse), ratio = jeonseRatio(r);
       return '<tr' + (i === 0 ? ' class="best"' : "") + '><td><b>' + esc(r.name) + '</b></td><td>' + esc(r.area || "") + '</td><td>' + esc(r.date || "") + '</td><td class="n">' + fmtEok(p) + '</td><td class="n">' + fmtEok(j) + '</td><td class="n">' + (ratio != null ? Math.round(ratio * 100) + "%" : "–") + '</td><td class="n">' + (p != null && j != null ? fmtEok(p - j) : "–") + '</td>' +
+        (function () { var cm = commuteOf(r); return people.map(function (_, k) { return '<td class="n">' + (cm[k] ? cm[k].km.toFixed(1) + "km · " + cm[k].min + "분" : "–") + '</td>'; }).join(""); })() +
         CATS.map(function (c) { var s = Number((r.scores || {})[c.key] || 0); return '<td class="n' + (s && s === best[c.key] && list.length > 1 ? " top" : "") + '">' + (s || "–") + '</td>'; }).join("") + '<td class="n"><b>' + totalScore(r) + '</b></td></tr>';
     }).join("");
     wrap.innerHTML = "<table><thead>" + head + "</thead><tbody>" + rows + "</tbody></table>";

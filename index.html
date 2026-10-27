@@ -971,7 +971,7 @@ td.top { background: color-mix(in srgb, var(--mark) 35%, transparent); font-weig
       <div class="toolbar">
         <div>
           <h2>후보 단지 지도</h2>
-          <p class="muted small">검색하거나 지도를 클릭해 핀을 찍고, 갈 순서대로 정렬하세요. '임장 예정' 핀은 순서대로 점선으로 이어집니다.</p>
+          <p class="muted small">검색하거나 지도를 클릭해 핀을 찍으세요. '임장 예정' 핀은 순서대로 점선으로 이어집니다.</p>
         </div>
       </div>
       <div class="maprow">
@@ -983,13 +983,11 @@ td.top { background: color-mix(in srgb, var(--mark) 35%, transparent); font-weig
           <div id="geo-results" class="geo-results" hidden></div>
           <div id="map" class="map"></div>
           <div id="map-blocked" class="map-blocked" hidden><span id="map-blocked-text"></span></div>
-          <p class="small muted">지도를 클릭하면 그 자리에 핀을 추가할 수 있습니다. 카카오맵 키가 없으면 OpenStreetMap(© OpenStreetMap contributors)으로 표시됩니다. 세대수·동수·준공년도는 한국부동산원 공시대상 공동주택 자료(2026-08-31 기준, 아파트 46,981단지)에서 자동으로 채워지며, 그 이후 준공한 신축은 없을 수 있습니다.</p>
-          <details class="mapcfg" id="mapcfg">
-            <summary>지도 설정 · <span id="map-provider">준비 중</span></summary>
+          <details class="mapcfg" id="mapcfg" hidden>
+            <summary>지도 설정 · <span id="map-provider"></span></summary>
             <div class="field">
               <label for="kakao-key">카카오맵 JavaScript 키</label>
-              <div class="search"><input id="kakao-key" autocomplete="off" placeholder="developers.kakao.com 에서 발급한 JavaScript 키"><button type="button" class="btn" id="kakao-save">적용</button></div>
-              <p class="hint">키는 이 브라우저에만 저장됩니다. 비우고 적용하면 OpenStreetMap으로 돌아갑니다. 발급: 카카오 개발자 사이트 → 내 애플리케이션 → 앱 추가 → 플랫폼 Web에 사이트 도메인 등록 → 카카오맵 사용 설정 ON → 앱 키의 JavaScript 키.</p>
+              <div class="search"><input id="kakao-key" autocomplete="off" placeholder="JavaScript 키"><button type="button" class="btn" id="kakao-save">적용</button></div>
               <p class="status" id="kakao-status"></p>
             </div>
           </details>
@@ -1006,7 +1004,7 @@ td.top { background: color-mix(in srgb, var(--mark) 35%, transparent); font-weig
               <div class="field" style="grid-column: 1 / -1;"><label for="pf-memo">메모</label><input id="pf-memo" placeholder="예: 역 도보 10분 표기, 전세가율 65%"></div>
             </div>
             <div class="field">
-              <label for="pf-aptq">단지 정보 찾기 <span class="muted">(공공데이터, 핀을 찍으면 자동으로 찾습니다)</span></label>
+              <label for="pf-aptq">단지 정보 찾기</label>
               <div class="search"><input id="pf-aptq" autocomplete="off" placeholder="단지명으로 다시 찾기"><button type="button" class="btn" id="pf-aptsearch">찾기</button></div>
               <div id="pf-aptresults" class="geo-results" hidden></div>
               <p class="hint" id="pf-aptstatus"></p>
@@ -1015,8 +1013,8 @@ td.top { background: color-mix(in srgb, var(--mark) 35%, transparent); font-weig
               <div class="field"><label for="pf-units">세대수</label><input id="pf-units" type="number" inputmode="numeric"></div>
               <div class="field"><label for="pf-bld">동수</label><input id="pf-bld" type="number" inputmode="numeric"></div>
               <div class="field"><label for="pf-year">준공(사용승인) 년도</label><input id="pf-year" type="number" inputmode="numeric"></div>
-              <div class="field"><label for="pf-sizes">평형·전용면적</label><input id="pf-sizes" placeholder="예: 59·84·114㎡ (손품으로 확인)"></div>
-              <div class="field" style="grid-column: 1 / -1;"><label for="pf-redev">재건축·재개발 진행 상황</label><input id="pf-redev" placeholder="예: 추진위 구성, 안전진단 통과, 조합설립 인가 등"></div>
+              <div class="field"><label for="pf-sizes">평형·전용면적</label><input id="pf-sizes" placeholder="예: 59·84·114㎡"></div>
+              <div class="field" style="grid-column: 1 / -1;"><label for="pf-redev">재건축·재개발 진행 상황</label><input id="pf-redev" placeholder="예: 안전진단 통과, 조합설립 인가"></div>
             </div>
             <p class="small muted" id="pf-coords"></p>
             <div class="card-actions">
@@ -1448,7 +1446,7 @@ td.top { background: color-mix(in srgb, var(--mark) 35%, transparent); font-weig
   }
   var noticeKind = "";
   function setMapNotice(msg, kind) { var b = $("map-blocked"); b.hidden = !msg; $("map-blocked-text").textContent = msg || ""; noticeKind = msg ? (kind || "") : ""; }
-  function setProvider(text) { $("map-provider").textContent = text; }
+  function setProvider(text) { $("map-provider").textContent = text; $("mapcfg").hidden = !/실패|없음/.test(text); }
   function loadView() { try { return JSON.parse(localStorage.getItem("imjang.mapview") || "null") || { lat: 37.5665, lng: 126.978, z: 11 }; } catch (e) { return { lat: 37.5665, lng: 126.978, z: 11 }; } }
   function saveView() { if (!backend) return; try { localStorage.setItem("imjang.mapview", JSON.stringify(backend.getView())); } catch (e) {} }
   function mapClicked(lat, lng) { startPin(lat, lng, "", "", null); }

@@ -430,6 +430,7 @@ window.JT = (function () {
       '<a class="btn sm" href="https://www.k-apt.go.kr/" target="_blank" rel="noopener">K-apt 관리비</a>';
     var cm = pos ? commuteChips(pos[0], pos[1], name) : "";
     return '<div class="detail">' +
+      (opts.score ? scoreHtml(opts.score) : "") +
       '<dl class="kv">' + kv.map(function (x) { return '<dt>' + x[0] + '</dt><dd>' + x[1] + '</dd>'; }).join("") + '</dl>' +
       (cm ? '<div class="chips">' + cm + '</div>' : "") +
       table +
@@ -447,6 +448,41 @@ window.JT = (function () {
       var js = priceMatch(res[2], dongKey, jibun, name);
       return detailHtml(p, apt, js, opts);
     });
+  }
+
+  // ---------- 추천 점수 (생애 첫 집·실거주·두 사람 출퇴근 기준, 100점) ----------
+  function lin(v, lo, hi) { if (v == null || !isFinite(v)) return null; return Math.max(0, Math.min(1, (v - lo) / (hi - lo))); } // lo→0, hi→1
+  // x: { r(price 행), units, year, redev, js, minPrice, trades, pos }, ctx: { maxp }
+  function scoreRow(x, ctx) {
+    var r = x.r, parts = [], total = 0, max = 0;
+    function add(label, pts, maxPts, why) { if (pts == null) { parts.push({ label: label, pts: null, max: maxPts, why: why }); return; } pts = Math.round(pts * 10) / 10; parts.push({ label: label, pts: pts, max: maxPts, why: why }); total += pts; max += maxPts; }
+    var people = commutePeople();
+    if (people.length && x.pos) {
+      var cm = commuteFor(x.pos[0], x.pos[1], r[2]), mean = cm.reduce(function (s, c) { return s + c.km; }, 0) / cm.length, worst = Math.max.apply(null, cm.map(function (c) { return c.km; }));
+      var f = (1 - lin(mean, 5, 25)) * 0.7 + (1 - lin(worst, 8, 30)) * 0.3;
+      add("출퇴근", 30 * f, 30, "두 사람 평균 " + mean.toFixed(1) + "km, 먼 쪽 " + worst.toFixed(1) + "km (5km 이하가 만점)");
+    } else add("출퇴근", null, 30, people.length ? "단지 좌표가 없어 계산 못 함" : "직장을 넣으면 반영됩니다");
+    var near = r[6];
+    if (near) {
+      add("지하철", near[0] ? 15 * (1 - lin(near[2], 300, 1200)) : 0, 15, near[0] ? esc(near[0]) + " " + near[2] + "m (300m 이하 만점, 1.2km 넘으면 0)" : "1.5km 안에 역 없음");
+      add("초등학교", near[3] ? 5 * (1 - lin(near[4], 300, 800)) : 0, 5, near[3] ? near[4] + "m (300m 이하 만점)" : "1km 안에 없음");
+    } else { add("지하철", null, 15, "자료 없음"); add("초등학교", null, 5, "자료 없음"); }
+    var mr = mainRatio(r, x.js);
+    if (mr) add("전세가율", 15 * lin(mr.ratio, 0.45, 0.75), 15, Math.round(mr.ratio * 100) + "% (75% 이상 만점, 45% 이하 0 — 실수요가 받쳐 주는 정도)"); else add("전세가율", null, 15, "최근 1년 전세 거래 없음");
+    if (x.units != null) add("세대수", 10 * lin(x.units, 300, 1000), 10, x.units.toLocaleString("ko-KR") + "세대 (1,000세대 이상 만점)"); else add("세대수", null, 10, "자료 없음");
+    var age = ageOf(x.year);
+    if (age != null) {
+      var ap = age <= 10 ? 10 : age <= 20 ? 10 - (age - 10) * 0.4 : age <= 30 ? 6 - (age - 20) * 0.4 : (x.redev && /조합설립|사업시행|관리처분|착공/.test(x.redev[0]) ? 5 : 1);
+      add("연식", ap, 10, age + "년차" + (age > 30 && x.redev ? ", 재건축 " + x.redev[0] + " 단계라 가점" : "") + " (10년 이하 만점)");
+    } else add("연식", null, 10, "준공년도 모름");
+    if (ctx.maxp && x.minPrice) { var ratio = x.minPrice / ctx.maxp; add("예산 여유", 10 * (1 - lin(ratio, 0.8, 1.0)) * 0.7 + 3, 10, "예산의 " + Math.round(ratio * 100) + "% (80% 이하면 만점, 취득세·수리비 여유)"); } else add("예산 여유", null, 10, "최대 집값을 넣으면 반영");
+    if (x.units) add("거래 활발", 5 * lin(x.trades / x.units, 0.005, 0.03), 5, "1년 " + x.trades + "건, 세대의 " + (x.trades / x.units * 100).toFixed(1) + "% (3% 이상 만점)"); else add("거래 활발", null, 5, "세대수 모름");
+    return { total: max ? Math.round(total / max * 100) : null, parts: parts, counted: max };
+  }
+  function scoreHtml(sc) {
+    if (!sc || sc.total == null) return "";
+    return '<div class="score-box"><div class="score-head"><b>추천 ' + sc.total + '점</b><span class="muted small"> (반영된 항목 ' + sc.counted + '점 만점을 100점으로 환산)</span></div><ul class="score-parts">' +
+      sc.parts.map(function (p) { return "<li><span>" + esc(p.label) + "</span><b>" + (p.pts == null ? "–" : p.pts + "/" + p.max) + "</b><span class=\"muted small\">" + p.why + "</span></li>"; }).join("") + "</ul></div>";
   }
 
   // ---------- 용어 설명 팝오버 ----------
@@ -482,5 +518,5 @@ window.JT = (function () {
     budget: budget, loanFor: loanFor, costsFor: costsFor, acquisitionTax: acquisitionTax, brokerFee: brokerFee, monthlyPayment: monthlyPayment, policyEligibility: policyEligibility, regionOf: regionOf, annuityFactor: annuityFactor,
     expandDongKey: expandDongKey, getKakaoKey: getKakaoKey, loadKakao: loadKakao, placeSearch: placeSearch,
     getCommute: getCommute, setCommute: setCommute, commutePeople: commutePeople, commuteFor: commuteFor, commuteChips: commuteChips, commuteMinutes: commuteMinutes, haversineKm: haversineKm, kakaoRouteUrl: kakaoRouteUrl, renderCommuteSetup: renderCommuteSetup, termify: termify,
-    loadJeonse: loadJeonse, nearChips: nearChips, mainRatio: mainRatio, ratioChip: ratioChip, detailHtml: detailHtml, detailFor: detailFor, walkMin: walkMin };
+    loadJeonse: loadJeonse, nearChips: nearChips, mainRatio: mainRatio, ratioChip: ratioChip, detailHtml: detailHtml, detailFor: detailFor, walkMin: walkMin, scoreRow: scoreRow, scoreHtml: scoreHtml };
 })();

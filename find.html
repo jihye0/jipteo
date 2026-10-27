@@ -56,7 +56,7 @@
       </div>
       <div class="field">
         <label for="sort">정렬</label>
-        <select id="sort"><option value="price">가격 낮은 순</option><option value="commute">출퇴근 가까운 순</option><option value="units">세대수 많은 순</option><option value="year">최근 준공 순</option><option value="trades">거래 많은 순</option></select>
+        <select id="sort"><option value="reco">추천순</option><option value="price">가격 낮은 순</option><option value="commute">출퇴근 가까운 순</option><option value="units">세대수 많은 순</option><option value="year">최근 준공 순</option><option value="trades">거래 많은 순</option></select>
       </div>
       <div class="field">
         <label for="maxKm">출퇴근 거리</label>
@@ -88,7 +88,7 @@
   <div class="note" id="data-note" hidden></div>
   <div class="list" id="results"></div>
   <div class="actions" id="more-wrap" hidden><button type="button" class="btn" id="more">더 보기</button></div>
-  <p class="small muted">실거래가·전세: 국토교통부 실거래가 공개시스템, 2025-10-28 ~ 2026-10-27 계약분(해제 거래 제외). 평형별 값은 그 기간 거래가의 <dfn data-t="median">중앙값</dfn>이고, 전세가율은 가장 거래가 많은 평형 기준입니다. 역·초등학교 거리는 카카오 장소 검색 직선거리입니다. 단지 정보: 한국부동산원 공시대상 공동주택(2026-08-31 기준). 거래가 없던 단지는 목록에 나오지 않습니다.</p>
+  <p class="small muted">실거래가·전세: 국토교통부 실거래가 공개시스템, 2025-10-28 ~ 2026-10-27 계약분(해제 거래 제외). 평형별 값은 그 기간 거래가의 <dfn data-t="median">중앙값</dfn>이고, 전세가율은 가장 거래가 많은 평형 기준입니다. 역·초등학교 거리는 카카오 장소 검색 직선거리입니다. 추천순은 출퇴근(30) · 지하철(15) · 전세가율(15) · 세대수(10) · 연식(10) · 예산 여유(10) · 초등학교(5) · 거래 활발(5)을 더한 점수이고, 자료가 없는 항목은 빼고 100점으로 환산합니다. 각 단지 "자세히"에 근거가 나옵니다. 단지 정보: 한국부동산원 공시대상 공동주택(2026-08-31 기준). 거래가 없던 단지는 목록에 나오지 않습니다.</p>
 </main>
 
 <script src="assets/terms.js"></script>
@@ -202,13 +202,16 @@
       var pos = r[5] || null, cm = pos ? J.commuteFor(pos[0], pos[1], r[2]) : [];
       if (maxKm && (!pos || cm.some(function (c) { return c.km > maxKm; }))) return;
       var kmSum = cm.length ? cm.reduce(function (s, c) { return s + c.km; }, 0) : Infinity;
-      rows.push({ r: r, apt: apt, js: js, units: units, bld: bld, year: year, mixed: mixed, redev: redev, areas: areas, inB: inB, minPrice: Math.min.apply(null, inB.map(function (a) { return a[2]; })), trades: trades, pos: pos, kmSum: kmSum });
+      var row = { r: r, apt: apt, js: js, units: units, bld: bld, year: year, mixed: mixed, redev: redev, areas: areas, inB: inB, minPrice: Math.min.apply(null, inB.map(function (a) { return a[2]; })), trades: trades, pos: pos, kmSum: kmSum };
+      row.score = J.scoreRow(row, { maxp: isFinite(maxp) ? maxp : 0 });
+      rows.push(row);
     });
     rows.sort(function (a, b) {
       if (sort === "units") return (b.units || 0) - (a.units || 0);
       if (sort === "year") return (b.year || 0) - (a.year || 0);
       if (sort === "trades") return b.trades - a.trades;
       if (sort === "commute") return a.kmSum - b.kmSum || a.minPrice - b.minPrice;
+      if (sort === "reco") return (b.score.total || 0) - (a.score.total || 0) || a.minPrice - b.minPrice;
       return a.minPrice - b.minPrice;
     });
     state.rows = rows; state.shown = 0;
@@ -229,6 +232,7 @@
         return '<span class="' + (ok ? "in" : "out") + '">' + a[0] + '㎡ <span class="muted">' + J.pyeong(a[0]) + '평형</span> <b>' + J.fmtEok(a[2], 1) + '</b> <span class="muted small">' + a[1] + '건 · ' + a[5].slice(0, 4) + "." + a[5].slice(4) + '</span></span>';
       }).join("");
       var chips = "";
+      if (x.score && x.score.total != null) chips += '<span class="chip reco" title="자세히에서 점수 근거를 볼 수 있습니다">추천 ' + x.score.total + '점</span>';
       if (x.units != null) chips += '<span class="chip">' + x.units.toLocaleString("ko-KR") + '세대</span>';
       if (x.bld != null) chips += '<span class="chip">' + x.bld + '개동</span>';
       if (x.year) chips += '<span class="chip">' + x.year + '년 준공</span>';
@@ -259,7 +263,7 @@
       var card = tg.closest(".row-card"), wrap = card.querySelector(".detail-wrap"), open = tg.getAttribute("aria-expanded") === "true";
       if (!open && !wrap.innerHTML) {
         var y = rowByKey(tg.dataset.detail);
-        if (y) { wrap.innerHTML = J.detailHtml(y.r, y.apt, y.js, { code: y.r.code, minp: J.num($("minp").value) || 0, maxp: J.num($("maxp").value) || 0 }); J.termify(wrap); }
+        if (y) { wrap.innerHTML = J.detailHtml(y.r, y.apt, y.js, { code: y.r.code, minp: J.num($("minp").value) || 0, maxp: J.num($("maxp").value) || 0, score: y.score }); J.termify(wrap); }
       }
       wrap.hidden = open; tg.setAttribute("aria-expanded", String(!open)); tg.textContent = open ? "자세히" : "접기";
       return;

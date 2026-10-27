@@ -119,13 +119,14 @@
     $("status").textContent = "데이터 불러오는 중";
     if (J.PRICE_AVAILABLE.indexOf(code) < 0) {
       data = null; $("results").innerHTML = ""; $("more-wrap").hidden = true;
-      $("data-note").hidden = false; $("data-note").textContent = J.SIDO_NAME[code] + " 실거래 요약은 아직 들어 있지 않습니다. 지금은 서울만 검색됩니다. 지도·핀 페이지에서는 " + J.SIDO_NAME[code] + " 단지도 세대수·준공년도는 자동으로 채워집니다.";
+      $("data-note").hidden = false; $("data-note").textContent = J.SIDO_NAME[code] + " 실거래 요약은 아직 들어 있지 않습니다. 지금은 서울·경기·인천만 검색됩니다. 지도·핀 페이지에서는 " + J.SIDO_NAME[code] + " 단지도 세대수·준공년도는 자동으로 채워집니다.";
       $("status").textContent = ""; fillSgg([]); return Promise.resolve();
     }
     $("data-note").hidden = true;
     return Promise.all([J.loadPrice(code), J.loadApt(code)]).then(function (res) {
-      var idx = new Map(); res[1].forEach(function (r) { idx.set(r[1] + "|" + r[2], r); });
-      data = { price: res[0], apt: res[1], aptIndex: idx, code: code };
+      var idx = new Map(), byName = new Map();
+      res[1].forEach(function (r) { idx.set(r[1] + "|" + r[2], r); var nk = r[1] + "|" + J.normName(r[0]); if (!byName.has(nk)) byName.set(nk, r); });
+      data = { price: res[0], apt: res[1], aptIndex: idx, aptByName: byName, code: code };
       fillSgg(res[0]);
       $("status").textContent = "";
     }).catch(function () { $("status").textContent = "데이터를 불러오지 못했습니다. 새로고침해 주세요."; $("status").className = "status err"; });
@@ -156,7 +157,7 @@
       var dk = r[0];
       if (sgg && dk.split(" ")[0] !== sgg) return;
       if (dong && dk.split(" ").slice(1).join(" ") !== dong) return;
-      var apt = data.aptIndex.get(dk + "|" + r[1]) || null;
+      var apt = data.aptIndex.get(dk + "|" + r[1]) || data.aptByName.get(dk + "|" + J.normName(r[2])) || null;
       var units = apt ? apt[3] : null, bld = apt ? apt[4] : null, year = r[3] || (apt ? apt[5] : 0);
       if (minUnits && (units == null || units < minUnits)) return;
       if (minYear && (!year || year < minYear)) return;

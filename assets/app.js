@@ -79,7 +79,7 @@ window.JT = (function () {
     "경북": "gyeongbuk", "경상북도": "gyeongbuk", "경남": "gyeongnam", "경상남도": "gyeongnam", "제주": "jeju", "제주특별자치도": "jeju"
   };
   var SIDO_NAME = { seoul: "서울", busan: "부산", daegu: "대구", incheon: "인천", gwangju: "광주", daejeon: "대전", ulsan: "울산", sejong: "세종", gyeonggi: "경기", gangwon: "강원", chungbuk: "충북", chungnam: "충남", jeonbuk: "전북", jeonnam: "전남", gyeongbuk: "경북", gyeongnam: "경남", jeju: "제주" };
-  var PRICE_AVAILABLE = ["seoul"]; // 실거래 요약이 들어 있는 시도
+  var PRICE_AVAILABLE = ["seoul", "gyeonggi", "incheon"]; // 실거래 요약이 들어 있는 시도
   var cache = {};
   function loadJson(path) {
     if (cache[path]) return cache[path];

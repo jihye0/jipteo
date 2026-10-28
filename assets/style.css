@@ -254,7 +254,7 @@ dfn[data-t]:hover { color: var(--accent); }
 /* ---- 출퇴근 ---- */
 .commute-row { display: grid; grid-template-columns: 5.5rem 1fr; gap: 0.4rem 0.6rem; align-items: start; }
 .commute-row .who { font-weight: 600; }
-.commute-row .geo-results, .commute-row .hint { grid-column: 2; }
+.commute-row > .geo-results, .commute-row > .hint { grid-column: 2; }
 .commute-row + .commute-row { margin-top: 0.4rem; }
 .chip.commute { color: var(--ink); background: var(--surface-2); }
 .chip.commute.good { color: var(--good); background: color-mix(in srgb, var(--good) 12%, transparent); }
@@ -296,7 +296,9 @@ table.cmp td { vertical-align: top; white-space: normal; min-width: 9rem; }
 @media (max-width: 480px) { .score-parts li { grid-template-columns: 5rem 3.6rem; } .score-parts li .muted { grid-column: 1 / -1; } }
 
 /* ---- 셔틀 정류장 ---- */
-.commute-body { display: grid; gap: 0.45rem; }
+.commute-body { display: grid; gap: 0.45rem; grid-template-columns: minmax(0, 1fr); }
+.commute-body > * { grid-column: 1; min-width: 0; }
+.commute-body .seg { justify-self: start; }
 .seg.sm button { padding: 0.25rem 0.6rem; font-size: 0.82rem; }
 .commute-row textarea.stops { width: 100%; font-size: 0.85rem; }
 .commute-row .maxwalk { max-width: 12rem; }

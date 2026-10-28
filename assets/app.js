@@ -394,7 +394,7 @@ window.JT = (function () {
           ? '<textarea class="stops" rows="4" placeholder="정류장 이름을 한 줄에 하나씩 붙여 넣으세요 (예: 잠실역 6번출구)"></textarea>' +
             '<div class="search"><select class="maxwalk"><option value="800">정류장 도보 800m 이내</option><option value="1000">1km 이내</option><option value="1500">1.5km 이내 (기본)</option><option value="2000">2km 이내</option></select><button type="button" class="btn geocode">정류장 위치 찾기</button>' + (p.stops && p.stops.length ? '<button type="button" class="btn ghost clear">지우기</button>' : "") + '</div>' +
             '<p class="hint">' + (p.stops && p.stops.length ? "정류장 " + p.stops.length + "곳 저장됨 · 이 브라우저에만 저장되고 어디에도 보내지 않습니다" : "목록을 붙여 넣고 '정류장 위치 찾기'를 누르세요. 이 브라우저에만 저장됩니다") + '</p>' +
-            '<details class="miss" hidden><summary></summary><p class="small muted"></p></details>' +
+            '<details class="miss"' + (p.miss && p.miss.length ? "" : " hidden") + '><summary>' + (p.miss && p.miss.length ? "못 찾은 정류장 " + p.miss.length + "곳 보기 (이름을 고쳐 다시 붙여 넣으면 됩니다)" : "") + '</summary><p class="small muted">' + esc((p.miss || []).join(", ")) + '</p></details>' +
             '<div class="search"><input class="where" autocomplete="off" placeholder="회사 위치 (선택 · 점수에 40% 반영)" value="' + esc(p.name) + '"><button type="button" class="btn find">찾기</button>' + (p.lat != null ? '<button type="button" class="btn ghost clear-co">회사 지우기</button>' : "") + '</div>' +
             '<div class="geo-results" hidden></div><p class="hint2 small muted">' + (p.lat != null ? "회사 설정됨 · " + esc(p.name) : "회사 위치는 넣지 않아도 됩니다") + '</p>'
           : '<div class="search"><input class="where" autocomplete="off" placeholder="직장 이름이나 주소 (예: 판교역, 테헤란로 152)" value="' + esc(p.name) + '"><button type="button" class="btn find">찾기</button>' + (p.lat != null ? '<button type="button" class="btn ghost clear">지우기</button>' : "") + '</div>' +
@@ -434,7 +434,7 @@ window.JT = (function () {
           if (!names.length) { hint.textContent = "정류장 이름을 먼저 붙여 넣으세요."; return; }
           hint.textContent = "정류장 위치를 찾는 중 0/" + names.length;
           geocodeStops(names, function (d, t) { hint.textContent = "정류장 위치를 찾는 중 " + d + "/" + t; }).then(function (res) {
-            p.stops = res.stops; save();
+            p.stops = res.stops; p.miss = res.miss; save();
             hint.textContent = "정류장 " + res.stops.length + "곳 저장됨 · 못 찾음 " + res.miss.length + "곳 · 이 브라우저에만 저장됩니다";
             if (res.miss.length) { miss.hidden = false; miss.querySelector("summary").textContent = "못 찾은 정류장 " + res.miss.length + "곳 보기"; miss.querySelector("p").textContent = res.miss.join(", "); }
             ta.value = "";

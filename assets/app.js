@@ -341,16 +341,35 @@ window.JT = (function () {
     }).join("");
   }
   // 정류장 이름 목록 -> 좌표 (카카오 장소 검색, 수도권 안에서만). onProgress(done, total)
+  // 정류장 이름 하나로 시도할 검색어 목록 (원문 → 출구 번호 뗀 것 → 부가 설명 뗀 것 → 첫 낱말)
+  function stopQueries(n) {
+    var q = [], seen = {};
+    function add(x) { x = String(x || "").replace(/\s+/g, " ").trim(); if (x.length >= 2 && !seen[x]) { seen[x] = 1; q.push(x); } }
+    add(n);
+    var base = n.replace(/\(.*?\)/g, " ").replace(/\s*(전방|건너편|맞은\s?편|맞은편|옆|앞|방면|입구|후문|정문|사이|대도로변|버스정류장|택시승강장|육교\s?밑|육교|횡단보도)\s*\d*\s*[mM]?\s*$/g, "").trim();
+    add(base);
+    add(base.replace(/\s*\d+(,\s*\d+)*\s*번\s*출구.*$/, "").trim());
+    add(n.replace(/\s*\d+(,\s*\d+)*\s*번\s*출구.*$/, "").trim());
+    var toks = base.split(" ");
+    if (toks.length > 1) { add(toks[0]); add(toks.slice(0, 2).join(" ")); }
+    var st = /([가-힣A-Za-z0-9]+(역|초교|초등학교|중학교|고등학교|시청|구청|주민센터|사거리|오거리|삼거리|터미널|공원|병원|마트|성당|교회|아파트|주유소|농협|우체국))/.exec(n);
+    if (st) add(st[1]);
+    return q;
+  }
   function geocodeStops(names, onProgress) {
     var out = [], miss = [], i = 0;
+    function metro(list) { return list.find(function (d) { return d.addr && ["seoul", "gyeonggi", "incheon"].indexOf(d.addr.code) >= 0; }) || null; }
+    function tryQueries(qs, k) {
+      if (k >= qs.length) return Promise.resolve(null);
+      return placeSearch(qs[k]).then(function (list) { var hit = metro(list); if (hit) return { hit: hit, q: qs[k] }; return new Promise(function (r) { setTimeout(r, 40); }).then(function () { return tryQueries(qs, k + 1); }); });
+    }
     function next() {
       if (i >= names.length) return Promise.resolve({ stops: out, miss: miss });
       var n = names[i++];
-      return placeSearch(n).then(function (list) {
-        var hit = list.find(function (d) { return d.addr && ["seoul", "gyeonggi", "incheon"].indexOf(d.addr.code) >= 0; }) || null; // 수도권 결과만
-        if (hit) out.push({ n: n, lat: hit.lat, lng: hit.lng }); else miss.push(n);
+      return tryQueries(stopQueries(n), 0).then(function (res) {
+        if (res) out.push({ n: n, lat: res.hit.lat, lng: res.hit.lng, q: res.q !== n ? res.q : undefined }); else miss.push(n);
         if (onProgress) onProgress(i, names.length);
-        return new Promise(function (r) { setTimeout(r, 60); }).then(next);
+        return new Promise(function (r) { setTimeout(r, 40); }).then(next);
       });
     }
     return next();

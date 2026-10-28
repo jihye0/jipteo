@@ -308,3 +308,17 @@ table.cmp td { vertical-align: top; white-space: normal; min-width: 9rem; }
 .legend { display: flex; gap: 0.9rem; flex-wrap: wrap; font-size: 0.8rem; color: var(--muted); }
 .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 0.35rem; vertical-align: middle; }
 label.btn { cursor: pointer; }
+
+/* ---- 후보 찾기 필터 v3 ---- */
+.chips-select { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.chips-select button { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 0.25rem 0.7rem; font-size: 0.82rem; color: var(--muted); }
+.chips-select button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.sgg-box { max-height: 9.5rem; overflow: auto; padding: 0.4rem; border: 1px solid var(--line); border-radius: 10px; display: grid; gap: 0.4rem; }
+.sgg-box .grp { display: flex; flex-wrap: wrap; gap: 0.3rem; align-items: center; }
+.sgg-box .grp > span { font-size: 0.75rem; color: var(--muted); margin-right: 0.2rem; }
+.sgg-box button { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 0.15rem 0.55rem; font-size: 0.78rem; color: var(--ink); }
+.sgg-box button[aria-pressed="true"] { background: var(--accent); color: #fff; border-color: var(--accent); }
+.sort-row { display: flex; gap: 0.4rem; align-items: center; }
+.sort-row select { flex: 1; }
+.tlimits { display: grid; gap: 0.4rem; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+.tlimits .field { gap: 0.2rem; }

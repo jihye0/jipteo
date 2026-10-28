@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>집터 · 후보 찾기</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
-<link rel="stylesheet" href="assets/style.css?v=20261027k">
+<link rel="stylesheet" href="assets/style.css?v=20261028a">
 </head>
 <body>
 <header class="topbar"><div class="topbar-inner"></div></header>
@@ -23,7 +23,7 @@
         <h2>조건</h2>
         <p class="small muted" id="budget-line">예산 페이지에서 계산한 값이 여기로 들어옵니다.</p>
       </div>
-      <a class="btn sm" href="index.html">예산 다시 계산</a>
+      <div class="actions"><button type="button" class="btn sm" id="reset">조건 초기화</button><a class="btn sm" href="index.html">예산 다시 계산</a></div>
     </div>
     <div class="grid">
       <div class="field">
@@ -35,44 +35,51 @@
         <div class="unit"><input id="maxp" type="number" inputmode="numeric" placeholder="예: 90000"><span>만원</span></div>
       </div>
       <div class="field">
-        <label for="sido">지역</label>
-        <select id="sido"></select>
-      </div>
-      <div class="field">
-        <label for="sgg">시군구</label>
-        <select id="sgg"><option value="">전체</option></select>
-      </div>
-      <div class="field">
-        <label for="dong">동</label>
-        <select id="dong"><option value="">전체</option></select>
-      </div>
-      <div class="field">
         <label for="minUnits"><dfn data-t="units">세대수</dfn></label>
         <select id="minUnits"><option value="0">전체</option><option value="300">300세대 이상</option><option value="500" selected>500세대 이상</option><option value="1000">1,000세대 이상</option></select>
       </div>
-      <div class="field">
-        <label for="minYear"><dfn data-t="built-year">준공</dfn></label>
-        <select id="minYear"><option value="0">전체</option><option value="2000">2000년 이후</option><option value="2010">2010년 이후</option><option value="2015">2015년 이후</option><option value="2020">2020년 이후</option></select>
+      <div class="field span-all">
+        <label>지역 <span class="muted small">(여러 개 선택)</span></label>
+        <div class="chips-select" id="regions"></div>
+      </div>
+      <div class="field span-all">
+        <label>시군구 <span class="muted small">(비우면 선택한 지역 전체 · 여러 개 선택)</span> <button type="button" class="btn sm ghost" id="sgg-clear">모두 해제</button></label>
+        <div class="sgg-box" id="sgg-box"></div>
+      </div>
+      <div class="field" id="dong-field" hidden>
+        <label for="dong">동</label>
+        <select id="dong"><option value="">전체</option></select>
+      </div>
+      <div class="field span-all">
+        <label><dfn data-t="built-year">준공</dfn> 연대 <span class="muted small">(비우면 전체)</span></label>
+        <div class="chips-select" id="decades"></div>
       </div>
       <div class="field">
-        <label for="sort">정렬</label>
-        <select id="sort"><option value="reco">추천순</option><option value="price">가격 낮은 순</option><option value="commute">출퇴근 가까운 순</option><option value="units">세대수 많은 순</option><option value="year">최근 준공 순</option><option value="trades">거래 많은 순</option></select>
-      </div>
-      <div class="field">
-        <label for="maxKm">출퇴근 거리</label>
-        <select id="maxKm"><option value="0">전체</option><option value="5">둘 다 5km 이내</option><option value="10">둘 다 10km 이내</option><option value="15">둘 다 15km 이내</option><option value="20">둘 다 20km 이내</option><option value="30">둘 다 30km 이내</option></select>
-      </div>
-      <div class="field span-all checks-row">
-        <label class="check"><input type="checkbox" id="noMixed" checked> 주상복합 제외 <span class="muted small">(이름에 '주상복합'이 있거나 1~2개 동 고층형)</span></label>
-        <label class="check"><input type="checkbox" id="onlyRedev"> <dfn data-t="redev">재건축·재개발</dfn> 추진 단지만</label>
+        <label for="ratio"><dfn data-t="jeonse-ratio">전세가율</dfn></label>
+        <select id="ratio"><option value="">전체</option><option value="75">75% 이상</option><option value="70">70% 이상</option><option value="60">60% 이상</option><option value="50">50% 이상</option><option value="lt50">50% 미만</option></select>
       </div>
       <div class="field span-all">
         <label><dfn data-t="pyeong">평형</dfn> (<dfn data-t="area">전용면적</dfn>)</label>
         <div class="seg" id="band">
           <button type="button" data-v="all" aria-pressed="true">전체</button>
-          <button type="button" data-v="s" aria-pressed="false">~60㎡ (18~25평형)</button>
+          <button type="button" data-v="s" aria-pressed="false">~60㎡ (~24평형)</button>
           <button type="button" data-v="m" aria-pressed="false">60~85㎡ (25~34평형)</button>
-          <button type="button" data-v="l" aria-pressed="false">85㎡~ (34평형~)</button>
+          <button type="button" data-v="l" aria-pressed="false">85㎡~ (35평형~)</button>
+        </div>
+      </div>
+      <div class="field span-all">
+        <label>출퇴근 시간 <span class="muted small">(어림값 · 사람별)</span></label>
+        <div class="tlimits" id="tlimits"></div>
+      </div>
+      <div class="field span-all checks-row">
+        <label class="check"><input type="checkbox" id="noMixed" checked> <dfn data-t="mixed-use">주상복합</dfn> 제외 <span class="muted small">(이름에 '주상복합'이 있거나 1~2개 동 고층형)</span></label>
+        <label class="check"><input type="checkbox" id="onlyRedev"> <dfn data-t="redev">재건축·재개발</dfn> 추진 단지만</label>
+      </div>
+      <div class="field span-all">
+        <label for="sort">정렬</label>
+        <div class="sort-row">
+          <select id="sort"><option value="reco">추천순</option><option value="price">가격</option><option value="commute">출퇴근 가까운 순</option><option value="ratio">전세가율</option><option value="units">세대수</option><option value="year">준공년도</option><option value="trades">거래량</option></select>
+          <button type="button" class="btn sm" id="dir" title="정렬 방향 바꾸기">↓ 내림차순</button>
         </div>
       </div>
     </div>
@@ -81,156 +88,217 @@
 
   <details class="card quiet" id="commute-card">
     <summary><b>출퇴근 기준</b> · <span id="commute-summary"></span></summary>
-    <p class="small muted">두 사람의 직장을 넣으면 단지마다 직선거리와 대략의 대중교통 시간이 붙습니다. 회사 셔틀을 타는 사람은 "회사 셔틀 정류장"을 골라 정류장 목록을 붙여 넣으면, 가장 가까운 정류장까지 걷는 거리로 계산합니다. 거리 필터("둘 다 N km 이내")에서 셔틀 쪽은 고른 도보 거리 이내가 조건입니다. 시간은 어림값이니 정확한 값은 칩을 눌러 카카오맵 길찾기로 확인하세요.</p>
+    <p class="small muted">두 사람의 직장을 넣으면 단지마다 직선거리와 대략의 대중교통 시간이 붙습니다. 회사 셔틀을 타는 사람은 "회사 셔틀 정류장"을 골라 정류장 목록을 붙여 넣으면 가장 가까운 정류장까지 걷는 거리로 계산하고, 회사 위치까지 넣으면 점수에 40% 비중으로 함께 들어갑니다. 시간은 어림값이니 정확한 값은 칩을 눌러 카카오맵 길찾기로 확인하세요.</p>
     <div id="commute-setup"></div>
   </details>
 
   <div class="note" id="data-note" hidden></div>
   <div class="list" id="results"></div>
   <div class="actions" id="more-wrap" hidden><button type="button" class="btn" id="more">더 보기</button></div>
-  <p class="small muted">실거래가·전세: 국토교통부 실거래가, <span id="period">2025-10-28 ~ 2026-10-27</span> 계약분(해제 거래 제외), 매달 1일 자동 갱신. 평형별 값은 그 기간 거래가의 <dfn data-t="median">중앙값</dfn>이고, 전세가율은 가장 거래가 많은 평형 기준입니다. 역·초등학교 거리는 카카오 장소 검색 직선거리입니다. 추천순은 출퇴근(30) · 지하철(15) · 전세가율(15) · 세대수(10) · 연식(10) · 예산 여유(10) · 초등학교(5) · 거래 활발(5)을 더한 점수이고, 자료가 없는 항목은 빼고 100점으로 환산합니다. 각 단지 "자세히"에 근거가 나옵니다. 단지 정보: 한국부동산원 공시대상 공동주택(2026-08-31 기준). 거래가 없던 단지는 목록에 나오지 않습니다.</p>
+  <p class="small muted">실거래가·전세: 국토교통부 실거래가, <span id="period">최근 12개월</span> 계약분(해제 거래 제외), 매달 자동 갱신. 평형별 값은 그 기간 거래가의 <dfn data-t="median">중앙값</dfn>이고, 전세가율은 가장 거래가 많은 평형 기준입니다. '평형'은 공급면적 기준 통칭(전용률 75% 가정)이고 괄호 안이 전용 평입니다. 역·초등학교 거리는 카카오 장소 검색 직선거리입니다. 추천순은 출퇴근(30) · 지하철(15) · 전세가율(15) · 세대수(10) · 연식(10) · 예산 여유(10) · 초등학교(5) · 거래 활발(5)을 더한 점수이고, 자료가 없는 항목은 빼고 100점으로 환산합니다. 각 단지 "자세히"에 근거가 나옵니다.</p>
 </main>
 
-<script src="assets/terms.js?v=20261027k"></script>
-<script src="assets/app.js?v=20261027k"></script>
+<script src="assets/terms.js?v=20261028a"></script>
+<script src="assets/app.js?v=20261028a"></script>
 <script>
 window.addEventListener("error", function (e) { var s = document.getElementById("status"); if (s) { s.textContent = "오류가 났습니다. Ctrl+F5(강력 새로고침)로 다시 열어 보세요. " + (e.message || ""); s.className = "status err"; } });
 (function () {
-  var J = window.JT, $ = J.$;
+  var J = window.JT, $ = J.$, esc = J.esc;
   J.renderNav("find");
 
-  var state = { band: "all", shown: 0, rows: [] };
-  var SIDO_OPTS = [["seoul+gyeonggi", "서울 + 경기"], ["seoul", "서울"], ["gyeonggi", "경기"], ["incheon", "인천"]];
-  var sidoSel = $("sido");
-  SIDO_OPTS.forEach(function (o) { var el = document.createElement("option"); el.value = o[0]; el.textContent = o[1]; sidoSel.appendChild(el); });
+  var REGIONS = [["seoul", "서울"], ["gg-south", "경기 남부"], ["gg-north", "경기 북부"], ["incheon", "인천"]];
+  var GG_NORTH = ["고양덕양구", "고양일산동구", "고양일산서구", "파주시", "김포시", "의정부시", "양주시", "동두천시", "포천시", "연천군", "남양주시", "구리시", "가평군"];
+  var DECADES = [["2020", "2020년대"], ["2010", "2010년대"], ["2000", "2000년대"], ["1990", "1990년대"], ["old", "1980년대 이전"]];
+  var SIDO_OF = { seoul: "seoul", "gg-south": "gyeonggi", "gg-north": "gyeonggi", incheon: "incheon" };
+  var DEFAULT_DIR = { reco: "desc", price: "asc", commute: "asc", ratio: "desc", units: "desc", year: "desc", trades: "desc" };
 
-  // 예산 가져오기
-  var b = J.lsGet("imjang.budget", null), saved = J.lsGet("imjang.findInputs", {});
-  if (saved.maxp != null) $("maxp").value = saved.maxp; else if (b && b.price) $("maxp").value = b.price;
-  if (saved.minp != null) $("minp").value = saved.minp;
+  var st = J.lsGet("imjang.findInputs2", null) || {};
+  if (!st.regions) { st.regions = ["seoul", "gg-south", "gg-north"]; }
+  st.sggs = st.sggs || []; st.decades = st.decades || []; st.tlimit = st.tlimit || {};
+  st.band = st.band || "all"; st.sort = st.sort || "reco"; st.dir = st.dir || DEFAULT_DIR[st.sort];
+  var state = { shown: 0, rows: [] };
+  var b = J.lsGet("imjang.budget", null);
+  if (st.maxp != null) $("maxp").value = st.maxp; else if (b && b.price) $("maxp").value = b.price;
+  if (st.minp != null) $("minp").value = st.minp;
   if (b && b.price) $("budget-line").textContent = "예산 페이지 계산: 최대 " + J.fmtEok(b.price) + " (대출 " + J.fmtEok(b.loan) + " 포함). 아래 값은 바꿔도 됩니다.";
   else $("budget-line").textContent = "아직 예산을 계산하지 않았습니다. 최대 집값을 직접 넣거나 예산 페이지에서 계산해 오세요.";
-  sidoSel.value = SIDO_OPTS.some(function (o) { return o[0] === saved.sido; }) ? saved.sido : "seoul+gyeonggi";
-  ["minUnits", "minYear", "sort", "maxKm"].forEach(function (k) { if (saved[k] != null) $(k).value = saved[k]; });
-  if (saved.noMixed != null) $("noMixed").checked = !!saved.noMixed;
-  if (saved.onlyRedev != null) $("onlyRedev").checked = !!saved.onlyRedev;
-  if (saved.band) { state.band = saved.band; }
+  ["minUnits", "ratio", "sort"].forEach(function (k) { if (st[k] != null) $(k).value = st[k]; });
+  if (st.noMixed != null) $("noMixed").checked = !!st.noMixed;
+  if (st.onlyRedev != null) $("onlyRedev").checked = !!st.onlyRedev;
+
+  function persist() {
+    st.minp = $("minp").value; st.maxp = $("maxp").value; st.minUnits = $("minUnits").value; st.ratio = $("ratio").value; st.sort = $("sort").value;
+    st.noMixed = $("noMixed").checked; st.onlyRedev = $("onlyRedev").checked; st.dong = $("dong").value;
+    J.lsSet("imjang.findInputs2", st);
+  }
+
+  // ---- 칩 선택 UI
+  function paintChips(el, items, selected) {
+    el.innerHTML = items.map(function (it) { return '<button type="button" data-v="' + esc(it[0]) + '" aria-pressed="' + (selected.indexOf(it[0]) >= 0) + '">' + esc(it[1]) + '</button>'; }).join("");
+  }
+  paintChips($("regions"), REGIONS, st.regions);
+  paintChips($("decades"), DECADES, st.decades);
+  $("regions").addEventListener("click", function (e) {
+    var x = e.target.closest("button[data-v]"); if (!x) return;
+    var v = x.dataset.v, i = st.regions.indexOf(v);
+    if (i >= 0) { if (st.regions.length === 1) return; st.regions.splice(i, 1); } else st.regions.push(v);
+    st.sggs = st.sggs.filter(function (k) { return regionOfKey(k) && st.regions.indexOf(regionOfKey(k)) >= 0; });
+    paintChips($("regions"), REGIONS, st.regions); persist(); ensureData().then(function () { paintSgg(); run(); });
+  });
+  $("decades").addEventListener("click", function (e) {
+    var x = e.target.closest("button[data-v]"); if (!x) return;
+    var v = x.dataset.v, i = st.decades.indexOf(v); if (i >= 0) st.decades.splice(i, 1); else st.decades.push(v);
+    paintChips($("decades"), DECADES, st.decades); persist(); run();
+  });
+  function paintBand() { $("band").querySelectorAll("button").forEach(function (x) { x.setAttribute("aria-pressed", String(x.dataset.v === st.band)); }); }
   paintBand();
-  // 출퇴근 기준
+  $("band").addEventListener("click", function (e) { var x = e.target.closest("button[data-v]"); if (!x) return; st.band = x.dataset.v; paintBand(); persist(); run(); });
+  function paintDir() { $("dir").textContent = st.dir === "asc" ? "↑ 오름차순" : "↓ 내림차순"; }
+  paintDir();
+  $("dir").addEventListener("click", function () { st.dir = st.dir === "asc" ? "desc" : "asc"; paintDir(); persist(); run(); });
+  $("sort").addEventListener("change", function () { st.dir = DEFAULT_DIR[$("sort").value] || "desc"; paintDir(); persist(); run(); });
+  $("reset").addEventListener("click", function () { localStorage.removeItem("imjang.findInputs2"); location.reload(); });
+
+  // ---- 출퇴근
   function commuteSummary() {
     var ps = J.commutePeople();
-    $("commute-summary").textContent = ps.length ? ps.map(function (p) { return p.label + ": " + (J.isShuttle(p) ? "셔틀 정류장 " + p.stops.length + "곳" : p.name); }).join(" · ") : "직장을 넣으면 단지마다 거리가 붙습니다";
-    $("maxKm").disabled = !ps.length; $("sort").querySelector('[value="commute"]').disabled = !ps.length;
+    $("commute-summary").textContent = ps.length ? ps.map(function (p) { return p.label + ": " + (J.isShuttle(p) ? "셔틀 정류장 " + p.stops.length + "곳" + (p.lat != null ? " + " + p.name : "") : p.name); }).join(" · ") : "직장을 넣으면 단지마다 거리가 붙습니다";
+    $("sort").querySelector('[value="commute"]').disabled = !ps.length;
+    paintTlimits(ps);
   }
+  function paintTlimits(ps) {
+    var el = $("tlimits");
+    if (!ps.length) { el.innerHTML = '<p class="small muted">아래 "출퇴근 기준"에 직장이나 셔틀 정류장을 넣으면 사람별로 시간 제한을 걸 수 있습니다.</p>'; return; }
+    el.innerHTML = ps.map(function (p) {
+      var sh = J.isShuttle(p), opts = sh ? [["", "제한 없음"], ["10", "정류장 도보 10분"], ["15", "도보 15분"], ["20", "도보 20분"], ["30", "도보 30분"]] : [["", "제한 없음"], ["20", "20분 이내"], ["30", "30분 이내"], ["45", "45분 이내"], ["60", "60분 이내"], ["90", "90분 이내"]];
+      var cur = st.tlimit[p.label] || "";
+      return '<label class="field"><span class="small muted">' + esc(p.label) + (sh ? " (셔틀 정류장까지)" : " (대중교통 어림)") + '</span><select data-t="' + esc(p.label) + '">' + opts.map(function (o) { return '<option value="' + o[0] + '"' + (o[0] === cur ? " selected" : "") + '>' + o[1] + '</option>'; }).join("") + '</select></label>';
+    }).join("");
+  }
+  $("tlimits").addEventListener("change", function (e) { var s = e.target.closest("select[data-t]"); if (!s) return; st.tlimit[s.dataset.t] = s.value; persist(); run(); });
   J.renderCommuteSetup($("commute-setup"), function () { commuteSummary(); run(); });
   commuteSummary();
   if (!J.commutePeople().length) $("commute-card").open = true;
 
-  function paintBand() { $("band").querySelectorAll("button").forEach(function (x) { x.setAttribute("aria-pressed", String(x.dataset.v === state.band)); }); }
-  $("band").addEventListener("click", function (e) { var x = e.target.closest("button[data-v]"); if (!x) return; state.band = x.dataset.v; paintBand(); run(); });
-
-  function persist() {
-    J.lsSet("imjang.findInputs", { minp: $("minp").value, maxp: $("maxp").value, sido: sidoSel.value, sgg: $("sgg").value, dong: $("dong").value, minUnits: $("minUnits").value, minYear: $("minYear").value, sort: $("sort").value, maxKm: $("maxKm").value, band: state.band, noMixed: $("noMixed").checked, onlyRedev: $("onlyRedev").checked });
+  // ---- 데이터
+  var loaded = {}; // code -> { price, aptIndex, aptByName, jIdx, jByName }
+  function regionOfRow(r) { return r.code === "gyeonggi" ? (GG_NORTH.indexOf(r[0].split(" ")[0]) >= 0 ? "gg-north" : "gg-south") : r.code; }
+  function regionOfKey(k) { var t = k.split("|"); return t[0] === "gyeonggi" ? (GG_NORTH.indexOf(t[1]) >= 0 ? "gg-north" : "gg-south") : t[0]; }
+  function sggKey(r) { return r.code + "|" + r[0].split(" ")[0]; }
+  function ensureData() {
+    var codes = []; st.regions.forEach(function (rg) { var c = SIDO_OF[rg]; if (codes.indexOf(c) < 0) codes.push(c); });
+    var need = codes.filter(function (c) { return !loaded[c]; });
+    if (!need.length) return Promise.resolve();
+    $("status").textContent = "데이터 불러오는 중"; $("status").className = "status";
+    return Promise.all(need.map(function (code) { return Promise.all([J.loadPrice(code), J.loadApt(code), J.loadJeonse(code).catch(function () { return []; })]).then(function (res) {
+      var idx = new Map(), byName = new Map(), jIdx = new Map(), jByName = new Map();
+      res[0].forEach(function (r) { r.code = code; });
+      res[1].forEach(function (r) { idx.set(r[1] + "|" + r[2], r); var nk = r[1] + "|" + J.normName(r[0]); if (!byName.has(nk)) byName.set(nk, r); });
+      res[2].forEach(function (r) { jIdx.set(r[0] + "|" + r[1], r); var nk = r[0] + "|" + J.normName(r[2]); if (!jByName.has(nk)) jByName.set(nk, r); });
+      loaded[code] = { price: res[0], aptIndex: idx, aptByName: byName, jIdx: jIdx, jByName: jByName };
+    }); })).then(function () { $("status").textContent = ""; }).catch(function () { $("status").textContent = "데이터를 불러오지 못했습니다. 새로고침해 주세요."; $("status").className = "status err"; });
   }
+  function activeRows() {
+    var out = [];
+    st.regions.forEach(function (rg) { var d = loaded[SIDO_OF[rg]]; if (!d) return; d.price.forEach(function (r) { if (regionOfRow(r) === rg) out.push(r); }); });
+    return out;
+  }
+  function paintSgg() {
+    var groups = {}, order = [];
+    activeRows().forEach(function (r) { var rg = regionOfRow(r), k = sggKey(r); if (!groups[rg]) { groups[rg] = {}; order.push(rg); } groups[rg][k] = r[0].split(" ")[0]; });
+    $("sgg-box").innerHTML = REGIONS.filter(function (x) { return groups[x[0]]; }).map(function (x) {
+      var g = groups[x[0]], keys = Object.keys(g).sort(function (a, b) { return g[a].localeCompare(g[b]); });
+      return '<div class="grp"><span>' + x[1] + '</span>' + keys.map(function (k) { return '<button type="button" data-k="' + esc(k) + '" aria-pressed="' + (st.sggs.indexOf(k) >= 0) + '">' + esc(g[k]) + '</button>'; }).join("") + '</div>';
+    }).join("");
+    paintDong();
+  }
+  $("sgg-box").addEventListener("click", function (e) {
+    var x = e.target.closest("button[data-k]"); if (!x) return;
+    var k = x.dataset.k, i = st.sggs.indexOf(k); if (i >= 0) st.sggs.splice(i, 1); else st.sggs.push(k);
+    x.setAttribute("aria-pressed", String(i < 0)); st.dong = ""; persist(); paintDong(); run();
+  });
+  $("sgg-clear").addEventListener("click", function () { st.sggs = []; st.dong = ""; persist(); paintSgg(); run(); });
+  function paintDong() {
+    var fld = $("dong-field"), sel = $("dong");
+    if (st.sggs.length !== 1) { fld.hidden = true; sel.innerHTML = '<option value="">전체</option>'; return; }
+    var set = {}; activeRows().forEach(function (r) { if (sggKey(r) === st.sggs[0]) set[r[0].split(" ").slice(1).join(" ")] = true; });
+    var keys = Object.keys(set).sort();
+    sel.innerHTML = '<option value="">전체</option>' + keys.map(function (k) { return '<option value="' + esc(k) + '">' + esc(k) + '</option>'; }).join("");
+    sel.value = keys.indexOf(st.dong || "") >= 0 ? st.dong : ""; fld.hidden = false;
+  }
+  $("dong").addEventListener("change", function () { st.dong = $("dong").value; persist(); run(); });
+
   function bandOf(area) { return area < 60 ? "s" : area < 85 ? "m" : "l"; }
-  // 주상복합 추정: 이름에 '주상복합', 또는 1~2개 동에 150세대 이상인 2000년 이후 고층형
+  function decadeOf(y) { return !y ? "" : y >= 2020 ? "2020" : y >= 2010 ? "2010" : y >= 2000 ? "2000" : y >= 1990 ? "1990" : "old"; }
   function isMixed(r, units, bld, year) { return /주상복합|주상/.test(r[2]) || (bld != null && bld <= 2 && units != null && units >= 150 && year >= 2000); }
   function redevLabel(rd) { return rd ? (/재건축/.test(rd[1]) ? "재건축" : /재개발/.test(rd[1]) ? "재개발" : "정비사업") + " · " + rd[0] : ""; }
 
-  var data = null; // { codes, price(rows, r.code 붙임), aptIndex, aptByName, jIdx, jByName }
-  function loadSido(sel) {
-    var codes = sel.split("+");
-    $("status").textContent = "데이터 불러오는 중"; $("status").className = "status";
-    $("data-note").hidden = true;
-    return Promise.all(codes.map(function (code) { return Promise.all([J.loadPrice(code), J.loadApt(code), J.loadJeonse(code).catch(function () { return []; })]); })).then(function (all) {
-      var idx = new Map(), byName = new Map(), jIdx = new Map(), jByName = new Map(), price = [];
-      all.forEach(function (res, i) {
-        var code = codes[i];
-        res[0].forEach(function (r) { r.code = code; price.push(r); });
-        res[1].forEach(function (r) { idx.set(code + "|" + r[1] + "|" + r[2], r); var nk = code + "|" + r[1] + "|" + J.normName(r[0]); if (!byName.has(nk)) byName.set(nk, r); });
-        res[2].forEach(function (r) { jIdx.set(code + "|" + r[0] + "|" + r[1], r); var nk = code + "|" + r[0] + "|" + J.normName(r[2]); if (!jByName.has(nk)) jByName.set(nk, r); });
-      });
-      data = { codes: codes, price: price, aptIndex: idx, aptByName: byName, jIdx: jIdx, jByName: jByName };
-      fillSgg();
-      $("status").textContent = "";
-    }).catch(function () { $("status").textContent = "데이터를 불러오지 못했습니다. 새로고침해 주세요."; $("status").className = "status err"; });
-  }
-  function sggKey(r) { return r.code + "|" + r[0].split(" ")[0]; }
-  function fillSgg() {
-    var set = {}; data.price.forEach(function (r) { set[sggKey(r)] = true; });
-    var keys = Object.keys(set).sort(function (a, b) { var ia = data.codes.indexOf(a.split("|")[0]), ib = data.codes.indexOf(b.split("|")[0]); return ia - ib || a.localeCompare(b); });
-    var sel = $("sgg"), cur = saved.sgg || "", multi = data.codes.length > 1;
-    sel.innerHTML = '<option value="">전체</option>' + keys.map(function (k) { var t = k.split("|"); return '<option value="' + J.esc(k) + '">' + (multi ? J.SIDO_NAME[t[0]] + " " : "") + J.esc(t[1]) + '</option>'; }).join("");
-    if (keys.indexOf(cur) >= 0) sel.value = cur;
-    fillDong();
-  }
-  function fillDong() {
-    var sgg = $("sgg").value, sel = $("dong"), cur = saved.dong || "", set = {};
-    if (data && sgg) data.price.forEach(function (r) { if (sggKey(r) === sgg) set[r[0].split(" ").slice(1).join(" ")] = true; });
-    var keys = Object.keys(set).sort();
-    sel.innerHTML = '<option value="">전체</option>' + keys.map(function (k) { return '<option value="' + J.esc(k) + '">' + J.esc(k) + '</option>'; }).join("");
-    if (keys.indexOf(cur) >= 0) sel.value = cur; else sel.value = "";
-    sel.disabled = !keys.length;
-  }
-
   function run() {
     persist();
-    if (!data) return;
-    var minp = J.num($("minp").value) || 0, maxp = J.num($("maxp").value) || Infinity;
-    var sgg = $("sgg").value, dong = $("dong").value, minUnits = Number($("minUnits").value), minYear = Number($("minYear").value), sort = $("sort").value;
-    var noMixed = $("noMixed").checked, onlyRedev = $("onlyRedev").checked;
-    var people = J.commutePeople(), maxKm = people.length ? Number($("maxKm").value) : 0;
-    if (sort === "commute" && !people.length) sort = "price";
     var rows = [], mixedSkipped = 0;
-    data.price.forEach(function (r) {
-      var dk = r[0], code = r.code;
-      if (sgg && sggKey(r) !== sgg) return;
-      if (dong && dk.split(" ").slice(1).join(" ") !== dong) return;
-      var apt = data.aptIndex.get(code + "|" + dk + "|" + r[1]) || data.aptByName.get(code + "|" + dk + "|" + J.normName(r[2])) || null;
-      var js = data.jIdx.get(code + "|" + dk + "|" + r[1]) || data.jByName.get(code + "|" + dk + "|" + J.normName(r[2])) || null;
+    var minp = J.num($("minp").value) || 0, maxp = J.num($("maxp").value) || Infinity;
+    var minUnits = Number($("minUnits").value), ratioSel = $("ratio").value, noMixed = $("noMixed").checked, onlyRedev = $("onlyRedev").checked, sort = $("sort").value;
+    var people = J.commutePeople();
+    if (sort === "commute" && !people.length) sort = "price";
+    activeRows().forEach(function (r) {
+      var d = loaded[r.code], dk = r[0];
+      if (st.sggs.length && st.sggs.indexOf(sggKey(r)) < 0) return;
+      if (st.sggs.length === 1 && st.dong && dk.split(" ").slice(1).join(" ") !== st.dong) return;
+      var apt = d.aptIndex.get(dk + "|" + r[1]) || d.aptByName.get(dk + "|" + J.normName(r[2])) || null;
+      var js = d.jIdx.get(dk + "|" + r[1]) || d.jByName.get(dk + "|" + J.normName(r[2])) || null;
       var units = apt ? apt[3] : null, bld = apt ? apt[4] : null, year = r[3] || (apt ? apt[5] : 0);
       if (minUnits && (units == null || units < minUnits)) return;
-      if (minYear && (!year || year < minYear)) return;
+      if (st.decades.length && st.decades.indexOf(decadeOf(year)) < 0) return;
       var mixed = isMixed(r, units, bld, year);
       if (noMixed && mixed) { mixedSkipped++; return; }
       var redev = r[7] || null;
       if (onlyRedev && !redev) return;
-      var areas = r[4].filter(function (a) { return state.band === "all" || bandOf(a[0]) === state.band; });
+      var mr = J.mainRatio(r, js), pct = mr ? mr.ratio * 100 : null;
+      if (ratioSel) { if (pct == null) return; if (ratioSel === "lt50" ? pct >= 50 : pct < Number(ratioSel)) return; }
+      var areas = r[4].filter(function (a) { return st.band === "all" || bandOf(a[0]) === st.band; });
       if (!areas.length) return;
       var inB = areas.filter(function (a) { return a[2] >= minp && a[2] <= maxp; });
       if (!inB.length) return;
       var trades = areas.reduce(function (s, a) { return s + a[1]; }, 0);
       var pos = r[5] || null, cm = pos ? J.commuteFor(pos[0], pos[1], r[2]) : [];
-      if (maxKm && (!pos || cm.some(function (c) { return c.mode === "shuttle" ? c.m > c.maxWalk : c.km > maxKm; }))) return;
-      var kmSum = cm.length ? cm.reduce(function (s, c) { return s + c.km; }, 0) : Infinity;
-      var row = { r: r, apt: apt, js: js, units: units, bld: bld, year: year, mixed: mixed, redev: redev, areas: areas, inB: inB, minPrice: Math.min.apply(null, inB.map(function (a) { return a[2]; })), trades: trades, pos: pos, kmSum: kmSum };
+      var limited = people.some(function (p) { return st.tlimit[p.label]; });
+      if (limited) {
+        if (!pos) return;
+        var bad = cm.some(function (c) { var lim = Number(st.tlimit[c.label] || 0); if (!lim) return false; return (c.mode === "shuttle" ? c.min : c.min) > lim; });
+        if (bad) return;
+      }
+      var kmSum = cm.length ? cm.reduce(function (s, c) { return s + (c.mode === "shuttle" ? c.km * 3 : c.km); }, 0) : Infinity;
+      var row = { r: r, apt: apt, js: js, units: units, bld: bld, year: year, mixed: mixed, redev: redev, areas: areas, inB: inB, minPrice: Math.min.apply(null, inB.map(function (a) { return a[2]; })), trades: trades, pos: pos, kmSum: kmSum, ratio: pct };
       row.score = J.scoreRow(row, { maxp: isFinite(maxp) ? maxp : 0 });
       rows.push(row);
     });
-    rows.sort(function (a, b) {
-      if (sort === "units") return (b.units || 0) - (a.units || 0);
-      if (sort === "year") return (b.year || 0) - (a.year || 0);
-      if (sort === "trades") return b.trades - a.trades;
-      if (sort === "commute") return a.kmSum - b.kmSum || a.minPrice - b.minPrice;
-      if (sort === "reco") return (b.score.total || 0) - (a.score.total || 0) || a.minPrice - b.minPrice;
-      return a.minPrice - b.minPrice;
-    });
+    var dirMul = st.dir === "asc" ? 1 : -1;
+    function val(x) {
+      if (sort === "units") return x.units || 0;
+      if (sort === "year") return x.year || 0;
+      if (sort === "trades") return x.trades;
+      if (sort === "ratio") return x.ratio == null ? -1 : x.ratio;
+      if (sort === "commute") return x.kmSum === Infinity ? 1e9 : x.kmSum;
+      if (sort === "reco") return x.score.total || 0;
+      return x.minPrice;
+    }
+    rows.sort(function (a, b) { return (val(a) - val(b)) * dirMul || a.minPrice - b.minPrice; });
     state.rows = rows; state.shown = 0;
     $("results").innerHTML = "";
-    if (!rows.length) { $("results").innerHTML = '<div class="empty"><h3>조건에 맞는 단지가 없습니다</h3><p>최대 집값을 올리거나 세대수·준공·출퇴근 거리 조건을 풀어 보세요. 1년간 거래가 없던 단지는 나오지 않습니다.</p></div>'; $("more-wrap").hidden = true; $("status").textContent = ""; return; }
+    if (!rows.length) { $("results").innerHTML = '<div class="empty"><h3>조건에 맞는 단지가 없습니다</h3><p>최대 집값을 올리거나 세대수·준공·전세가율·출퇴근 조건을 풀어 보세요. 1년간 거래가 없던 단지는 나오지 않습니다.</p></div>'; $("more-wrap").hidden = true; $("status").textContent = ""; return; }
     $("status").textContent = rows.length.toLocaleString("ko-KR") + "개 단지가 조건에 맞습니다." + (mixedSkipped ? " 주상복합으로 보이는 " + mixedSkipped + "곳은 뺐습니다." : "");
     showMore();
   }
   function showMore() {
     var slice = state.rows.slice(state.shown, state.shown + 40); state.shown += slice.length;
     var pinned = {}; J.candidates.items.forEach(function (c) { if (c.addr) pinned[c.addr.code + "|" + c.addr.dongKey + "|" + c.addr.jibun] = true; });
-    var multi = data.codes.length > 1;
+    var multi = st.regions.length > 1;
     $("results").insertAdjacentHTML("beforeend", slice.map(function (x) {
       var r = x.r, key = r.code + "|" + r[0] + "|" + r[1];
       var minp = J.num($("minp").value) || 0, maxp = J.num($("maxp").value) || Infinity;
       var lines = x.areas.map(function (a) {
         var ok = a[2] >= minp && a[2] <= maxp;
-        return '<span class="' + (ok ? "in" : "out") + '">' + a[0] + '㎡ <span class="muted">' + J.pyeong(a[0]) + '평형</span> <b>' + J.fmtEok(a[2], 1) + '</b> <span class="muted small">' + a[1] + '건 · ' + a[5].slice(0, 4) + "." + a[5].slice(4) + '</span></span>';
+        return '<span class="' + (ok ? "in" : "out") + '">' + a[0] + '㎡ <span class="muted">' + J.pyeongType(a[0]) + '평형</span> <b>' + J.fmtEok(a[2], 1) + '</b> <span class="muted small">' + a[1] + '건 · ' + a[5].slice(0, 4) + "." + a[5].slice(4) + '</span></span>';
       }).join("");
       var chips = "";
       if (x.score && x.score.total != null) chips += '<span class="chip reco" title="자세히에서 점수 근거를 볼 수 있습니다">추천 ' + x.score.total + '점</span>';
@@ -238,18 +306,18 @@ window.addEventListener("error", function (e) { var s = document.getElementById(
       if (x.bld != null) chips += '<span class="chip">' + x.bld + '개동</span>';
       if (x.year) chips += '<span class="chip">' + x.year + '년 준공</span>';
       if (x.mixed) chips += '<span class="chip warn">주상복합 추정</span>';
-      if (x.redev) chips += '<span class="chip mark" title="' + J.esc(x.redev[2]) + '">' + J.esc(redevLabel(x.redev)) + '</span>';
+      if (x.redev) chips += '<span class="chip mark" title="' + esc(x.redev[2]) + '">' + esc(redevLabel(x.redev)) + '</span>';
       chips += J.ratioChip(J.mainRatio(r, x.js)) + J.nearChips(r[6]);
       if (pinned[key]) chips += '<span class="chip accent">핀에 담김</span>';
       var commute = x.pos ? J.commuteChips(x.pos[0], x.pos[1], r[2]) : "";
-      return '<article class="row-card" data-key="' + J.esc(key) + '">' +
-        '<div class="title"><h3>' + J.esc(r[2]) + '</h3><span class="small muted">' + (multi ? J.SIDO_NAME[r.code] + " " : "") + J.esc(r[0]) + ' ' + J.esc(r[1]) + '</span></div>' +
+      return '<article class="row-card" data-key="' + esc(key) + '">' +
+        '<div class="title"><h3>' + esc(r[2]) + '</h3><span class="small muted">' + (multi ? J.SIDO_NAME[r.code] + " " : "") + esc(r[0]) + ' ' + esc(r[1]) + '</span></div>' +
         '<div class="chips">' + chips + '</div>' +
         (commute ? '<div class="chips">' + commute + '</div>' : "") +
         '<div class="price-line">' + lines + '</div>' +
-        '<div class="actions end"><button type="button" class="btn sm toggle" data-detail="' + J.esc(key) + '" aria-expanded="false">자세히</button>' +
+        '<div class="actions end"><button type="button" class="btn sm toggle" data-detail="' + esc(key) + '" aria-expanded="false">자세히</button>' +
         '<a class="btn sm" href="https://new.land.naver.com/search?sk=' + encodeURIComponent(r[2]) + '" target="_blank" rel="noopener">네이버부동산</a>' +
-        '<button type="button" class="btn sm primary" data-pin="' + J.esc(key) + '"' + (pinned[key] ? " disabled" : "") + '>' + (pinned[key] ? "담았음" : "핀으로 담기") + '</button></div>' +
+        '<button type="button" class="btn sm primary" data-pin="' + esc(key) + '"' + (pinned[key] ? " disabled" : "") + '>' + (pinned[key] ? "담았음" : "핀으로 담기") + '</button></div>' +
         '<div class="detail-wrap" hidden></div>' +
         '</article>';
     }).join(""));
@@ -271,7 +339,7 @@ window.addEventListener("error", function (e) { var s = document.getElementById(
     }
     var btn = e.target.closest("button[data-pin]"); if (!btn) return;
     var x = rowByKey(btn.dataset.pin); if (!x) return;
-    var r = x.r, code = r.code, minp = J.num($("minp").value) || 0, maxp = J.num($("maxp").value) || Infinity;
+    var r = x.r, code = r.code;
     var pick = x.inB.slice().sort(function (a, b) { return b[1] - a[1]; })[0];
     var rec = {
       id: J.uid("c"), name: r[2], area: J.SIDO_NAME[code] + " " + r[0], status: "후보", memo: "후보 찾기에서 담음",
@@ -282,15 +350,12 @@ window.addEventListener("error", function (e) { var s = document.getElementById(
       order: J.candidates.items.length, createdAt: Date.now(), updatedAt: Date.now()
     };
     Object.keys(rec).forEach(function (k) { if (rec[k] === null) delete rec[k]; });
-    J.candidates.save(rec).then(function () { btn.textContent = "담았음"; btn.disabled = true; $("status").textContent = r[2] + "을(를) 핀에 담았습니다. 지도·핀 페이지에서 볼 수 있습니다."; });
+    J.candidates.save(rec).then(function () { btn.textContent = "담았음"; btn.disabled = true; $("status").textContent = r[2] + "을(를) 핀에 담았습니다. 지도·핀과 관심 단지 페이지에서 볼 수 있습니다."; });
   });
 
   ["minp", "maxp"].forEach(function (k) { $(k).addEventListener("input", run); });
-  ["minUnits", "minYear", "sort", "maxKm", "noMixed", "onlyRedev"].forEach(function (k) { $(k).addEventListener("change", run); });
-  $("sgg").addEventListener("change", function () { saved.dong = ""; fillDong(); run(); });
-  $("dong").addEventListener("change", run);
-  sidoSel.addEventListener("change", function () { saved.sgg = ""; saved.dong = ""; loadSido(sidoSel.value).then(run); });
-  loadSido(sidoSel.value).then(run);
+  ["minUnits", "ratio", "noMixed", "onlyRedev"].forEach(function (k) { $(k).addEventListener("change", run); });
+  ensureData().then(function () { paintSgg(); run(); });
   fetch("data/meta.json").then(function (r) { return r.ok ? r.json() : null; }).then(function (m) { if (m && m.window) $("period").textContent = m.window[0].slice(0, 4) + "." + m.window[0].slice(4) + " ~ " + m.window[1].slice(0, 4) + "." + m.window[1].slice(4); }).catch(function () {});
 })();
 </script>

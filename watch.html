@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>집터 · 관심 단지</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
-<link rel="stylesheet" href="assets/style.css?v=20261027k">
+<link rel="stylesheet" href="assets/style.css?v=20261028a">
 </head>
 <body>
 <header class="topbar"><div class="topbar-inner"></div></header>
@@ -32,8 +32,8 @@
   <div class="list" id="watch"></div>
 </main>
 
-<script src="assets/terms.js?v=20261027k"></script>
-<script src="assets/app.js?v=20261027k"></script>
+<script src="assets/terms.js?v=20261028a"></script>
+<script src="assets/app.js?v=20261028a"></script>
 <script>
 (function () {
   var J = window.JT, $ = J.$, esc = J.esc, fmtEok = J.fmtEok;
@@ -103,7 +103,7 @@
         var last = null, first = null, lastJ = null;
         months.forEach(function (m) { var v = h.m[m][a]; if (!v) return; if (v[1]) { if (!first) first = { m: m, v: v[1] }; last = { m: m, v: v[1] }; } if (v[5]) lastJ = { m: m, v: v[5] }; });
         var chg = last && first && first.m !== last.m ? ((last.v / first.v - 1) * 100) : null;
-        return "<tr><td>" + a + "㎡ <span class=\"muted\">" + J.pyeong(a) + "평형</span></td><td class=\"n\">" + (last ? "<b>" + fmtEok(last.v, 1) + "</b> <span class=\"muted small\">" + ymLabel(last.m) + "</span>" : "–") + "</td>" +
+        return "<tr><td>" + a + "㎡ <span class=\"muted\">" + J.pyeongType(a) + "평형</span></td><td class=\"n\">" + (last ? "<b>" + fmtEok(last.v, 1) + "</b> <span class=\"muted small\">" + ymLabel(last.m) + "</span>" : "–") + "</td>" +
           "<td class=\"n\">" + (chg != null ? (chg >= 0 ? "+" : "") + chg.toFixed(1) + "% <span class=\"muted small\">" + ymLabel(first.m) + "→</span>" : "–") + "</td>" +
           "<td class=\"n\">" + (lastJ ? fmtEok(lastJ.v, 1) + (last ? " <span class=\"muted small\">" + Math.round(lastJ.v / last.v * 100) + "%</span>" : "") : "–") + "</td>" +
           "<td class=\"n\">" + (budget && budget.price && last ? (last.v <= budget.price ? '<span class="chip good">예산 안</span>' : "예산 +" + fmtEok(last.v - budget.price)) : "–") + "</td></tr>";

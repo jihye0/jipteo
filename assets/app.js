@@ -322,19 +322,31 @@ window.JT = (function () {
   }
   // 단지 좌표 -> 사람별 출퇴근 정보. 직장 모드: 직선거리·어림 시간. 셔틀 모드: 가장 가까운 정류장까지 거리·도보 시간
   // GTX-A 수서~동탄 구간(개통)에서 구성역까지. [역명, 위도, 경도, 구성역까지 분(어림)]
-  var GTXA = { to: { n: "구성역", lat: 37.3008, lng: 127.1222 }, from: [["수서역", 37.4873, 127.1017, 13], ["성남역", 37.4028, 127.1121, 6], ["동탄역", 37.2022, 127.0961, 7]] };
+  // GTX-A 역: [역명, 위도, 경도, 노선 위치(분), 개통 여부]. 위치 차이가 곧 소요시간(어림). 서울역~수서 사이(삼성역)는 아직 미개통.
+  var GTXA = [["운정중앙역", 37.7236, 126.7474, 0, true], ["킨텍스역", 37.6694, 126.7475, 5, true], ["대곡역", 37.6315, 126.8113, 10, true], ["연신내역", 37.6190, 126.9210, 18, true], ["서울역", 37.5547, 126.9707, 24, true], ["삼성역", 37.5088, 127.0631, 31, false], ["수서역", 37.4873, 127.1017, 36, true], ["성남역", 37.4028, 127.1121, 42, true], ["구성역", 37.3008, 127.1222, 48, true], ["동탄역", 37.2022, 127.0961, 55, true]];
+  function gtxStation(name) { return GTXA.find(function (x) { return x[0] === name; }) || null; }
   function accessMin(km) { return km <= 1.2 ? Math.max(3, Math.round(km * 1000 / 67)) : Math.round(8 + km * 3); } // 역까지: 가까우면 도보, 멀면 버스·지하철 어림
+  // p.gtx = { to: "서울역", future: true|false }  future: 수서~서울역 연결(개통 예정)을 된 것으로 가정
   function gtxFor(p, lat, lng) {
+    var to = gtxStation(p.gtx.to); if (!to) return null;
     var best = null;
-    GTXA.from.forEach(function (st) { var km = haversineKm(lat, lng, st[1], st[2]); var acc = accessMin(km); if (!best || acc + st[3] < best.acc + best.ride) best = { st: st[0], km: km, acc: acc, ride: st[3] }; });
-    var last = (p.lat != null && p.lng != null) ? walkMin(haversineKm(GTXA.to.lat, GTXA.to.lng, p.lat, p.lng) * 1000) : 10;
-    best.last = Math.min(last, 25); best.min = best.acc + best.ride + best.last;
+    GTXA.forEach(function (st) {
+      if (st[0] === to[0] || !st[4]) return;
+      var lo = Math.min(st[3], to[3]), hi = Math.max(st[3], to[3]);
+      if (!p.gtx.future && lo < 31 && hi > 31) return; // 서울역~수서 사이를 건너는 경로는 미개통
+      var km = haversineKm(lat, lng, st[1], st[2]), acc = accessMin(km), ride = hi - lo + (lo < 31 && hi > 31 ? 2 : 0);
+      if (!best || acc + ride < best.acc + best.ride) best = { st: st[0], km: km, acc: acc, ride: ride };
+    });
+    if (!best) return null;
+    best.to = to[0];
+    best.last = Math.min((p.lat != null && p.lng != null) ? accessMin(haversineKm(to[1], to[2], p.lat, p.lng)) : 10, 25);
+    best.min = best.acc + best.ride + best.last;
     return best;
   }
   function commuteFor(lat, lng, fromName) {
     if (lat == null || lng == null) return [];
     return commutePeople().map(function (p) {
-      var g = p.gtx ? gtxFor(p, lat, lng) : null;
+      var g = (p.gtx && p.gtx.to) ? gtxFor(p, lat, lng) : null;
       if (isShuttle(p)) {
         var s = nearestStop(p, lat, lng), maxWalk = p.maxWalk || 1500;
         var o = { label: p.label, mode: "shuttle", stop: s.n, m: s.m, km: s.m / 1000, min: walkMin(s.m), maxWalk: maxWalk, ok: s.m <= maxWalk, url: kakaoRouteUrl(fromName || "집", lat, lng, s.n, s.lat, s.lng) };
@@ -349,7 +361,7 @@ window.JT = (function () {
   function gtxChip(c) {
     if (!c.gtx) return "";
     var g = c.gtx, cls = g.min <= 35 ? " good" : g.min <= 50 ? "" : g.min <= 70 ? " warn" : " bad";
-    return '<span class="chip commute' + cls + '" title="' + esc(g.st) + '까지 ' + g.km.toFixed(1) + 'km(약 ' + g.acc + '분) + GTX ' + g.ride + '분 + 구성역에서 ' + g.last + '분 · 어림값">' + esc(c.label) + ' GTX ' + esc(g.st) + ' ' + g.km.toFixed(1) + 'km → 구성역 약 ' + g.min + '분</span>';
+    return '<span class="chip commute' + cls + '" title="' + esc(g.st) + '까지 ' + g.km.toFixed(1) + 'km(약 ' + g.acc + '분) + GTX ' + g.ride + '분 + ' + esc(g.to) + '에서 ' + g.last + '분 · 어림값">' + esc(c.label) + ' GTX ' + esc(g.st) + ' ' + g.km.toFixed(1) + 'km → ' + esc(g.to) + ' 약 ' + g.min + '분</span>';
   }
   function commuteChips(lat, lng, fromName) {
     return commuteFor(lat, lng, fromName).map(function (c) {
@@ -412,7 +424,8 @@ window.JT = (function () {
         '<input class="who" value="' + esc(p.label) + '" aria-label="누구" maxlength="6">' +
         '<div class="commute-body">' +
         '<div class="seg sm mode"><button type="button" data-m="point" aria-pressed="' + !sh + '">직장 위치</button><button type="button" data-m="shuttle" aria-pressed="' + sh + '">회사 셔틀 정류장</button></div>' +
-        '<label class="check small"><input type="checkbox" class="gtx"' + (p.gtx ? " checked" : "") + '> GTX-A로 구성역 출퇴근도 계산 <span class="muted">(수서·성남·동탄역 승차 · 어림값, 더 빠르면 점수에 반영)</span></label>' +
+        '<div class="search gtx-row"><select class="gtx-to"><option value="">GTX-A 안 씀</option>' + GTXA.map(function (st) { return '<option value="' + st[0] + '"' + (p.gtx && p.gtx.to === st[0] ? " selected" : "") + (st[4] ? "" : " disabled") + '>' + st[0] + (st[4] ? "" : " (미개통)") + '</option>'; }).join("") + '</select><label class="check small"><input type="checkbox" class="gtx-future"' + (p.gtx && p.gtx.future ? " checked" : "") + '> 수서~서울역 연결 개통 가정</label></div>' +
+        '<p class="hint">GTX-A: 회사에서 가장 가까운 GTX역을 고르면, 단지마다 가장 가까운 GTX역까지 가서 타는 시간을 어림해 칩과 점수에 넣습니다(더 빠를 때만). 지금은 운정~서울역, 수서~동탄만 다니고 가운데가 안 이어져 있어 "연결 개통 가정"을 켜면 미래 기준으로 계산합니다.</p>' +
         (sh
           ? '<textarea class="stops" rows="4" placeholder="정류장 이름을 한 줄에 하나씩 붙여 넣으세요 (예: 잠실역 6번출구)"></textarea>' +
             '<div class="search"><select class="maxwalk"><option value="800">정류장 도보 800m 이내</option><option value="1000">1km 이내</option><option value="1500">1.5km 이내 (기본)</option><option value="2000">2km 이내</option></select><button type="button" class="btn geocode">정류장 위치 찾기</button>' + (p.stops && p.stops.length ? '<button type="button" class="btn ghost clear">지우기</button>' : "") + '</div>' +
@@ -428,7 +441,8 @@ window.JT = (function () {
     el.querySelectorAll(".commute-row").forEach(function (row) {
       var i = Number(row.dataset.i), p = c.people[i], who = row.querySelector(".who"), hint = row.querySelector(".hint");
       who.addEventListener("change", function () { p.label = who.value.trim() || (i === 0 ? "나" : "상대"); who.value = p.label; save(); });
-      row.querySelector(".gtx").addEventListener("change", function (ev) { p.gtx = ev.target.checked; save(); });
+      row.querySelector(".gtx-to").addEventListener("change", function (ev) { p.gtx = ev.target.value ? { to: ev.target.value, future: !!(p.gtx && p.gtx.future) } : null; save(); });
+      row.querySelector(".gtx-future").addEventListener("change", function (ev) { if (!p.gtx) p.gtx = { to: "" }; p.gtx.future = ev.target.checked; save(); });
       row.querySelector(".mode").addEventListener("click", function (ev) { var b = ev.target.closest("button[data-m]"); if (!b || b.dataset.m === (p.mode || "point")) return; p.mode = b.dataset.m; save(); renderCommuteSetup(el, onChange); });
       var clr = row.querySelector(".clear");
       if (clr) clr.addEventListener("click", function () { if (isShuttle(p)) { p.stops = []; } else { p.name = ""; p.lat = null; p.lng = null; } save(); renderCommuteSetup(el, onChange); });

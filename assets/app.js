@@ -49,15 +49,16 @@ window.JT = (function () {
   function fmtMan(man) { return man == null ? "–" : Math.round(man).toLocaleString("ko-KR") + "만원"; }
   function uid(prefix) { return (prefix || "v") + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
   function lsGet(k, d) { try { var v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } }
-  function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} if (typeof pushPrivate === "function") pushPrivate(k, v); }
 
   // ---------- 내비 ----------
   function renderNav(active) {
     var el = document.querySelector(".topbar-inner"); if (!el) return;
     el.innerHTML = '<a class="brand" href="index.html">집<span>터</span></a><nav class="nav" aria-label="주요 메뉴">' +
-      PAGES.map(function (p) { return '<a href="' + p.href + '"' + (p.key === active ? ' aria-current="page"' : "") + '>' + p.label + '</a>'; }).join("") + '</nav>';
+      PAGES.map(function (p) { return '<a href="' + p.href + '"' + (p.key === active ? ' aria-current="page"' : "") + '>' + p.label + '</a>'; }).join("") + '</nav><div class="auth" id="auth"></div>';
     if (window.JT_TERMS) termify(document);
-    if (SYNC.key && window.JT_FIREBASE) syncStart();
+    onSync(paintAuth);
+    if (window.JT_FIREBASE) authInit();
   }
 
   // ---------- 저장소 (브라우저 localStorage) ----------
@@ -603,23 +604,22 @@ window.JT = (function () {
       sc.parts.map(function (p) { return "<li><span>" + esc(p.label) + "</span><b>" + (p.pts == null ? "–" : p.pts + "/" + p.max) + "</b><span class=\"muted small\">" + p.why + "</span></li>"; }).join("") + "</ul></div>";
   }
 
-  // ---------- 실시간 공유 (Firebase Realtime Database, 방 코드 기준) ----------
-  // 핀(candidates)과 임장 기록(visits)만 공유. 출퇴근·셔틀·예산은 공유하지 않음.
-  var SYNC = { key: lsGet("imjang.room", ""), status: "off", db: null, error: "", listeners: [] };
-  function roomKey() { return SYNC.key; }
-  function setRoom(k) { SYNC.key = String(k || "").trim(); lsSet("imjang.room", SYNC.key); }
-  function newRoomKey() { var a = "abcdefghijkmnpqrstuvwxyz23456789", s = ""; for (var i = 0; i < 24; i++) s += a[Math.floor(Math.random() * a.length)]; return s; }
+  // ---------- 로그인 + 실시간 공유 (Firebase: 구글 로그인, 허용된 이메일만) ----------
+  // 공용: /couple/candidates, /couple/visits (핀·임장 기록, 두 사람이 함께)
+  // 개인: /users/<uid>/private/<키> (출퇴근·셔틀·예산·검색 조건, 본인 기기끼리만)
+  var PRIVATE_KEYS = ["imjang.commute.v1", "imjang.budgetInputs", "imjang.budget", "imjang.findInputs2"];
+  var SYNC = { status: "init", user: null, allowed: false, db: null, auth: null, error: "", listeners: [], privRef: null, pulled: false };
   function onSync(fn) { SYNC.listeners.push(fn); fn(SYNC); }
-  function emitSync() { SYNC.listeners.forEach(function (fn) { fn(SYNC); }); }
+  function emitSync() { SYNC.listeners.forEach(function (fn) { try { fn(SYNC); } catch (e) {} }); }
   function loadScript(src) { return new Promise(function (res, rej) { var s = document.createElement("script"); s.src = src; s.onload = res; s.onerror = function () { rej(src); }; document.head.appendChild(s); }); }
-  function clean(o) { return JSON.parse(JSON.stringify(o)); } // undefined 제거
-  function bindStore(store, name) {
-    var ref = SYNC.db.ref("rooms/" + SYNC.key + "/" + name);
+  function clean(o) { return JSON.parse(JSON.stringify(o)); }
+  function isAllowed(email) { var list = window.JT_ALLOWED || []; email = String(email || "").toLowerCase(); return list.some(function (e) { return String(e).toLowerCase() === email; }); }
+  function bindStore(store, path) {
+    var ref = SYNC.db.ref(path);
     store.remote = { set: function (rec) { ref.child(rec.id).set(clean(rec)); }, remove: function (id) { ref.child(id).remove(); } };
     return ref.once("value").then(function (snap) {
       var remote = snap.val() || {}, byId = {};
       store.items.forEach(function (l) { byId[l.id] = l; });
-      // 내게만 있는 것은 올리고, 방에 있는 것은 받는다 (둘 다 있으면 최근 수정이 이김)
       store.items.forEach(function (l) { if (!remote[l.id]) ref.child(l.id).set(clean(l)); });
       Object.keys(remote).forEach(function (id) { var r = remote[id], l = byId[id]; if (!l || (r.updatedAt || 0) > (l.updatedAt || 0)) store.applyRemote(r); else if ((l.updatedAt || 0) > (r.updatedAt || 0)) ref.child(id).set(clean(l)); });
       ref.on("child_added", function (s) { store.applyRemote(s.val()); });
@@ -627,21 +627,70 @@ window.JT = (function () {
       ref.on("child_removed", function (s) { store.removeRemote(s.key); });
     });
   }
-  function syncStart() {
-    if (!window.JT_FIREBASE || !SYNC.key) { SYNC.status = window.JT_FIREBASE ? "off" : "noconfig"; emitSync(); return Promise.resolve(false); }
-    if (SYNC.db) return Promise.resolve(true);
+  // 개인 설정: 원격이 더 최근이면 받아서 적용(바뀐 게 있으면 새로고침), 그 뒤로는 저장할 때마다 올림
+  function pullPrivate() {
+    var stamps = lsGet("imjang.priv.t", {});
+    return SYNC.privRef.once("value").then(function (snap) {
+      var remote = snap.val() || {}, changed = false;
+      PRIVATE_KEYS.forEach(function (k) {
+        var r = remote[k.replace(/\./g, "_")];
+        if (r && r.t > (stamps[k] || 0)) { try { localStorage.setItem(k, JSON.stringify(r.v)); } catch (e) {} stamps[k] = r.t; changed = true; }
+        else if (!r) { var v = lsGet(k, null); if (v != null) { var t = Date.now(); SYNC.privRef.child(k.replace(/\./g, "_")).set({ v: clean(v), t: t }); stamps[k] = t; } }
+      });
+      lsSet("imjang.priv.t", stamps);
+      SYNC.pulled = true;
+      if (changed) { SYNC.status = "reloading"; emitSync(); setTimeout(function () { location.reload(); }, 300); }
+    });
+  }
+  function pushPrivate(k, v) {
+    if (!SYNC.privRef || !SYNC.pulled || PRIVATE_KEYS.indexOf(k) < 0) return;
+    var t = Date.now(), stamps = lsGet("imjang.priv.t", {}); stamps[k] = t; try { localStorage.setItem("imjang.priv.t", JSON.stringify(stamps)); } catch (e) {}
+    try { SYNC.privRef.child(k.replace(/\./g, "_")).set({ v: clean(v), t: t }); } catch (e) {}
+  }
+  function authInit() {
+    if (!window.JT_FIREBASE) { SYNC.status = "noconfig"; emitSync(); return Promise.resolve(false); }
+    if (SYNC.auth) return Promise.resolve(true);
     SYNC.status = "loading"; emitSync();
-    return loadScript("https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js").then(function () { return loadScript("https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"); }).then(function () {
+    var base = "https://www.gstatic.com/firebasejs/10.14.1/";
+    return loadScript(base + "firebase-app-compat.js").then(function () { return Promise.all([loadScript(base + "firebase-auth-compat.js"), loadScript(base + "firebase-database-compat.js")]); }).then(function () {
       if (!firebase.apps.length) firebase.initializeApp(window.JT_FIREBASE);
-      SYNC.db = firebase.database();
-      return Promise.all([bindStore(candidates, "candidates"), bindStore(visits, "visits")]);
-    }).then(function () {
-      SYNC.status = "on"; emitSync();
-      SYNC.db.ref(".info/connected").on("value", function (s) { SYNC.connected = !!s.val(); emitSync(); });
+      SYNC.auth = firebase.auth(); SYNC.db = firebase.database();
+      SYNC.auth.onAuthStateChanged(function (user) {
+        SYNC.user = user || null;
+        if (!user) { SYNC.status = "out"; SYNC.allowed = false; emitSync(); return; }
+        if (!(window.JT_ALLOWED || []).length) { SYNC.status = "nolist"; SYNC.allowed = false; emitSync(); return; }
+        if (!isAllowed(user.email)) { SYNC.status = "denied"; SYNC.allowed = false; emitSync(); return; }
+        SYNC.allowed = true; SYNC.status = "connecting"; emitSync();
+        SYNC.privRef = SYNC.db.ref("users/" + user.uid + "/private");
+        Promise.all([bindStore(candidates, "couple/candidates"), bindStore(visits, "couple/visits"), pullPrivate()]).then(function () {
+          if (SYNC.status !== "reloading") { SYNC.status = "on"; emitSync(); }
+          SYNC.db.ref(".info/connected").on("value", function (s) { SYNC.connected = !!s.val(); emitSync(); });
+        }).catch(function (e) { SYNC.status = "error"; SYNC.error = (e && e.message) ? e.message : String(e); emitSync(); });
+      });
       return true;
     }).catch(function (e) { SYNC.status = "error"; SYNC.error = (e && e.message) ? e.message : String(e); emitSync(); return false; });
   }
-  function syncLeave() { setRoom(""); location.reload(); }
+  function signIn() {
+    return authInit().then(function () {
+      var p = new firebase.auth.GoogleAuthProvider(); p.setCustomParameters({ prompt: "select_account" });
+      return SYNC.auth.signInWithPopup(p).catch(function (e) { if (e && /popup|cancel/i.test(e.code || "")) return SYNC.auth.signInWithRedirect(p); throw e; });
+    }).catch(function (e) { SYNC.status = "error"; SYNC.error = (e && e.message) ? e.message : String(e); emitSync(); });
+  }
+  function signOut() { if (!SYNC.auth) return; SYNC.auth.signOut().then(function () { location.reload(); }); }
+  function authLabel(S) {
+    if (S.status === "noconfig") return "";
+    if (S.status === "loading" || S.status === "init") return '<span class="muted small">…</span>';
+    if (S.status === "out") return '<button type="button" class="btn sm" data-auth="in">구글 로그인</button>';
+    var who = S.user ? esc((S.user.displayName || S.user.email || "").split(" ")[0]) : "";
+    var st = S.status === "on" ? (S.connected === false ? "연결 끊김" : "공유 중") : S.status === "connecting" || S.status === "reloading" ? "연결 중" : S.status === "denied" ? "허용되지 않은 계정" : S.status === "nolist" ? "허용 목록 없음" : S.status === "error" ? "오류" : "";
+    return '<span class="auth-who" title="' + esc(S.user ? S.user.email : "") + '">' + who + ' <span class="muted small">' + st + '</span></span><button type="button" class="btn sm ghost" data-auth="out">로그아웃</button>';
+  }
+  function paintAuth() {
+    var el = document.getElementById("auth"); if (!el) return;
+    el.innerHTML = authLabel(SYNC);
+    var b = el.querySelector("[data-auth=in]"); if (b) b.addEventListener("click", signIn);
+    var o = el.querySelector("[data-auth=out]"); if (o) o.addEventListener("click", signOut);
+  }
 
   // ---------- 용어 설명 팝오버 ----------
   // 페이지의 <dfn data-t="키">낱말</dfn> 을 누르면 짧은 설명이 뜬다. 용어 목록은 assets/terms.js
@@ -677,5 +726,5 @@ window.JT = (function () {
     expandDongKey: expandDongKey, getKakaoKey: getKakaoKey, loadKakao: loadKakao, placeSearch: placeSearch,
     getCommute: getCommute, setCommute: setCommute, commutePeople: commutePeople, commuteFor: commuteFor, commuteChips: commuteChips, commuteMinutes: commuteMinutes, haversineKm: haversineKm, kakaoRouteUrl: kakaoRouteUrl, renderCommuteSetup: renderCommuteSetup, nearestStop: nearestStop, isShuttle: isShuttle, termify: termify,
     loadJeonse: loadJeonse, nearChips: nearChips, mainRatio: mainRatio, ratioChip: ratioChip, detailHtml: detailHtml, detailFor: detailFor, walkMin: walkMin, scoreRow: scoreRow, scoreHtml: scoreHtml,
-    SYNC: SYNC, roomKey: roomKey, setRoom: setRoom, newRoomKey: newRoomKey, onSync: onSync, syncStart: syncStart, syncLeave: syncLeave };
+    SYNC: SYNC, onSync: onSync, authInit: authInit, signIn: signIn, signOut: signOut, isAllowed: isAllowed };
 })();

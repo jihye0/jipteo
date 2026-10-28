@@ -333,3 +333,7 @@ code { background: var(--surface-2); padding: 0.1rem 0.4rem; border-radius: 6px;
 @media (max-width: 820px) { .auth .auth-who { display: none; } }
 
 .brand { white-space: nowrap; flex-shrink: 0; }
+
+.checks-row .check { flex-wrap: wrap; row-gap: 0.1rem; }
+.check dfn, .check > span { white-space: normal; }
+.check dfn { white-space: nowrap; }

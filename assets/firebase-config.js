@@ -12,4 +12,4 @@ window.JT_FIREBASE = {
 
 // 로그인을 허용할 구글 계정 이메일. 비어 있으면 로그인해도 데이터가 연결되지 않습니다.
 // 데이터베이스 규칙에도 같은 이메일을 넣어야 실제로 보호됩니다.
-window.JT_ALLOWED = [];
+window.JT_ALLOWED = ["llimjihye@gmail.com"];

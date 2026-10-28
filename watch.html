@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>집터 · 관심 단지</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
-<link rel="stylesheet" href="assets/style.css?v=20261028f">
+<link rel="stylesheet" href="assets/style.css?v=20261028g">
 </head>
 <body>
 <header class="topbar"><div class="topbar-inner"></div></header>
@@ -44,9 +44,9 @@
   <div class="list" id="watch"></div>
 </main>
 
-<script src="assets/terms.js?v=20261028f"></script>
-<script src="assets/firebase-config.js?v=20261028f"></script>
-<script src="assets/app.js?v=20261028f"></script>
+<script src="assets/terms.js?v=20261028g"></script>
+<script src="assets/firebase-config.js?v=20261028g"></script>
+<script src="assets/app.js?v=20261028g"></script>
 <script>
 (function () {
   var J = window.JT, $ = J.$, esc = J.esc, fmtEok = J.fmtEok;
@@ -81,7 +81,7 @@
       return;
     }
     function paint(S) {
-      if (S.status === "noconfig") { el.innerHTML = '<p class="muted">아직 Firebase 설정이 들어가지 않았습니다. 설정이 들어가면 여기서 방을 만들 수 있습니다.</p>'; return; }
+      if (!window.JT_FIREBASE || S.status === "noconfig") { el.innerHTML = '<p class="muted">아직 Firebase 설정이 들어가지 않았습니다. 설정이 들어가면 여기서 방을 만들 수 있습니다.</p>'; return; }
       if (!J.roomKey()) {
         el.innerHTML = '<div class="actions"><button type="button" class="btn sm primary" id="room-new">방 만들기</button><span class="muted small">또는</span><input id="room-code" placeholder="받은 방 코드 붙여넣기" style="max-width:16rem"><button type="button" class="btn sm" id="room-enter">들어가기</button></div>';
         $("room-new").addEventListener("click", function () { J.setRoom(J.newRoomKey()); location.reload(); });

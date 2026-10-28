@@ -345,15 +345,22 @@ window.JT = (function () {
   function stopQueries(n) {
     var q = [], seen = {};
     function add(x) { x = String(x || "").replace(/\s+/g, " ").trim(); if (x.length >= 2 && !seen[x]) { seen[x] = 1; q.push(x); } }
+    var GENERIC = /^(이마트|홈플러스|롯데마트|하나로마트|하나로클럽|힐스테이트|래미안|자이|푸르지오|더샵|아이파크|롯데캐슬|e편한세상|반도유보라|우미린|호반베르디움|호수마을|무지개마을|목동|주공|현대|삼성|한양|우성|벽산|동아|대림|쌍용|코오롱|두산|한신|신동아|극동|동부|한일|태영|삼익|진흥|금호|KT|CU|GS25|맥도날드|스타벅스|하나은행|우리은행|국민은행|기업은행|농협|우체국|주유소|교회|성당|병원|의원|약국|편의점|사거리|삼거리|오거리|입구|정문|후문|육교|정류장)$/;
     add(n);
-    var base = n.replace(/\(.*?\)/g, " ").replace(/\s*(전방|건너편|맞은\s?편|맞은편|옆|앞|방면|입구|후문|정문|사이|대도로변|버스정류장|택시승강장|육교\s?밑|육교|횡단보도)\s*\d*\s*[mM]?\s*$/g, "").trim();
+    var aptized = n.replace(/([가-힣0-9])A(?=\s|$)/g, "$1아파트").replace(/([가-힣0-9])APT(?=\s|$)/gi, "$1아파트"); // '극동늘푸른A' -> '극동늘푸른아파트'
+    add(aptized);
+    var base = aptized.replace(/\(.*?\)/g, " ").replace(/\s*(전방|건너편|맞은\s?편|맞은편|옆|앞|방면|입구|후문|정문|사이|대도로변|버스정류장|택시승강장|육교\s?밑|육교|횡단보도)\s*\d*\s*[mM]?\s*$/g, "").trim();
     add(base);
-    add(base.replace(/\s*\d+(,\s*\d+)*\s*번\s*출구.*$/, "").trim());
-    add(n.replace(/\s*\d+(,\s*\d+)*\s*번\s*출구.*$/, "").trim());
+    add(base.replace(/\s*\d+(\s*,\s*\d+)*\s*번\s*출구.*$/, "").trim());
+    add(base.replace(/\s*\d+(\s*,\s*\d+)*\s*번\s*,?\s*\d*\s*번?\s*출구.*$/, "").trim());
+    add(base.replace(/(사거리|삼거리|오거리|입구|육교)$/, "").trim());
     var toks = base.split(" ");
-    if (toks.length > 1) { add(toks[0]); add(toks.slice(0, 2).join(" ")); }
-    var st = /([가-힣A-Za-z0-9]+(역|초교|초등학교|중학교|고등학교|시청|구청|주민센터|사거리|오거리|삼거리|터미널|공원|병원|마트|성당|교회|아파트|주유소|농협|우체국))/.exec(n);
-    if (st) add(st[1]);
+    if (toks.length === 2 && !GENERIC.test(toks[0]) && !GENERIC.test(toks[1])) add(toks[1] + " " + toks[0]); // '불정동 이마트' -> '이마트 불정동'
+    if (toks.length >= 3) add(toks.slice(0, 2).join(" "));
+    var st = /([가-힣A-Za-z0-9]+(역|초교|초등학교|중학교|고등학교|시청|구청|주민센터|터미널|공원|성당|교회|농협|우체국))/.exec(aptized);
+    if (st && !GENERIC.test(st[1])) add(st[1]);
+    // 마지막 보루: 앞 낱말 하나 (단, 흔한 상호·동네 이름은 금지)
+    if (toks.length > 1 && !GENERIC.test(toks[0]) && toks[0].length >= 3) add(toks[0]);
     return q;
   }
   function geocodeStops(names, onProgress) {

@@ -657,7 +657,8 @@ window.JT = (function () {
       SYNC.auth = firebase.auth(); SYNC.db = firebase.database();
       SYNC.auth.onAuthStateChanged(function (user) {
         SYNC.user = user || null;
-        if (!user) { SYNC.status = "out"; SYNC.allowed = false; emitSync(); return; }
+        if (!user) { SYNC.status = "out"; SYNC.allowed = false; try { localStorage.removeItem("imjang.auth.cache"); } catch (e) {} emitSync(); return; }
+        try { localStorage.setItem("imjang.auth.cache", JSON.stringify({ name: user.displayName || "", email: user.email || "" })); } catch (e) {}
         // 허용 여부는 데이터베이스 규칙이 결정한다 (이메일 목록은 Firebase 안에만 있음). 읽기가 거부되면 허용되지 않은 계정.
         SYNC.status = "connecting"; emitSync();
         SYNC.privRef = SYNC.db.ref("users/" + user.uid + "/private");
@@ -676,10 +677,14 @@ window.JT = (function () {
       return SYNC.auth.signInWithPopup(p).catch(function (e) { if (e && /popup|cancel/i.test(e.code || "")) return SYNC.auth.signInWithRedirect(p); throw e; });
     }).catch(function (e) { SYNC.status = "error"; SYNC.error = (e && e.message) ? e.message : String(e); emitSync(); });
   }
-  function signOut() { if (!SYNC.auth) return; SYNC.auth.signOut().then(function () { location.reload(); }); }
+  function signOut() { try { localStorage.removeItem("imjang.auth.cache"); } catch (e) {} authInit().then(function () { if (!SYNC.auth) return; return SYNC.auth.signOut(); }).then(function () { location.reload(); }); }
   function authLabel(S) {
     if (S.status === "noconfig") return "";
-    if (S.status === "loading" || S.status === "init") return '<span class="muted small">…</span>';
+    if (S.status === "loading" || S.status === "init") {
+      var c = lsGet("imjang.auth.cache", null);
+      if (c && c.email) return '<span class="auth-who" title="' + esc(c.email) + '">' + esc((c.name || c.email).split(" ")[0]) + ' <span class="muted small">연결 중</span></span><button type="button" class="btn sm ghost" data-auth="out">로그아웃</button>';
+      return "";
+    }
     if (S.status === "out") return '<button type="button" class="btn sm" data-auth="in">구글 로그인</button>';
     var who = S.user ? esc((S.user.displayName || S.user.email || "").split(" ")[0]) : "";
     var st = S.status === "on" ? (S.connected === false ? "연결 끊김" : "공유 중") : S.status === "connecting" || S.status === "reloading" ? "연결 중" : S.status === "denied" ? "허용되지 않은 계정" : S.status === "nolist" ? "허용 목록 없음" : S.status === "error" ? "오류" : "";

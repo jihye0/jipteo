@@ -331,9 +331,9 @@ window.JT = (function () {
     var to = gtxStation(p.gtx.to); if (!to) return null;
     var best = null;
     GTXA.forEach(function (st) {
-      if (st[0] === to[0] || !st[4]) return;
+      if (st[0] === to[0] || st[0] === "삼성역") return; // 삼성역은 승차역으로는 제외
       var lo = Math.min(st[3], to[3]), hi = Math.max(st[3], to[3]);
-      if (!p.gtx.future && lo < 31 && hi > 31) return; // 서울역~수서 사이를 건너는 경로는 미개통
+      // 수서~서울역 사이(삼성역)는 아직 미개통이지만, 몇 년 뒤를 보고 고르는 것이라 전 구간이 이어진 것으로 가정한다
       var km = haversineKm(lat, lng, st[1], st[2]), acc = accessMin(km), ride = hi - lo + (lo < 31 && hi > 31 ? 2 : 0);
       if (!best || acc + ride < best.acc + best.ride) best = { st: st[0], km: km, acc: acc, ride: ride };
     });
@@ -424,8 +424,8 @@ window.JT = (function () {
         '<input class="who" value="' + esc(p.label) + '" aria-label="누구" maxlength="6">' +
         '<div class="commute-body">' +
         '<div class="seg sm mode"><button type="button" data-m="point" aria-pressed="' + !sh + '">직장 위치</button><button type="button" data-m="shuttle" aria-pressed="' + sh + '">회사 셔틀 정류장</button></div>' +
-        '<div class="search gtx-row"><select class="gtx-to"><option value="">GTX-A 안 씀</option>' + GTXA.map(function (st) { return '<option value="' + st[0] + '"' + (p.gtx && p.gtx.to === st[0] ? " selected" : "") + (st[4] ? "" : " disabled") + '>' + st[0] + (st[4] ? "" : " (미개통)") + '</option>'; }).join("") + '</select><label class="check small"><input type="checkbox" class="gtx-future"' + (p.gtx && p.gtx.future ? " checked" : "") + '> 수서~서울역 연결 개통 가정</label></div>' +
-        '<p class="hint">GTX-A: 회사에서 가장 가까운 GTX역을 고르면, 단지마다 가장 가까운 GTX역까지 가서 타는 시간을 어림해 칩과 점수에 넣습니다(더 빠를 때만). 지금은 운정~서울역, 수서~동탄만 다니고 가운데가 안 이어져 있어 "연결 개통 가정"을 켜면 미래 기준으로 계산합니다.</p>' +
+        '<div class="search gtx-row"><select class="gtx-to"><option value="">GTX-A 안 씀</option>' + GTXA.map(function (st) { return '<option value="' + st[0] + '"' + (p.gtx && p.gtx.to === st[0] ? " selected" : "") + '>' + st[0] + (st[4] ? "" : " (개통 예정)") + '</option>'; }).join("") + '</select></div>' +
+        '<p class="hint">회사에서 가까운 GTX-A 역을 고르면, 단지마다 가장 가까운 GTX역까지 가서 타는 시간을 어림해 칩과 점수에 넣습니다(기존 경로보다 빠를 때만). 수서~서울역 구간은 개통됐다고 보고 계산합니다.</p>' +
         (sh
           ? '<textarea class="stops" rows="4" placeholder="정류장 이름을 한 줄에 하나씩 붙여 넣으세요 (예: 잠실역 6번출구)"></textarea>' +
             '<div class="search"><select class="maxwalk"><option value="800">정류장 도보 800m 이내</option><option value="1000">1km 이내</option><option value="1500">1.5km 이내 (기본)</option><option value="2000">2km 이내</option></select><button type="button" class="btn geocode">정류장 위치 찾기</button>' + (p.stops && p.stops.length ? '<button type="button" class="btn ghost clear">지우기</button>' : "") + '</div>' +
@@ -441,8 +441,7 @@ window.JT = (function () {
     el.querySelectorAll(".commute-row").forEach(function (row) {
       var i = Number(row.dataset.i), p = c.people[i], who = row.querySelector(".who"), hint = row.querySelector(".hint");
       who.addEventListener("change", function () { p.label = who.value.trim() || (i === 0 ? "나" : "상대"); who.value = p.label; save(); });
-      row.querySelector(".gtx-to").addEventListener("change", function (ev) { p.gtx = ev.target.value ? { to: ev.target.value, future: !!(p.gtx && p.gtx.future) } : null; save(); });
-      row.querySelector(".gtx-future").addEventListener("change", function (ev) { if (!p.gtx) p.gtx = { to: "" }; p.gtx.future = ev.target.checked; save(); });
+      row.querySelector(".gtx-to").addEventListener("change", function (ev) { p.gtx = ev.target.value ? { to: ev.target.value } : null; save(); });
       row.querySelector(".mode").addEventListener("click", function (ev) { var b = ev.target.closest("button[data-m]"); if (!b || b.dataset.m === (p.mode || "point")) return; p.mode = b.dataset.m; save(); renderCommuteSetup(el, onChange); });
       var clr = row.querySelector(".clear");
       if (clr) clr.addEventListener("click", function () { if (isShuttle(p)) { p.stops = []; } else { p.name = ""; p.lat = null; p.lng = null; } save(); renderCommuteSetup(el, onChange); });

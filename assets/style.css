@@ -324,3 +324,5 @@ label.btn { cursor: pointer; }
 .sort-row select { flex: 1; }
 .tlimits { display: grid; gap: 0.4rem; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
 .tlimits .field { gap: 0.2rem; }
+
+code { background: var(--surface-2); padding: 0.1rem 0.4rem; border-radius: 6px; font-size: 0.9em; }

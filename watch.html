@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>집터 · 관심 단지</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
-<link rel="stylesheet" href="assets/style.css?v=20261028e">
+<link rel="stylesheet" href="assets/style.css?v=20261028f">
 </head>
 <body>
 <header class="topbar"><div class="topbar-inner"></div></header>
@@ -30,12 +30,23 @@
     <div class="note" id="share-box" hidden></div>
   </div>
 
+  <div class="card" id="room-card">
+    <div class="card-head">
+      <div>
+        <h2>둘이 함께 보기 <span class="muted small">(실시간)</span></h2>
+        <p class="small muted">방을 만들고 코드(링크)를 상대에게 보내면, 핀과 임장 기록이 두 사람 사이에서 바로 맞춰집니다. 출퇴근 기준·셔틀 정류장·예산은 공유되지 않습니다.</p>
+      </div>
+    </div>
+    <div id="room"></div>
+  </div>
+
   <p class="small muted" id="meta"></p>
   <div class="list" id="watch"></div>
 </main>
 
-<script src="assets/terms.js?v=20261028e"></script>
-<script src="assets/app.js?v=20261028e"></script>
+<script src="assets/terms.js?v=20261028f"></script>
+<script src="assets/firebase-config.js?v=20261028f"></script>
+<script src="assets/app.js?v=20261028f"></script>
 <script>
 (function () {
   var J = window.JT, $ = J.$, esc = J.esc, fmtEok = J.fmtEok;
@@ -58,6 +69,34 @@
       $("io-status").textContent = "가져왔습니다. 페이지를 다시 불러옵니다."; setTimeout(function () { location.reload(); }, 800);
     }).catch(function () { $("io-status").textContent = "이 사이트에서 내보낸 파일이 아닙니다."; $("io-status").className = "status err"; });
   });
+
+  // ---- 실시간 공유 방
+  (function () {
+    var el = $("room");
+    var m = /[?&]room=([a-z0-9]{20,})/i.exec(location.search);
+    if (m && m[1] !== J.roomKey()) {
+      el.innerHTML = '<div class="note">상대가 보낸 방에 들어갑니다. 내 핀·임장 기록은 방 목록과 합쳐집니다. <button type="button" class="btn sm primary" id="room-join">이 방에 들어가기</button> <button type="button" class="btn sm ghost" id="room-no">아니요</button></div>';
+      $("room-join").addEventListener("click", function () { J.setRoom(m[1]); history.replaceState(null, "", location.pathname); location.reload(); });
+      $("room-no").addEventListener("click", function () { history.replaceState(null, "", location.pathname); location.reload(); });
+      return;
+    }
+    function paint(S) {
+      if (S.status === "noconfig") { el.innerHTML = '<p class="muted">아직 Firebase 설정이 들어가지 않았습니다. 설정이 들어가면 여기서 방을 만들 수 있습니다.</p>'; return; }
+      if (!J.roomKey()) {
+        el.innerHTML = '<div class="actions"><button type="button" class="btn sm primary" id="room-new">방 만들기</button><span class="muted small">또는</span><input id="room-code" placeholder="받은 방 코드 붙여넣기" style="max-width:16rem"><button type="button" class="btn sm" id="room-enter">들어가기</button></div>';
+        $("room-new").addEventListener("click", function () { J.setRoom(J.newRoomKey()); location.reload(); });
+        $("room-enter").addEventListener("click", function () { var k = $("room-code").value.trim().replace(/.*room=/, ""); if (k.length < 20) { alert("방 코드가 올바르지 않습니다."); return; } J.setRoom(k); location.reload(); });
+        return;
+      }
+      var link = location.origin + location.pathname + "?room=" + J.roomKey();
+      var state = S.status === "on" ? (S.connected === false ? "연결 끊김 (다시 연결 중)" : "연결됨 · 바뀌면 바로 반영") : S.status === "loading" ? "연결하는 중" : S.status === "error" ? "오류: " + esc(S.error) : "대기";
+      el.innerHTML = '<p>방 코드 <code>' + esc(J.roomKey()) + '</code> · <b>' + state + '</b></p><div class="actions"><button type="button" class="btn sm primary" id="room-copy">초대 링크 복사</button><button type="button" class="btn sm ghost" id="room-leave">방 나가기</button></div><p class="small muted">상대가 이 링크를 열고 "이 방에 들어가기"를 누르면 됩니다. 핀은 후보 찾기·지도에서, 임장 기록은 임장 페이지에서 담는 대로 공유됩니다.</p>';
+      $("room-copy").addEventListener("click", function () { var done = function () { $("io-status").textContent = "초대 링크를 복사했습니다."; }; if (navigator.clipboard) navigator.clipboard.writeText(link).then(done, function () { prompt("링크", link); }); else prompt("링크", link); });
+      $("room-leave").addEventListener("click", function () { if (confirm("방을 나가면 이 기기에서는 더 이상 실시간으로 맞춰지지 않습니다. 지금까지의 목록은 이 기기에 남습니다.")) J.syncLeave(); });
+    }
+    J.onSync(paint);
+    if (J.roomKey() && window.JT_FIREBASE && J.SYNC.status === "off") J.syncStart();
+  })();
 
   // ---- 공유 링크 (핀 목록만, 주소에 담아 전달)
   function packPins() {

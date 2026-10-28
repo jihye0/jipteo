@@ -57,6 +57,7 @@ window.JT = (function () {
     el.innerHTML = '<a class="brand" href="index.html">집<span>터</span></a><nav class="nav" aria-label="주요 메뉴">' +
       PAGES.map(function (p) { return '<a href="' + p.href + '"' + (p.key === active ? ' aria-current="page"' : "") + '>' + p.label + '</a>'; }).join("") + '</nav>';
     if (window.JT_TERMS) termify(document);
+    if (SYNC.key && window.JT_FIREBASE) syncStart();
   }
 
   // ---------- 저장소 (브라우저 localStorage) ----------
@@ -64,8 +65,11 @@ window.JT = (function () {
     var s = { items: lsGet(lsKey, []), listeners: [] };
     function emit() { s.listeners.forEach(function (fn) { fn(s.items); }); }
     s.onChange = function (fn) { s.listeners.push(fn); fn(s.items); };
-    s.save = function (rec) { s.items = s.items.filter(function (r) { return r.id !== rec.id; }).concat([rec]); lsSet(lsKey, s.items); emit(); return Promise.resolve(rec); };
-    s.remove = function (id) { s.items = s.items.filter(function (r) { return r.id !== id; }); lsSet(lsKey, s.items); emit(); return Promise.resolve(); };
+    s.remote = null; // 실시간 공유가 켜지면 { set(rec), remove(id) }
+    s.save = function (rec) { s.items = s.items.filter(function (r) { return r.id !== rec.id; }).concat([rec]); lsSet(lsKey, s.items); emit(); if (s.remote) { try { s.remote.set(rec); } catch (e) {} } return Promise.resolve(rec); };
+    s.remove = function (id) { s.items = s.items.filter(function (r) { return r.id !== id; }); lsSet(lsKey, s.items); emit(); if (s.remote) { try { s.remote.remove(id); } catch (e) {} } return Promise.resolve(); };
+    s.applyRemote = function (rec) { if (!rec || !rec.id) return; var cur = s.get(rec.id); if (cur && JSON.stringify(cur) === JSON.stringify(rec)) return; s.items = s.items.filter(function (r) { return r.id !== rec.id; }).concat([rec]); lsSet(lsKey, s.items); emit(); };
+    s.removeRemote = function (id) { if (!s.get(id)) return; s.items = s.items.filter(function (r) { return r.id !== id; }); lsSet(lsKey, s.items); emit(); };
     s.get = function (id) { return s.items.find(function (r) { return r.id === id; }) || null; };
     return s;
   }
@@ -599,6 +603,46 @@ window.JT = (function () {
       sc.parts.map(function (p) { return "<li><span>" + esc(p.label) + "</span><b>" + (p.pts == null ? "–" : p.pts + "/" + p.max) + "</b><span class=\"muted small\">" + p.why + "</span></li>"; }).join("") + "</ul></div>";
   }
 
+  // ---------- 실시간 공유 (Firebase Realtime Database, 방 코드 기준) ----------
+  // 핀(candidates)과 임장 기록(visits)만 공유. 출퇴근·셔틀·예산은 공유하지 않음.
+  var SYNC = { key: lsGet("imjang.room", ""), status: "off", db: null, error: "", listeners: [] };
+  function roomKey() { return SYNC.key; }
+  function setRoom(k) { SYNC.key = String(k || "").trim(); lsSet("imjang.room", SYNC.key); }
+  function newRoomKey() { var a = "abcdefghijkmnpqrstuvwxyz23456789", s = ""; for (var i = 0; i < 24; i++) s += a[Math.floor(Math.random() * a.length)]; return s; }
+  function onSync(fn) { SYNC.listeners.push(fn); fn(SYNC); }
+  function emitSync() { SYNC.listeners.forEach(function (fn) { fn(SYNC); }); }
+  function loadScript(src) { return new Promise(function (res, rej) { var s = document.createElement("script"); s.src = src; s.onload = res; s.onerror = function () { rej(src); }; document.head.appendChild(s); }); }
+  function clean(o) { return JSON.parse(JSON.stringify(o)); } // undefined 제거
+  function bindStore(store, name) {
+    var ref = SYNC.db.ref("rooms/" + SYNC.key + "/" + name);
+    store.remote = { set: function (rec) { ref.child(rec.id).set(clean(rec)); }, remove: function (id) { ref.child(id).remove(); } };
+    return ref.once("value").then(function (snap) {
+      var remote = snap.val() || {}, byId = {};
+      store.items.forEach(function (l) { byId[l.id] = l; });
+      // 내게만 있는 것은 올리고, 방에 있는 것은 받는다 (둘 다 있으면 최근 수정이 이김)
+      store.items.forEach(function (l) { if (!remote[l.id]) ref.child(l.id).set(clean(l)); });
+      Object.keys(remote).forEach(function (id) { var r = remote[id], l = byId[id]; if (!l || (r.updatedAt || 0) > (l.updatedAt || 0)) store.applyRemote(r); else if ((l.updatedAt || 0) > (r.updatedAt || 0)) ref.child(id).set(clean(l)); });
+      ref.on("child_added", function (s) { store.applyRemote(s.val()); });
+      ref.on("child_changed", function (s) { store.applyRemote(s.val()); });
+      ref.on("child_removed", function (s) { store.removeRemote(s.key); });
+    });
+  }
+  function syncStart() {
+    if (!window.JT_FIREBASE || !SYNC.key) { SYNC.status = window.JT_FIREBASE ? "off" : "noconfig"; emitSync(); return Promise.resolve(false); }
+    if (SYNC.db) return Promise.resolve(true);
+    SYNC.status = "loading"; emitSync();
+    return loadScript("https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js").then(function () { return loadScript("https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"); }).then(function () {
+      if (!firebase.apps.length) firebase.initializeApp(window.JT_FIREBASE);
+      SYNC.db = firebase.database();
+      return Promise.all([bindStore(candidates, "candidates"), bindStore(visits, "visits")]);
+    }).then(function () {
+      SYNC.status = "on"; emitSync();
+      SYNC.db.ref(".info/connected").on("value", function (s) { SYNC.connected = !!s.val(); emitSync(); });
+      return true;
+    }).catch(function (e) { SYNC.status = "error"; SYNC.error = (e && e.message) ? e.message : String(e); emitSync(); return false; });
+  }
+  function syncLeave() { setRoom(""); location.reload(); }
+
   // ---------- 용어 설명 팝오버 ----------
   // 페이지의 <dfn data-t="키">낱말</dfn> 을 누르면 짧은 설명이 뜬다. 용어 목록은 assets/terms.js
   function termify(root) {
@@ -632,5 +676,6 @@ window.JT = (function () {
     budget: budget, loanFor: loanFor, costsFor: costsFor, acquisitionTax: acquisitionTax, brokerFee: brokerFee, monthlyPayment: monthlyPayment, policyEligibility: policyEligibility, regionOf: regionOf, annuityFactor: annuityFactor,
     expandDongKey: expandDongKey, getKakaoKey: getKakaoKey, loadKakao: loadKakao, placeSearch: placeSearch,
     getCommute: getCommute, setCommute: setCommute, commutePeople: commutePeople, commuteFor: commuteFor, commuteChips: commuteChips, commuteMinutes: commuteMinutes, haversineKm: haversineKm, kakaoRouteUrl: kakaoRouteUrl, renderCommuteSetup: renderCommuteSetup, nearestStop: nearestStop, isShuttle: isShuttle, termify: termify,
-    loadJeonse: loadJeonse, nearChips: nearChips, mainRatio: mainRatio, ratioChip: ratioChip, detailHtml: detailHtml, detailFor: detailFor, walkMin: walkMin, scoreRow: scoreRow, scoreHtml: scoreHtml };
+    loadJeonse: loadJeonse, nearChips: nearChips, mainRatio: mainRatio, ratioChip: ratioChip, detailHtml: detailHtml, detailFor: detailFor, walkMin: walkMin, scoreRow: scoreRow, scoreHtml: scoreHtml,
+    SYNC: SYNC, roomKey: roomKey, setRoom: setRoom, newRoomKey: newRoomKey, onSync: onSync, syncStart: syncStart, syncLeave: syncLeave };
 })();

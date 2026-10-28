@@ -321,28 +321,45 @@ window.JT = (function () {
     return best;
   }
   // 단지 좌표 -> 사람별 출퇴근 정보. 직장 모드: 직선거리·어림 시간. 셔틀 모드: 가장 가까운 정류장까지 거리·도보 시간
+  // GTX-A 수서~동탄 구간(개통)에서 구성역까지. [역명, 위도, 경도, 구성역까지 분(어림)]
+  var GTXA = { to: { n: "구성역", lat: 37.3008, lng: 127.1222 }, from: [["수서역", 37.4873, 127.1017, 13], ["성남역", 37.4028, 127.1121, 6], ["동탄역", 37.2022, 127.0961, 7]] };
+  function accessMin(km) { return km <= 1.2 ? Math.max(3, Math.round(km * 1000 / 67)) : Math.round(8 + km * 3); } // 역까지: 가까우면 도보, 멀면 버스·지하철 어림
+  function gtxFor(p, lat, lng) {
+    var best = null;
+    GTXA.from.forEach(function (st) { var km = haversineKm(lat, lng, st[1], st[2]); var acc = accessMin(km); if (!best || acc + st[3] < best.acc + best.ride) best = { st: st[0], km: km, acc: acc, ride: st[3] }; });
+    var last = (p.lat != null && p.lng != null) ? walkMin(haversineKm(GTXA.to.lat, GTXA.to.lng, p.lat, p.lng) * 1000) : 10;
+    best.last = Math.min(last, 25); best.min = best.acc + best.ride + best.last;
+    return best;
+  }
   function commuteFor(lat, lng, fromName) {
     if (lat == null || lng == null) return [];
     return commutePeople().map(function (p) {
+      var g = p.gtx ? gtxFor(p, lat, lng) : null;
       if (isShuttle(p)) {
         var s = nearestStop(p, lat, lng), maxWalk = p.maxWalk || 1500;
         var o = { label: p.label, mode: "shuttle", stop: s.n, m: s.m, km: s.m / 1000, min: walkMin(s.m), maxWalk: maxWalk, ok: s.m <= maxWalk, url: kakaoRouteUrl(fromName || "집", lat, lng, s.n, s.lat, s.lng) };
         if (p.lat != null && p.lng != null) { o.ckm = haversineKm(lat, lng, p.lat, p.lng); o.cmin = commuteMinutes(o.ckm); o.cname = p.name; o.curl = kakaoRouteUrl(fromName || "집", lat, lng, p.name || p.label + " 직장", p.lat, p.lng); }
+        o.gtx = g;
         return o;
       }
       var km = haversineKm(lat, lng, p.lat, p.lng);
-      return { label: p.label, mode: "point", name: p.name, km: km, min: commuteMinutes(km), url: kakaoRouteUrl(fromName || "집", lat, lng, p.name || p.label + " 직장", p.lat, p.lng) };
+      return { label: p.label, mode: "point", name: p.name, km: km, min: commuteMinutes(km), gtx: g, url: kakaoRouteUrl(fromName || "집", lat, lng, p.name || p.label + " 직장", p.lat, p.lng) };
     });
+  }
+  function gtxChip(c) {
+    if (!c.gtx) return "";
+    var g = c.gtx, cls = g.min <= 35 ? " good" : g.min <= 50 ? "" : g.min <= 70 ? " warn" : " bad";
+    return '<span class="chip commute' + cls + '" title="' + esc(g.st) + '까지 ' + g.km.toFixed(1) + 'km(약 ' + g.acc + '분) + GTX ' + g.ride + '분 + 구성역에서 ' + g.last + '분 · 어림값">' + esc(c.label) + ' GTX ' + esc(g.st) + ' ' + g.km.toFixed(1) + 'km → 구성역 약 ' + g.min + '분</span>';
   }
   function commuteChips(lat, lng, fromName) {
     return commuteFor(lat, lng, fromName).map(function (c) {
       if (c.mode === "shuttle") {
         var cs = c.m <= 800 ? " good" : c.m <= 1500 ? "" : c.m <= 2500 ? " warn" : " bad";
         return '<a class="chip commute' + cs + '" href="' + c.url + '" target="_blank" rel="noopener" title="가장 가까운 셔틀 정류장: ' + esc(c.stop) + ' · 카카오맵 길찾기 열기">' + esc(c.label) + ' 셔틀 ' + esc(c.stop) + ' ' + (c.m > 2000 ? (c.m / 1000).toFixed(1) + 'km · 걷기엔 멀어요' : c.m + 'm · 도보 ' + c.min + '분') + '</a>' +
-          (c.ckm != null ? '<a class="chip commute" href="' + c.curl + '" target="_blank" rel="noopener" title="' + esc(c.cname || "") + ' 직선거리 · 카카오맵 길찾기 열기">' + esc(c.label) + ' 회사 ' + c.ckm.toFixed(1) + 'km</a>' : "");
+          (c.ckm != null ? '<a class="chip commute" href="' + c.curl + '" target="_blank" rel="noopener" title="' + esc(c.cname || "") + ' 직선거리 · 카카오맵 길찾기 열기">' + esc(c.label) + ' 회사 ' + c.ckm.toFixed(1) + 'km</a>' : "") + gtxChip(c);
       }
       var cls = c.km <= 8 ? " good" : c.km <= 15 ? "" : c.km <= 25 ? " warn" : " bad";
-      return '<a class="chip commute' + cls + '" href="' + c.url + '" target="_blank" rel="noopener" title="' + esc(c.name || "") + ' · 카카오맵 길찾기 열기">' + esc(c.label) + ' ' + c.km.toFixed(1) + 'km · 약 ' + c.min + '분</a>';
+      return '<a class="chip commute' + cls + '" href="' + c.url + '" target="_blank" rel="noopener" title="' + esc(c.name || "") + ' · 카카오맵 길찾기 열기">' + esc(c.label) + ' ' + c.km.toFixed(1) + 'km · 약 ' + c.min + '분</a>' + gtxChip(c);
     }).join("");
   }
   // 정류장 이름 목록 -> 좌표 (카카오 장소 검색, 수도권 안에서만). onProgress(done, total)
@@ -395,6 +412,7 @@ window.JT = (function () {
         '<input class="who" value="' + esc(p.label) + '" aria-label="누구" maxlength="6">' +
         '<div class="commute-body">' +
         '<div class="seg sm mode"><button type="button" data-m="point" aria-pressed="' + !sh + '">직장 위치</button><button type="button" data-m="shuttle" aria-pressed="' + sh + '">회사 셔틀 정류장</button></div>' +
+        '<label class="check small"><input type="checkbox" class="gtx"' + (p.gtx ? " checked" : "") + '> GTX-A로 구성역 출퇴근도 계산 <span class="muted">(수서·성남·동탄역 승차 · 어림값, 더 빠르면 점수에 반영)</span></label>' +
         (sh
           ? '<textarea class="stops" rows="4" placeholder="정류장 이름을 한 줄에 하나씩 붙여 넣으세요 (예: 잠실역 6번출구)"></textarea>' +
             '<div class="search"><select class="maxwalk"><option value="800">정류장 도보 800m 이내</option><option value="1000">1km 이내</option><option value="1500">1.5km 이내 (기본)</option><option value="2000">2km 이내</option></select><button type="button" class="btn geocode">정류장 위치 찾기</button>' + (p.stops && p.stops.length ? '<button type="button" class="btn ghost clear">지우기</button>' : "") + '</div>' +
@@ -410,6 +428,7 @@ window.JT = (function () {
     el.querySelectorAll(".commute-row").forEach(function (row) {
       var i = Number(row.dataset.i), p = c.people[i], who = row.querySelector(".who"), hint = row.querySelector(".hint");
       who.addEventListener("change", function () { p.label = who.value.trim() || (i === 0 ? "나" : "상대"); who.value = p.label; save(); });
+      row.querySelector(".gtx").addEventListener("change", function (ev) { p.gtx = ev.target.checked; save(); });
       row.querySelector(".mode").addEventListener("click", function (ev) { var b = ev.target.closest("button[data-m]"); if (!b || b.dataset.m === (p.mode || "point")) return; p.mode = b.dataset.m; save(); renderCommuteSetup(el, onChange); });
       var clr = row.querySelector(".clear");
       if (clr) clr.addEventListener("click", function () { if (isShuttle(p)) { p.stops = []; } else { p.name = ""; p.lat = null; p.lng = null; } save(); renderCommuteSetup(el, onChange); });
@@ -576,10 +595,10 @@ window.JT = (function () {
     var people = commutePeople();
     if (people.length && x.pos) {
       var cm = commuteFor(x.pos[0], x.pos[1], r[2]);
-      var fs = cm.map(function (c) { if (c.mode !== "shuttle") return 1 - lin(c.km, 5, 25); var sf = 1 - lin(c.m, 800, 2500); return c.ckm != null ? sf * 0.6 + (1 - lin(c.ckm, 5, 25)) * 0.4 : sf; });
+      var fs = cm.map(function (c) { var f0; if (c.mode !== "shuttle") f0 = 1 - lin(c.km, 5, 25); else { var sf = 1 - lin(c.m, 800, 2500); f0 = c.ckm != null ? sf * 0.6 + (1 - lin(c.ckm, 5, 25)) * 0.4 : sf; } if (c.gtx) { c.gtxF = 1 - lin(c.gtx.min, 25, 70); if (c.gtxF > f0) { c.useGtx = true; return c.gtxF; } } return f0; });
       var meanF = fs.reduce(function (s, v) { return s + v; }, 0) / fs.length, minF = Math.min.apply(null, fs);
       var f = meanF * 0.7 + minF * 0.3;
-      add("출퇴근", 30 * f, 30, cm.map(function (c) { return c.label + " " + (c.mode === "shuttle" ? "셔틀 정류장 " + (c.m > 2000 ? (c.m / 1000).toFixed(1) + "km" : c.m + "m") + "(800m 이하 만점)" + (c.ckm != null ? " + 회사 " + c.ckm.toFixed(1) + "km(5km 이하 만점, 비중 40%)" : "") : c.km.toFixed(1) + "km(5km 이하 만점)"); }).join(", "));
+      add("출퇴근", 30 * f, 30, cm.map(function (c) { if (c.useGtx) return c.label + " GTX " + c.gtx.st + " 경유 약 " + c.gtx.min + "분(25분 이하 만점, 70분 넘으면 0)"; return c.label + " " + (c.mode === "shuttle" ? "셔틀 정류장 " + (c.m > 2000 ? (c.m / 1000).toFixed(1) + "km" : c.m + "m") + "(800m 이하 만점)" + (c.ckm != null ? " + 회사 " + c.ckm.toFixed(1) + "km(5km 이하 만점, 비중 40%)" : "") : c.km.toFixed(1) + "km(5km 이하 만점)"); }).join(", "));
     } else add("출퇴근", null, 30, people.length ? "단지 좌표가 없어 계산 못 함" : "직장을 넣으면 반영됩니다");
     var near = r[6];
     if (near) {

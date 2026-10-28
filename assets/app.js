@@ -428,7 +428,7 @@ window.JT = (function () {
         '<p class="hint">회사에서 가까운 GTX-A 역을 고르면, 단지마다 가장 가까운 GTX역까지 가서 타는 시간을 어림해 칩과 점수에 넣습니다(기존 경로보다 빠를 때만). 수서~서울역 구간은 개통됐다고 보고 계산합니다.</p>' +
         (sh
           ? '<textarea class="stops" rows="4" placeholder="정류장 이름을 한 줄에 하나씩 붙여 넣으세요 (예: 잠실역 6번출구)"></textarea>' +
-            '<div class="search"><select class="maxwalk"><option value="800">정류장 도보 800m 이내</option><option value="1000">1km 이내</option><option value="1500">1.5km 이내 (기본)</option><option value="2000">2km 이내</option></select><button type="button" class="btn geocode">정류장 위치 찾기</button>' + (p.stops && p.stops.length ? '<button type="button" class="btn ghost clear">지우기</button>' : "") + '</div>' +
+            '<div class="search"><button type="button" class="btn geocode">정류장 위치 찾기</button>' + (p.stops && p.stops.length ? '<button type="button" class="btn ghost clear">지우기</button>' : "") + '</div>' +
             '<p class="hint">' + (p.stops && p.stops.length ? "정류장 " + p.stops.length + "곳 저장됨 · 이 브라우저에만 저장되고 어디에도 보내지 않습니다" : "목록을 붙여 넣고 '정류장 위치 찾기'를 누르세요. 이 브라우저에만 저장됩니다") + '</p>' +
             '<details class="miss"' + (p.miss && p.miss.length ? "" : " hidden") + '><summary>' + (p.miss && p.miss.length ? "못 찾은 정류장 " + p.miss.length + "곳 보기 (이름을 고쳐 다시 붙여 넣으면 됩니다)" : "") + '</summary><p class="small muted">' + esc((p.miss || []).join(", ")) + '</p></details>' +
             '<div class="search"><input class="where" autocomplete="off" placeholder="회사 위치 (선택 · 점수에 40% 반영)" value="' + esc(p.name) + '"><button type="button" class="btn find">찾기</button>' + (p.lat != null ? '<button type="button" class="btn ghost clear-co">회사 지우기</button>' : "") + '</div>' +
@@ -446,7 +446,7 @@ window.JT = (function () {
       var clr = row.querySelector(".clear");
       if (clr) clr.addEventListener("click", function () { if (isShuttle(p)) { p.stops = []; } else { p.name = ""; p.lat = null; p.lng = null; } save(); renderCommuteSetup(el, onChange); });
       if (isShuttle(p)) {
-        var ta = row.querySelector(".stops"), mw = row.querySelector(".maxwalk"), miss = row.querySelector(".miss");
+        var ta = row.querySelector(".stops"), miss = row.querySelector(".miss");
         var cc = row.querySelector(".clear-co"); if (cc) cc.addEventListener("click", function () { p.name = ""; p.lat = null; p.lng = null; save(); renderCommuteSetup(el, onChange); });
         (function () {
           var where2 = row.querySelector(".where"), box2 = row.querySelector(".geo-results"), hint2 = row.querySelector(".hint2");
@@ -463,8 +463,6 @@ window.JT = (function () {
           row.querySelector(".find").addEventListener("click", doSearch2);
           where2.addEventListener("keydown", function (ev) { if (ev.key === "Enter") { ev.preventDefault(); doSearch2(); } });
         })();
-        mw.value = String(p.maxWalk || 1500);
-        mw.addEventListener("change", function () { p.maxWalk = Number(mw.value); save(); });
         row.querySelector(".geocode").addEventListener("click", function () {
           var names = ta.value.split(/\r?\n/).map(function (s) { return s.replace(/^[#■\s]+/, "").trim(); }).filter(function (s) { return s && !/^#/.test(s); });
           names = names.filter(function (s, k) { return names.indexOf(s) === k; });

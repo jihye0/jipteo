@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>집터 · 관심 단지</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
-<link rel="stylesheet" href="assets/style.css?v=20261028o">
+<link rel="stylesheet" href="assets/style.css?v=20261028p">
 </head>
 <body>
 <header class="topbar"><div class="topbar-inner"></div></header>
@@ -21,7 +21,7 @@
     <div class="card-head">
       <div>
         <h2>내 데이터 백업</h2>
-        <p class="small muted">핀·임장 기록·출퇴근 기준·예산 입력은 이 브라우저에만 저장됩니다. 다른 기기에서도 보려면 파일로 내보내고 거기서 가져오세요.</p>
+        <p class="small muted">구글 로그인을 하면 핀·임장 기록·출퇴근 기준·예산 입력이 계정에 저장돼 따로 옮길 필요가 없습니다. 로그인 없이 쓰거나 만약을 대비해 파일로 보관하고 싶을 때만 쓰세요.</p>
       </div>
       <div class="actions"><button type="button" class="btn sm primary" id="share">관심 단지 공유 링크</button><button type="button" class="btn sm" id="export">내보내기</button><label class="btn sm" for="import">가져오기</label><input type="file" id="import" accept="application/json" hidden></div>
     </div>
@@ -44,9 +44,9 @@
   <div class="list" id="watch"></div>
 </main>
 
-<script src="assets/terms.js?v=20261028o"></script>
-<script src="assets/firebase-config.js?v=20261028o"></script>
-<script src="assets/app.js?v=20261028o"></script>
+<script src="assets/terms.js?v=20261028p"></script>
+<script src="assets/firebase-config.js?v=20261028p"></script>
+<script src="assets/app.js?v=20261028p"></script>
 <script>
 (function () {
   var J = window.JT, $ = J.$, esc = J.esc, fmtEok = J.fmtEok;

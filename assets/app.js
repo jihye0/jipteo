@@ -658,14 +658,14 @@ window.JT = (function () {
       SYNC.auth.onAuthStateChanged(function (user) {
         SYNC.user = user || null;
         if (!user) { SYNC.status = "out"; SYNC.allowed = false; emitSync(); return; }
-        if (!(window.JT_ALLOWED || []).length) { SYNC.status = "nolist"; SYNC.allowed = false; emitSync(); return; }
-        if (!isAllowed(user.email)) { SYNC.status = "denied"; SYNC.allowed = false; emitSync(); return; }
-        SYNC.allowed = true; SYNC.status = "connecting"; emitSync();
+        // 허용 여부는 데이터베이스 규칙이 결정한다 (이메일 목록은 Firebase 안에만 있음). 읽기가 거부되면 허용되지 않은 계정.
+        SYNC.status = "connecting"; emitSync();
         SYNC.privRef = SYNC.db.ref("users/" + user.uid + "/private");
         Promise.all([bindStore(candidates, "couple/candidates"), bindStore(visits, "couple/visits"), pullPrivate()]).then(function () {
           if (SYNC.status !== "reloading") { SYNC.status = "on"; emitSync(); }
           SYNC.db.ref(".info/connected").on("value", function (s) { SYNC.connected = !!s.val(); emitSync(); });
-        }).catch(function (e) { SYNC.status = "error"; SYNC.error = (e && e.message) ? e.message : String(e); emitSync(); });
+          SYNC.allowed = true;
+        }).catch(function (e) { var msg = (e && (e.code || e.message)) ? String(e.code || e.message) : String(e); if (/permission/i.test(msg)) { SYNC.status = "denied"; SYNC.allowed = false; } else { SYNC.status = "error"; SYNC.error = msg; } emitSync(); });
       });
       return true;
     }).catch(function (e) { SYNC.status = "error"; SYNC.error = (e && e.message) ? e.message : String(e); emitSync(); return false; });

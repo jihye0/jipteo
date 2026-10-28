@@ -10,6 +10,5 @@ window.JT_FIREBASE = {
   appId: "1:667222972235:web:e74d465f199613fbab3ace"
 };
 
-// 로그인을 허용할 구글 계정 이메일. 비어 있으면 로그인해도 데이터가 연결되지 않습니다.
-// 데이터베이스 규칙에도 같은 이메일을 넣어야 실제로 보호됩니다.
-window.JT_ALLOWED = ["llimjihye@gmail.com"];
+// 허용 계정은 여기 적지 않습니다. Firebase 데이터베이스 규칙(비공개)에만 두고, 사이트는 읽기 허용 여부로 판단합니다.
+window.JT_ALLOWED = [];

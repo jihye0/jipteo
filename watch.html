@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>집터 · 관심 단지</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
-<link rel="stylesheet" href="assets/style.css?v=20261028r">
+<link rel="stylesheet" href="assets/style.css?v=20261028s">
 </head>
 <body>
 <header class="topbar"><div class="topbar-inner"></div></header>
@@ -15,19 +15,6 @@
     <span class="eyebrow">Tracking</span>
     <h1>관심 단지 가격 추이</h1>
     <p class="lead">핀으로 담아 둔 단지의 월별 <dfn data-t="actual-price">실거래</dfn> 중앙값을 그래프로 봅니다. 데이터는 매달 1일 자동으로 쌓이니, 몇 년 뒤 살 계획이라면 지금부터 담아 두세요.</p>
-  </div>
-
-  <div class="card">
-    <div class="card-head">
-      <div>
-        <h2>내 데이터 백업</h2>
-        <p class="small muted">구글 로그인을 하면 핀·임장 기록·출퇴근 기준·예산 입력이 계정에 저장돼 따로 옮길 필요가 없습니다. 로그인 없이 쓰거나 만약을 대비해 파일로 보관하고 싶을 때만 쓰세요.</p>
-      </div>
-      <div class="actions"><button type="button" class="btn sm primary" id="share">관심 단지 공유 링크</button><button type="button" class="btn sm" id="export">내보내기</button><label class="btn sm" for="import">가져오기</label><input type="file" id="import" accept="application/json" hidden></div>
-    </div>
-    <p class="status" id="io-status"></p>
-    <p class="small muted">"공유 링크"는 담아 둔 단지 목록만 주소에 담아 보냅니다(셔틀 정류장·예산 같은 개인 정보는 빠짐). 받은 사람이 링크를 열면 자기 목록에 합칠 수 있어, 두 사람이 서로 링크를 주고받으면 같은 목록을 볼 수 있습니다.</p>
-    <div class="note" id="share-box" hidden></div>
   </div>
 
   <div class="card" id="room-card">
@@ -44,31 +31,14 @@
   <div class="list" id="watch"></div>
 </main>
 
-<script src="assets/terms.js?v=20261028r"></script>
-<script src="assets/firebase-config.js?v=20261028r"></script>
-<script src="assets/app.js?v=20261028r"></script>
+<script src="assets/terms.js?v=20261028s"></script>
+<script src="assets/firebase-config.js?v=20261028s"></script>
+<script src="assets/app.js?v=20261028s"></script>
 <script>
 (function () {
   var J = window.JT, $ = J.$, esc = J.esc, fmtEok = J.fmtEok;
   J.renderNav("watch");
   var budget = J.lsGet("imjang.budget", null);
-
-  // ---- 백업
-  $("export").addEventListener("click", function () {
-    var keys = ["imjang.candidates.v1", "imjang.visits.v1", "imjang.commute.v1", "imjang.budgetInputs", "imjang.budget", "imjang.findInputs"], out = { app: "jipteo", exportedAt: new Date().toISOString(), data: {} };
-    keys.forEach(function (k) { var v = localStorage.getItem(k); if (v != null) out.data[k] = JSON.parse(v); });
-    var blob = new Blob([JSON.stringify(out, null, 1)], { type: "application/json" }), a = document.createElement("a");
-    a.href = URL.createObjectURL(blob); a.download = "jipteo-backup-" + new Date().toISOString().slice(0, 10) + ".json"; a.click();
-    $("io-status").textContent = "내보냈습니다. 파일을 다른 기기로 옮겨 '가져오기'를 누르세요.";
-  });
-  $("import").addEventListener("change", function () {
-    var f = this.files[0]; if (!f) return;
-    f.text().then(function (t) {
-      var o = JSON.parse(t); if (!o || o.app !== "jipteo" || !o.data) throw new Error("형식");
-      Object.keys(o.data).forEach(function (k) { localStorage.setItem(k, JSON.stringify(o.data[k])); });
-      $("io-status").textContent = "가져왔습니다. 페이지를 다시 불러옵니다."; setTimeout(function () { location.reload(); }, 800);
-    }).catch(function () { $("io-status").textContent = "이 사이트에서 내보낸 파일이 아닙니다."; $("io-status").className = "status err"; });
-  });
 
   // ---- 로그인 상태
   (function () {
@@ -85,38 +55,6 @@
         error: "오류: " + esc(S.error)
       }[S.status] || S.status;
       el.innerHTML = "<p>" + msg + "</p>";
-    });
-  })();
-
-  // ---- 공유 링크 (핀 목록만, 주소에 담아 전달)
-  function packPins() {
-    var mini = J.candidates.items.map(function (c) { return [c.name, c.area || "", c.status || "후보", c.addr ? [c.addr.code, c.addr.dongKey, c.addr.jibun || ""] : null, c.lat != null ? [c.lat, c.lng] : null, c.price || null, c.memo || ""]; });
-    var bytes = new TextEncoder().encode(JSON.stringify(mini)), bin = ""; bytes.forEach(function (b) { bin += String.fromCharCode(b); });
-    return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-  }
-  function unpackPins(str) {
-    var b = str.replace(/-/g, "+").replace(/_/g, "/"); while (b.length % 4) b += "=";
-    var bin = atob(b), bytes = new Uint8Array(bin.length); for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-    return JSON.parse(new TextDecoder().decode(bytes));
-  }
-  $("share").addEventListener("click", function () {
-    if (!J.candidates.items.length) { $("io-status").textContent = "담아 둔 단지가 없습니다."; return; }
-    var url = location.origin + location.pathname + "?share=" + packPins();
-    var done = function () { $("io-status").textContent = "링크를 복사했습니다. 카톡 등으로 보내면 상대가 자기 목록에 합칠 수 있습니다. (" + J.candidates.items.length + "곳, 길이 " + url.length + "자)"; };
-    if (navigator.clipboard) navigator.clipboard.writeText(url).then(done, function () { prompt("아래 링크를 복사하세요", url); done(); }); else { prompt("아래 링크를 복사하세요", url); done(); }
-  });
-  (function () {
-    var m = /[?&]share=([^&]+)/.exec(location.search); if (!m) return;
-    var list; try { list = unpackPins(m[1]); } catch (e) { return; }
-    var mine = J.candidates.items, isNew = function (p) { return !mine.some(function (c) { return (c.addr && p[3] && c.addr.dongKey === p[3][1] && (c.addr.jibun || "") === p[3][2]) || J.normName(c.name) === J.normName(p[0]); }); };
-    var fresh = list.filter(isNew);
-    var box = $("share-box"); box.hidden = false;
-    box.innerHTML = "상대가 보낸 관심 단지 <b>" + list.length + "곳</b>" + (fresh.length ? " 중 내 목록에 없는 <b>" + fresh.length + "곳</b>: " + fresh.map(function (p) { return esc(p[0]); }).join(", ") + ' <button type="button" class="btn sm primary" id="merge">내 목록에 합치기</button>' : " — 모두 이미 내 목록에 있습니다.") + ' <button type="button" class="btn sm ghost" id="share-close">닫기</button>';
-    $("share-close").addEventListener("click", function () { history.replaceState(null, "", location.pathname); box.hidden = true; });
-    var mb = $("merge"); if (mb) mb.addEventListener("click", function () {
-      var p = Promise.resolve(), n = J.candidates.items.length;
-      fresh.forEach(function (x, i) { p = p.then(function () { var rec = { id: J.uid("c"), name: x[0], area: x[1], status: x[2] || "후보", memo: x[6] || "상대가 공유한 단지", order: n + i, createdAt: Date.now(), updatedAt: Date.now() }; if (x[3]) { rec.addr = { code: x[3][0], dongKey: x[3][1], jibun: x[3][2], loose: false }; rec.jibunAddr = J.SIDO_NAME[x[3][0]] + " " + J.expandDongKey(x[3][0], x[3][1]) + " " + x[3][2]; } if (x[4]) { rec.lat = x[4][0]; rec.lng = x[4][1]; } if (x[5]) rec.price = x[5]; return J.candidates.save(rec); }); });
-      p.then(function () { history.replaceState(null, "", location.pathname); location.reload(); });
     });
   })();
 

@@ -15,8 +15,8 @@
 | (출퇴근 기준) | 후보 찾기·지도의 '출퇴근 기준'에서 사람마다 '직장 위치' 또는 '회사 셔틀 정류장'을 고름. 셔틀 모드는 정류장 이름 목록을 붙여 넣으면 카카오 검색으로 위치를 찾아 **브라우저 localStorage(`imjang.commute.v1`)에만** 저장하고, 가장 가까운 정류장까지 걷는 거리로 칩·필터·추천 점수를 계산. 정류장 목록 자체는 저장소에 넣지 않음. |
 | `visit.html` | 임장 체크리스트(7개 항목, 35점)·기록·비교표(출퇴근 열 포함), 임장 가이드. |
 | `policy.html` | 2026-10-27 기준 규정. 세 줄 요약 → 내 조건(예산 입력값 기준) → 항목별 핵심 숫자·짧은 요점, 자세한 근거와 출처는 접힘. 취득세·중개보수 예시 표는 `JT.P`로 계산. |
-| `watch.html` | 관심 단지. 핀으로 담은 단지의 월별 매매·전세 중앙값 그래프(`data/history/<시도>/<시군구>.json`), 첫 기록 대비 변화, 내 예산과 비교. 내 데이터 내보내기/가져오기(JSON), 핀 목록 공유 링크(`?share=`), 실시간 공유 방(`?room=`). |
-| `assets/firebase-config.js` | 실시간 공유용 Firebase 웹 설정(프로젝트 jiptoe-bc18c, Realtime Database asia-southeast1). 공개 식별값이며 보호는 DB 규칙(`rooms/$room` 은 코드 길이 20자 이상일 때만 읽기·쓰기)으로 함. `app.js`의 SYNC가 방 코드(localStorage `imjang.room`)로 `rooms/<코드>/candidates`·`visits`를 양방향 동기화(최근 수정 우선). 출퇴근·셔틀·예산은 공유하지 않음. |
+| `watch.html` | 관심 단지. 핀으로 담은 단지의 월별 매매·전세 중앙값 그래프(`data/history/<시도>/<시군구>.json`), 첫 기록 대비 변화, 내 예산과 비교. 구글 로그인 상태 표시(허용 계정만 데이터 연결). |
+| `assets/firebase-config.js` | Firebase 웹 설정(프로젝트 jiptoe-bc18c, Realtime Database asia-southeast1). 공개 식별값이며 보호는 DB 규칙으로 함: 허용된 두 구글 계정만 `couple/candidates`·`couple/visits`(공용)와 `users/<uid>/private`(개인 설정: 출퇴근·셔틀·예산·검색 조건)를 읽고 씀. 허용 이메일은 저장소가 아니라 Firebase 규칙에만 있음. `app.js`의 SYNC가 구글 로그인 후 양방향 동기화(최근 수정 우선). |
 | `terms.html` | 집 사는 순서 6단계와 용어 사전(50여 개, 검색·분류). 다른 페이지의 `<dfn data-t="키">` 낱말을 누르면 같은 설명이 팝오버로 뜸. |
 | `assets/style.css`, `assets/app.js`, `assets/terms.js` | 공통 스타일, 저장소, 데이터 로더, 예산 계산, 출퇴근 계산(직선거리 → 어림 시간), 카카오 SDK 로더, 규정 파라미터(`JT.P`), 용어 데이터. |
 | `tools/geocode.html`, `tools/near.html` | 관리용. 실거래 요약의 단지마다 카카오 주소·장소 검색으로 좌표와 가까운 역·초등학교를 만들어 `window.GEO.out` / `window.NEAR.out`에 쌓음(사이트 도메인에서만 동작). |

@@ -523,6 +523,32 @@ window.JT = (function () {
     var pct = Math.round(r.ratio * 100), cls = pct >= 70 ? " good" : pct >= 55 ? "" : " warn";
     return '<span class="chip' + cls + '" title="' + r.area + '㎡ 기준 · 전세 ' + fmtEok(r.jeonse) + ' ÷ 매매 ' + fmtEok(r.sale) + '">전세가율 ' + pct + '%</span>';
   }
+  // ---------- 급지 (구·시별 전용 평당가 순위, data/grade.json, scripts/build_grade.py) ----------
+  var GRADE = null, gradeP = null;
+  function loadGrade() { if (!gradeP) gradeP = loadJson("data/grade.json").then(function (g) { GRADE = g; return g; }).catch(function () { GRADE = { sgg: {}, dong: {}, count: 0 }; return GRADE; }); return gradeP; }
+  // 단지의 대표 평당가(전용, 만원/평): 거래가 가장 많은 평형 기준
+  function ppyOf(p) { var best = null; p[4].forEach(function (a) { if (a[2] && (!best || a[1] > best[1])) best = a; }); return best ? Math.round(best[2] / (best[0] / 3.3058)) : null; }
+  function gradeOf(code, dongKey) {
+    if (!GRADE || !dongKey) return null;
+    var sgg = GRADE.sgg[code + "|" + dongKey.split(" ")[0]], dong = GRADE.dong[code + "|" + dongKey];
+    if (!sgg) return null;
+    return { rank: sgg[0], ppy: sgg[1], n: sgg[2], total: GRADE.count, dong: dong ? { rank: dong[0], ppy: dong[1], n: dong[2], count: dong[3] } : null };
+  }
+  function gradeChips(code, dongKey) {
+    var g = gradeOf(code, dongKey); if (!g) return "";
+    var sgg = dongKey.split(" ")[0], dong = dongKey.split(" ").slice(1).join(" ");
+    var out = '<span class="chip grade' + (g.rank <= 10 ? " good" : g.rank <= 20 ? "" : " low") + '" title="서울·경기·인천 ' + g.total + '개 구·시 중 ' + g.rank + '위 · ' + esc(sgg) + ' 전용 평당 ' + g.ppy.toLocaleString("ko-KR") + '만원"><dfn data-t="grade">급지</dfn> ' + g.rank + '위</span>';
+    if (g.dong) out += '<span class="chip' + (g.dong.rank <= Math.ceil(g.dong.count / 3) ? " good" : g.dong.rank > g.dong.count - Math.ceil(g.dong.count / 3) ? " low" : "") + '" title="' + esc(sgg) + ' 안 ' + g.dong.count + '개 동 중 ' + g.dong.rank + '위 · ' + esc(dong) + ' 전용 평당 ' + g.dong.ppy.toLocaleString("ko-KR") + '만원">' + esc(dong) + ' ' + g.dong.rank + '/' + g.dong.count + '위</span>';
+    return out;
+  }
+  function gradeText(code, p) {
+    var g = gradeOf(code, p[0]); if (!g) return null;
+    var sgg = p[0].split(" ")[0], dong = p[0].split(" ").slice(1).join(" "), ppy = ppyOf(p);
+    var s = "서울·경기·인천 " + g.total + "개 구·시 중 <b>" + g.rank + "위</b> (" + esc(sgg) + " 전용 평당 " + g.ppy.toLocaleString("ko-KR") + "만)";
+    if (g.dong) s += " · " + esc(dong) + "은(는) 구 안 " + g.dong.count + "개 동 중 <b>" + g.dong.rank + "위</b> (평당 " + g.dong.ppy.toLocaleString("ko-KR") + "만)";
+    if (ppy && g.dong) { var d = Math.round((ppy / g.dong.ppy - 1) * 100); s += " · 이 단지 평당 " + ppy.toLocaleString("ko-KR") + "만, 동 중앙값보다 " + (d >= 0 ? d + "% 비쌈" : (-d) + "% 쌈"); }
+    return { g: g, ppy: ppy, html: s };
+  }
   // 상세 HTML. p: price 행, apt: apt 행(없으면 null), js: jeonse 행(없으면 null), opts: { code, minp, maxp, lat, lng }
   function detailHtml(p, apt, js, opts) {
     opts = opts || {};
@@ -536,6 +562,8 @@ window.JT = (function () {
     kv.push(["규모", (units != null ? units.toLocaleString("ko-KR") + "세대" : "세대수 모름") + (bld != null ? " · " + bld + "개동" : "") + (units >= 1000 ? " · 대단지" : units != null && units < 300 ? " · 소규모" : "")]);
     kv.push(["준공", year ? year + "년 (" + age + "년차)" + (age >= 30 ? " · 재건축 연한 지남" : age >= 20 ? " · 구축" : age <= 7 ? " · 신축급" : "") : "모름"]);
     kv.push(["1년 거래", trades + "건" + (units ? " · 세대의 " + (trades / units * 100).toFixed(1) + "%" : "")]);
+    var gt = opts.code ? gradeText(opts.code, p) : null;
+    if (gt) kv.push(['<dfn data-t="grade">급지</dfn>', gt.html]);
     var rd = p[7] || null;
     if (rd) kv.push(["정비사업", esc(rd[1]) + " · <b>" + esc(rd[0]) + "</b> · 구역 " + esc(rd[2]) + (rd[3] ? " · 공급 예정 " + Number(rd[3]).toLocaleString("ko-KR") + "세대" : "") + ' <span class="muted small">(국토부 전국 도시정비사업 통합 데이터, 2026-05 기준)</span>']);
     if (near) {
@@ -561,6 +589,12 @@ window.JT = (function () {
       if (/관리처분|착공|이주|철거/.test(rd[0])) tips.push("정비사업이 " + rd[0] + " 단계입니다. 곧 이주·철거가 진행되거나 이미 진행 중이라 지금 들어가 살기엔 맞지 않을 수 있고, 조합원 지위 양도 제한도 확인해야 합니다.");
       else if (/조합설립|사업시행/.test(rd[0])) tips.push("정비사업이 " + rd[0] + " 단계로 중간쯤 와 있습니다. 보통 준공까지 5~10년 더 걸리고 분담금이 생기니, 실거주하면서 기다릴 수 있는지 따져 보세요.");
       else tips.push("정비사업 초기 단계(" + rd[0] + ")입니다. 기대감이 가격에 먼저 반영되는 시기라 사업이 늦어질 때의 부담을 생각해 두세요.");
+    }
+    if (gt) {
+      if (gt.g.rank <= 10) tips.push("급지 " + gt.g.rank + "위, 상급지입니다. 세대수가 적거나 오래됐어도 땅값이 받쳐 주는 동네라 하락기에 덜 빠지는 편입니다. 다만 규제지역(토지거래허가·대출 한도)에 해당하는지 확인하세요.");
+      else if (gt.g.rank <= 25) tips.push("급지 " + gt.g.rank + "위, 중상급지입니다. 같은 값이면 급지가 높은 쪽이 되팔 때 유리하니 동 순위와 역 거리로 그 안에서 고르세요.");
+      if (gt.g.dong && gt.g.dong.count >= 4 && gt.g.dong.rank > gt.g.dong.count - Math.ceil(gt.g.dong.count / 3)) tips.push("같은 구 안에서는 싼 동입니다. 급지가 높아도 동이 외지면 그 급지 값을 다 받지 못하니, 왜 싼지(역·학군·경사·소음) 현장에서 확인하세요.");
+      if (gt.g.dong && gt.ppy && gt.ppy < gt.g.dong.ppy * 0.8) tips.push("동 중앙값보다 20% 넘게 싼 단지입니다. 대장 단지 옆의 작은 단지일 가능성이 큰데, 거래가 세대의 2% 넘게 돌고 역이 가까우면 괜찮은 진입 방법이고, 거래가 거의 없으면 되팔 때 애를 먹습니다.");
     }
     if (age >= 30) tips.push("지은 지 " + age + "년이 지나 재건축 연한을 넘겼습니다. 추진 단계(안전진단·조합 등)와 분담금 이야기를 중개사에게 꼭 물어보세요.");
     else if (age >= 20) tips.push("지은 지 " + age + "년 된 구축입니다. 배관·주차·엘리베이터 상태를 현장에서 확인하세요.");
@@ -589,8 +623,9 @@ window.JT = (function () {
   // 한 단지의 상세를 비동기로 만든다 (후보 찾기 밖, 예: 지도 핀에서)
   function detailFor(code, dongKey, jibun, name, opts) {
     if (PRICE_AVAILABLE.indexOf(code) < 0) return Promise.resolve(null);
-    return Promise.all([loadPrice(code), loadApt(code), loadJeonse(code).catch(function () { return []; })]).then(function (res) {
+    return Promise.all([loadPrice(code), loadApt(code), loadJeonse(code).catch(function () { return []; }), loadGrade()]).then(function (res) {
       var p = priceMatch(res[0], dongKey, jibun, name); if (!p) return null;
+      opts = opts || {}; if (!opts.code) opts.code = code;
       var am = aptMatch(res[1], { code: code, dongKey: dongKey, jibun: jibun, loose: false }, name), apt = am.exact || am.list[0] || null;
       var js = priceMatch(res[2], dongKey, jibun, name);
       return detailHtml(p, apt, js, opts);
@@ -760,6 +795,6 @@ window.JT = (function () {
     budget: budget, loanFor: loanFor, costsFor: costsFor, acquisitionTax: acquisitionTax, brokerFee: brokerFee, monthlyPayment: monthlyPayment, policyEligibility: policyEligibility, regionOf: regionOf, annuityFactor: annuityFactor,
     expandDongKey: expandDongKey, getKakaoKey: getKakaoKey, loadKakao: loadKakao, placeSearch: placeSearch,
     getCommute: getCommute, setCommute: setCommute, commutePeople: commutePeople, commuteFor: commuteFor, commuteChips: commuteChips, commuteMinutes: commuteMinutes, haversineKm: haversineKm, kakaoRouteUrl: kakaoRouteUrl, renderCommuteSetup: renderCommuteSetup, nearestStop: nearestStop, isShuttle: isShuttle, termify: termify,
-    loadJeonse: loadJeonse, nearChips: nearChips, mainRatio: mainRatio, ratioChip: ratioChip, detailHtml: detailHtml, detailFor: detailFor, walkMin: walkMin, scoreRow: scoreRow, scoreHtml: scoreHtml,
+    loadJeonse: loadJeonse, nearChips: nearChips, mainRatio: mainRatio, ratioChip: ratioChip, detailHtml: detailHtml, detailFor: detailFor, walkMin: walkMin, scoreRow: scoreRow, scoreHtml: scoreHtml, loadGrade: loadGrade, gradeOf: gradeOf, gradeChips: gradeChips, ppyOf: ppyOf,
     SYNC: SYNC, onSync: onSync, authInit: authInit, signIn: signIn, signOut: signOut, isAllowed: isAllowed };
 })();

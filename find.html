@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>집터 · 후보 찾기</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
-<link rel="stylesheet" href="assets/style.css?v=20261028s">
+<link rel="stylesheet" href="assets/style.css?v=20261029a">
 </head>
 <body>
 <header class="topbar"><div class="topbar-inner"></div></header>
@@ -23,7 +23,7 @@
         <h2>조건</h2>
         <p class="small muted" id="budget-line">예산 페이지에서 계산한 값이 여기로 들어옵니다.</p>
       </div>
-      <div class="actions"><button type="button" class="btn sm" id="reset">조건 초기화</button><a class="btn sm" href="index.html">예산 다시 계산</a></div>
+      <div class="actions"><button type="button" class="btn sm primary" id="preset-top" title="급지 10위 안 · 300세대 이상 · 역 도보 10분 · 1년 거래 10건 이상 · 전세가율 50% 이상">묶음: 상급지 작은 단지</button><button type="button" class="btn sm" id="reset">조건 초기화</button><a class="btn sm" href="index.html">예산 다시 계산</a></div>
     </div>
     <div class="grid">
       <div class="field">
@@ -55,6 +55,18 @@
         <div class="chips-select" id="decades"></div>
       </div>
       <div class="field">
+        <label for="grade"><dfn data-t="grade">급지</dfn> <span class="muted small">(구·시 평당가 순위)</span></label>
+        <select id="grade"><option value="">전체</option><option value="5">5위 안</option><option value="10">10위 안</option><option value="15">15위 안</option><option value="20">20위 안</option><option value="30">30위 안</option><option value="40">40위 안</option></select>
+      </div>
+      <div class="field">
+        <label for="station">지하철역까지</label>
+        <select id="station"><option value="">전체</option><option value="350">도보 5분 (350m)</option><option value="670">도보 10분 (670m)</option><option value="1000">도보 15분 (1km)</option></select>
+      </div>
+      <div class="field">
+        <label for="minTrades">1년 거래</label>
+        <select id="minTrades"><option value="0">전체</option><option value="5">5건 이상</option><option value="10">10건 이상</option><option value="20">20건 이상</option></select>
+      </div>
+      <div class="field">
         <label for="ratio"><dfn data-t="jeonse-ratio">전세가율</dfn></label>
         <select id="ratio"><option value="">전체</option><option value="75">75% 이상</option><option value="70">70% 이상</option><option value="60">60% 이상</option><option value="50">50% 이상</option><option value="lt50">50% 미만</option></select>
       </div>
@@ -78,7 +90,7 @@
       <div class="field span-all">
         <label for="sort">정렬</label>
         <div class="sort-row">
-          <select id="sort"><option value="reco">추천순</option><option value="price">가격</option><option value="commute">출퇴근 가까운 순</option><option value="ratio">전세가율</option><option value="units">세대수</option><option value="year">준공년도</option><option value="trades">거래량</option></select>
+          <select id="sort"><option value="reco">추천순</option><option value="grade">급지 높은 순</option><option value="price">가격</option><option value="commute">출퇴근 가까운 순</option><option value="ratio">전세가율</option><option value="units">세대수</option><option value="year">준공년도</option><option value="trades">거래량</option></select>
           <button type="button" class="btn sm" id="dir" title="정렬 방향 바꾸기">↓ 내림차순</button>
         </div>
       </div>
@@ -95,12 +107,12 @@
   <div class="note" id="data-note" hidden></div>
   <div class="list" id="results"></div>
   <div class="actions" id="more-wrap" hidden><button type="button" class="btn" id="more">더 보기</button></div>
-  <p class="small muted">실거래가·전세: 국토교통부 실거래가, <span id="period">최근 12개월</span> 계약분(해제 거래 제외), 매달 자동 갱신. 평형별 값은 그 기간 거래가의 <dfn data-t="median">중앙값</dfn>이고, 전세가율은 가장 거래가 많은 평형 기준입니다. '평형'은 공급면적 기준 통칭(전용률 75% 가정)이고 괄호 안이 전용 평입니다. 역·초등학교 거리는 카카오 장소 검색 직선거리입니다. 추천순은 출퇴근(30) · 지하철(15) · 전세가율(15) · 세대수(10) · 연식(10) · 예산 여유(10) · 초등학교(5) · 거래 활발(5)을 더한 점수이고, 자료가 없는 항목은 빼고 100점으로 환산합니다. 각 단지 "자세히"에 근거가 나옵니다.</p>
+  <p class="small muted">실거래가·전세: 국토교통부 실거래가, <span id="period">최근 12개월</span> 계약분(해제 거래 제외), 매달 자동 갱신. 평형별 값은 그 기간 거래가의 <dfn data-t="median">중앙값</dfn>이고, 전세가율은 가장 거래가 많은 평형 기준입니다. '평형'은 공급면적 기준 통칭(전용률 75% 가정)이고 괄호 안이 전용 평입니다. 역·초등학교 거리는 카카오 장소 검색 직선거리입니다. 급지는 서울·경기·인천 구·시(경기는 구 단위)를 최근 1년 실거래의 전용 평당가 순으로 줄 세운 순위이고, 동 순위는 같은 구 안에서의 순서입니다(매달 자동 갱신). 추천순은 출퇴근(30) · 지하철(15) · 전세가율(15) · 세대수(10) · 연식(10) · 예산 여유(10) · 초등학교(5) · 거래 활발(5)을 더한 점수이고, 자료가 없는 항목은 빼고 100점으로 환산합니다. 각 단지 "자세히"에 근거가 나옵니다.</p>
 </main>
 
-<script src="assets/terms.js?v=20261028s"></script>
-<script src="assets/firebase-config.js?v=20261028s"></script>
-<script src="assets/app.js?v=20261028s"></script>
+<script src="assets/terms.js?v=20261029a"></script>
+<script src="assets/firebase-config.js?v=20261029a"></script>
+<script src="assets/app.js?v=20261029a"></script>
 <script>
 window.addEventListener("error", function (e) { var s = document.getElementById("status"); if (s) { s.textContent = "오류가 났습니다. Ctrl+F5(강력 새로고침)로 다시 열어 보세요. " + (e.message || ""); s.className = "status err"; } });
 (function () {
@@ -111,7 +123,7 @@ window.addEventListener("error", function (e) { var s = document.getElementById(
   var GG_NORTH = ["고양덕양구", "고양일산동구", "고양일산서구", "파주시", "김포시", "의정부시", "양주시", "동두천시", "포천시", "연천군", "남양주시", "구리시", "가평군"];
   var DECADES = [["2020", "2020년대"], ["2010", "2010년대"], ["2000", "2000년대"], ["1990", "1990년대"], ["old", "1980년대 이전"]];
   var SIDO_OF = { seoul: "seoul", "gg-south": "gyeonggi", "gg-north": "gyeonggi", incheon: "incheon" };
-  var DEFAULT_DIR = { reco: "desc", price: "asc", commute: "asc", ratio: "desc", units: "desc", year: "desc", trades: "desc" };
+  var DEFAULT_DIR = { reco: "desc", grade: "asc", price: "asc", commute: "asc", ratio: "desc", units: "desc", year: "desc", trades: "desc" };
 
   var st = J.lsGet("imjang.findInputs2", null) || {};
   if (!st.regions) { st.regions = ["seoul", "gg-south", "gg-north"]; }
@@ -123,12 +135,13 @@ window.addEventListener("error", function (e) { var s = document.getElementById(
   if (st.minp != null) $("minp").value = st.minp;
   if (b && b.price) $("budget-line").textContent = "예산 페이지 계산: 최대 " + J.fmtEok(b.price) + " (대출 " + J.fmtEok(b.loan) + " 포함). 아래 값은 바꿔도 됩니다.";
   else $("budget-line").textContent = "아직 예산을 계산하지 않았습니다. 최대 집값을 직접 넣거나 예산 페이지에서 계산해 오세요.";
-  ["minUnits", "ratio", "sort"].forEach(function (k) { if (st[k] != null) $(k).value = st[k]; });
+  ["minUnits", "ratio", "sort", "grade", "station", "minTrades"].forEach(function (k) { if (st[k] != null) $(k).value = st[k]; });
   if (st.noMixed != null) $("noMixed").checked = !!st.noMixed;
   if (st.onlyRedev != null) $("onlyRedev").checked = !!st.onlyRedev;
 
   function persist() {
     st.minp = $("minp").value; st.maxp = $("maxp").value; st.minUnits = $("minUnits").value; st.ratio = $("ratio").value; st.sort = $("sort").value;
+    st.grade = $("grade").value; st.station = $("station").value; st.minTrades = $("minTrades").value;
     st.noMixed = $("noMixed").checked; st.onlyRedev = $("onlyRedev").checked; st.dong = $("dong").value;
     J.lsSet("imjang.findInputs2", st);
   }
@@ -189,15 +202,15 @@ window.addEventListener("error", function (e) { var s = document.getElementById(
   function ensureData() {
     var codes = []; st.regions.forEach(function (rg) { var c = SIDO_OF[rg]; if (codes.indexOf(c) < 0) codes.push(c); });
     var need = codes.filter(function (c) { return !loaded[c]; });
-    if (!need.length) return Promise.resolve();
+    if (!need.length) return J.loadGrade();
     $("status").textContent = "데이터 불러오는 중"; $("status").className = "status";
-    return Promise.all(need.map(function (code) { return Promise.all([J.loadPrice(code), J.loadApt(code), J.loadJeonse(code).catch(function () { return []; })]).then(function (res) {
+    return Promise.all([J.loadGrade()].concat(need.map(function (code) { return Promise.all([J.loadPrice(code), J.loadApt(code), J.loadJeonse(code).catch(function () { return []; })]).then(function (res) {
       var idx = new Map(), byName = new Map(), jIdx = new Map(), jByName = new Map();
       res[0].forEach(function (r) { r.code = code; });
       res[1].forEach(function (r) { idx.set(r[1] + "|" + r[2], r); var nk = r[1] + "|" + J.normName(r[0]); if (!byName.has(nk)) byName.set(nk, r); });
       res[2].forEach(function (r) { jIdx.set(r[0] + "|" + r[1], r); var nk = r[0] + "|" + J.normName(r[2]); if (!jByName.has(nk)) jByName.set(nk, r); });
       loaded[code] = { price: res[0], aptIndex: idx, aptByName: byName, jIdx: jIdx, jByName: jByName };
-    }); })).then(function () { $("status").textContent = ""; }).catch(function () { $("status").textContent = "데이터를 불러오지 못했습니다. 새로고침해 주세요."; $("status").className = "status err"; });
+    }); }))).then(function () { $("status").textContent = ""; }).catch(function () { $("status").textContent = "데이터를 불러오지 못했습니다. 새로고침해 주세요."; $("status").className = "status err"; });
   }
   function activeRows() {
     var out = [];
@@ -239,6 +252,7 @@ window.addEventListener("error", function (e) { var s = document.getElementById(
     var rows = [], mixedSkipped = 0;
     var minp = J.num($("minp").value) || 0, maxp = J.num($("maxp").value) || Infinity;
     var minUnits = Number($("minUnits").value), ratioSel = $("ratio").value, noMixed = $("noMixed").checked, onlyRedev = $("onlyRedev").checked, sort = $("sort").value;
+    var maxGrade = Number($("grade").value) || 0, maxStation = Number($("station").value) || 0, minTrades = Number($("minTrades").value) || 0;
     var people = J.commutePeople();
     if (sort === "commute" && !people.length) sort = "price";
     activeRows().forEach(function (r) {
@@ -254,6 +268,9 @@ window.addEventListener("error", function (e) { var s = document.getElementById(
       if (noMixed && mixed) { mixedSkipped++; return; }
       var redev = r[7] || null;
       if (onlyRedev && !redev) return;
+      var grade = J.gradeOf(r.code, dk);
+      if (maxGrade && (!grade || grade.rank > maxGrade)) return;
+      if (maxStation && (!r[6] || !r[6][0] || r[6][2] > maxStation)) return;
       var mr = J.mainRatio(r, js), pct = mr ? mr.ratio * 100 : null;
       if (ratioSel) { if (pct == null) return; if (ratioSel === "lt50" ? pct >= 50 : pct < Number(ratioSel)) return; }
       var areas = r[4].filter(function (a) { return st.band === "all" || bandOf(a[0]) === st.band; });
@@ -261,6 +278,7 @@ window.addEventListener("error", function (e) { var s = document.getElementById(
       var inB = areas.filter(function (a) { return a[2] >= minp && a[2] <= maxp; });
       if (!inB.length) return;
       var trades = areas.reduce(function (s, a) { return s + a[1]; }, 0);
+      if (minTrades && trades < minTrades) return;
       var pos = r[5] || null, cm = pos ? J.commuteFor(pos[0], pos[1], r[2]) : [];
       var limited = people.some(function (p) { return st.tlimit[p.label]; });
       if (limited) {
@@ -269,7 +287,7 @@ window.addEventListener("error", function (e) { var s = document.getElementById(
         if (bad) return;
       }
       var kmSum = cm.length ? cm.reduce(function (s, c) { return s + (c.mode === "shuttle" ? c.km * 3 : c.km); }, 0) : Infinity;
-      var row = { r: r, apt: apt, js: js, units: units, bld: bld, year: year, mixed: mixed, redev: redev, areas: areas, inB: inB, minPrice: Math.min.apply(null, inB.map(function (a) { return a[2]; })), trades: trades, pos: pos, kmSum: kmSum, ratio: pct };
+      var row = { r: r, apt: apt, js: js, units: units, bld: bld, year: year, mixed: mixed, redev: redev, areas: areas, inB: inB, minPrice: Math.min.apply(null, inB.map(function (a) { return a[2]; })), trades: trades, pos: pos, kmSum: kmSum, ratio: pct, grade: grade };
       row.score = J.scoreRow(row, { maxp: isFinite(maxp) ? maxp : 0 });
       rows.push(row);
     });
@@ -281,12 +299,13 @@ window.addEventListener("error", function (e) { var s = document.getElementById(
       if (sort === "ratio") return x.ratio == null ? -1 : x.ratio;
       if (sort === "commute") return x.kmSum === Infinity ? 1e9 : x.kmSum;
       if (sort === "reco") return x.score.total || 0;
+      if (sort === "grade") return x.grade ? x.grade.rank * 1000 + (x.grade.dong ? x.grade.dong.rank : 999) : 1e9;
       return x.minPrice;
     }
     rows.sort(function (a, b) { return (val(a) - val(b)) * dirMul || a.minPrice - b.minPrice; });
     state.rows = rows; state.shown = 0;
     $("results").innerHTML = "";
-    if (!rows.length) { $("results").innerHTML = '<div class="empty"><h3>조건에 맞는 단지가 없습니다</h3><p>최대 집값을 올리거나 세대수·준공·전세가율·출퇴근 조건을 풀어 보세요. 1년간 거래가 없던 단지는 나오지 않습니다.</p></div>'; $("more-wrap").hidden = true; $("status").textContent = ""; return; }
+    if (!rows.length) { $("results").innerHTML = '<div class="empty"><h3>조건에 맞는 단지가 없습니다</h3><p>최대 집값을 올리거나 급지·세대수·역 거리·거래·전세가율·출퇴근 조건을 풀어 보세요. 1년간 거래가 없던 단지는 나오지 않습니다.</p></div>'; $("more-wrap").hidden = true; $("status").textContent = ""; return; }
     $("status").textContent = rows.length.toLocaleString("ko-KR") + "개 단지가 조건에 맞습니다." + (mixedSkipped ? " 주상복합으로 보이는 " + mixedSkipped + "곳은 뺐습니다." : "");
     showMore();
   }
@@ -306,6 +325,7 @@ window.addEventListener("error", function (e) { var s = document.getElementById(
       if (x.units != null) chips += '<span class="chip">' + x.units.toLocaleString("ko-KR") + '세대</span>';
       if (x.bld != null) chips += '<span class="chip">' + x.bld + '개동</span>';
       if (x.year) chips += '<span class="chip">' + x.year + '년 준공</span>';
+      chips += J.gradeChips(r.code, r[0]);
       if (x.mixed) chips += '<span class="chip warn">주상복합 추정</span>';
       if (x.redev) chips += '<span class="chip mark" title="' + esc(x.redev[2]) + '">' + esc(redevLabel(x.redev)) + '</span>';
       chips += J.ratioChip(J.mainRatio(r, x.js)) + J.nearChips(r[6]);
@@ -355,7 +375,15 @@ window.addEventListener("error", function (e) { var s = document.getElementById(
   });
 
   ["minp", "maxp"].forEach(function (k) { $(k).addEventListener("input", run); });
-  ["minUnits", "ratio", "noMixed", "onlyRedev"].forEach(function (k) { $(k).addEventListener("change", run); });
+  ["minUnits", "ratio", "noMixed", "onlyRedev", "grade", "station", "minTrades"].forEach(function (k) { $(k).addEventListener("change", run); });
+  $("preset-top").addEventListener("click", function () {
+    $("grade").value = "10"; $("minUnits").value = "300"; $("station").value = "670"; $("minTrades").value = "10"; $("ratio").value = "50";
+    $("noMixed").checked = true; $("onlyRedev").checked = false; $("sort").value = "grade"; st.dir = "asc"; paintDir();
+    st.sggs = []; st.dong = ""; st.decades = []; paintChips($("decades"), DECADES, st.decades);
+    if (st.regions.indexOf("seoul") < 0) st.regions.push("seoul"); if (st.regions.indexOf("gg-south") < 0) st.regions.push("gg-south");
+    paintChips($("regions"), REGIONS, st.regions); persist();
+    ensureData().then(function () { paintSgg(); run(); var s = $("status"); s.textContent = "'상급지 작은 단지' 묶음: 급지 10위 안 · 300세대 이상 · 역 도보 10분 · 1년 거래 10건 이상 · 전세가율 50% 이상 · 급지순. " + s.textContent; });
+  });
   ensureData().then(function () { paintSgg(); run(); });
   fetch("data/meta.json").then(function (r) { return r.ok ? r.json() : null; }).then(function (m) { if (m && m.window) $("period").textContent = m.window[0].slice(0, 4) + "." + m.window[0].slice(4) + " ~ " + m.window[1].slice(0, 4) + "." + m.window[1].slice(4); }).catch(function () {});
 })();

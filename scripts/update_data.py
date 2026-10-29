@@ -221,6 +221,11 @@ def main():
     meta = load_json(os.path.join(DATA, "meta.json"), {})
     meta.update({"updatedAt": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"), "window": [window[0], window[-1]], "source": "국토교통부 아파트 매매·전월세 실거래가 API (data.go.kr)"})
     save_json(os.path.join(DATA, "meta.json"), meta)
+    # 급지(구·시별 평당가 순위)도 같이 다시 계산
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import build_grade
+    g = build_grade.build()
+    print("grade.json:", g["count"], "sgg")
     print("done")
 
 

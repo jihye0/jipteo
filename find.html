@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>집터 · 후보 찾기</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
-<link rel="stylesheet" href="assets/style.css?v=20261029a">
+<link rel="stylesheet" href="assets/style.css?v=20261029b">
 </head>
 <body>
 <header class="topbar"><div class="topbar-inner"></div></header>
@@ -84,7 +84,7 @@
         <div class="tlimits" id="tlimits"></div>
       </div>
       <div class="field span-all checks-row">
-        <label class="check"><input type="checkbox" id="noMixed" checked> <dfn data-t="mixed-use">주상복합</dfn> 제외 <span class="muted small">(이름에 '주상복합'이 있거나 1~2개 동 고층형)</span></label>
+        <label class="check"><input type="checkbox" id="noMixed" checked> <dfn data-t="mixed-use">주상복합</dfn> 제외 <span class="muted small">(확인된 단지 + 이름에 '주상복합'이 있거나 1~2개 동 고층형 추정)</span></label>
         <label class="check"><input type="checkbox" id="onlyRedev"> <dfn data-t="redev">재건축·재개발</dfn> 추진 단지만</label>
       </div>
       <div class="field span-all">
@@ -110,9 +110,9 @@
   <p class="small muted">실거래가·전세: 국토교통부 실거래가, <span id="period">최근 12개월</span> 계약분(해제 거래 제외), 매달 자동 갱신. 평형별 값은 그 기간 거래가의 <dfn data-t="median">중앙값</dfn>이고, 전세가율은 가장 거래가 많은 평형 기준입니다. '평형'은 공급면적 기준 통칭(전용률 75% 가정)이고 괄호 안이 전용 평입니다. 역·초등학교 거리는 카카오 장소 검색 직선거리입니다. 급지는 서울·경기·인천 구·시(경기는 구 단위)를 최근 1년 실거래의 전용 평당가 순으로 줄 세운 순위이고, 동 순위는 같은 구 안에서의 순서입니다(매달 자동 갱신). 추천순은 출퇴근(30) · 지하철(15) · 전세가율(15) · 세대수(10) · 연식(10) · 예산 여유(10) · 초등학교(5) · 거래 활발(5)을 더한 점수이고, 자료가 없는 항목은 빼고 100점으로 환산합니다. 각 단지 "자세히"에 근거가 나옵니다.</p>
 </main>
 
-<script src="assets/terms.js?v=20261029a"></script>
-<script src="assets/firebase-config.js?v=20261029a"></script>
-<script src="assets/app.js?v=20261029a"></script>
+<script src="assets/terms.js?v=20261029b"></script>
+<script src="assets/firebase-config.js?v=20261029b"></script>
+<script src="assets/app.js?v=20261029b"></script>
 <script>
 window.addEventListener("error", function (e) { var s = document.getElementById("status"); if (s) { s.textContent = "오류가 났습니다. Ctrl+F5(강력 새로고침)로 다시 열어 보세요. " + (e.message || ""); s.className = "status err"; } });
 (function () {
@@ -196,15 +196,17 @@ window.addEventListener("error", function (e) { var s = document.getElementById(
 
   // ---- 데이터
   var loaded = {}; // code -> { price, aptIndex, aptByName, jIdx, jByName }
+  var MIXED = {}; // 손으로 확인한 주상복합 (data/mixed.json)
+  var mixedP = fetch("data/mixed.json").then(function (r) { return r.ok ? r.json() : {}; }).then(function (m) { MIXED = m || {}; }).catch(function () {});
   function regionOfRow(r) { return r.code === "gyeonggi" ? (GG_NORTH.indexOf(r[0].split(" ")[0]) >= 0 ? "gg-north" : "gg-south") : r.code; }
   function regionOfKey(k) { var t = k.split("|"); return t[0] === "gyeonggi" ? (GG_NORTH.indexOf(t[1]) >= 0 ? "gg-north" : "gg-south") : t[0]; }
   function sggKey(r) { return r.code + "|" + r[0].split(" ")[0]; }
   function ensureData() {
     var codes = []; st.regions.forEach(function (rg) { var c = SIDO_OF[rg]; if (codes.indexOf(c) < 0) codes.push(c); });
     var need = codes.filter(function (c) { return !loaded[c]; });
-    if (!need.length) return J.loadGrade();
+    if (!need.length) return Promise.all([J.loadGrade(), mixedP]);
     $("status").textContent = "데이터 불러오는 중"; $("status").className = "status";
-    return Promise.all([J.loadGrade()].concat(need.map(function (code) { return Promise.all([J.loadPrice(code), J.loadApt(code), J.loadJeonse(code).catch(function () { return []; })]).then(function (res) {
+    return Promise.all([J.loadGrade(), mixedP].concat(need.map(function (code) { return Promise.all([J.loadPrice(code), J.loadApt(code), J.loadJeonse(code).catch(function () { return []; })]).then(function (res) {
       var idx = new Map(), byName = new Map(), jIdx = new Map(), jByName = new Map();
       res[0].forEach(function (r) { r.code = code; });
       res[1].forEach(function (r) { idx.set(r[1] + "|" + r[2], r); var nk = r[1] + "|" + J.normName(r[0]); if (!byName.has(nk)) byName.set(nk, r); });
@@ -244,7 +246,7 @@ window.addEventListener("error", function (e) { var s = document.getElementById(
 
   function bandOf(area) { return area < 60 ? "s" : area < 85 ? "m" : "l"; }
   function decadeOf(y) { return !y ? "" : y >= 2020 ? "2020" : y >= 2010 ? "2010" : y >= 2000 ? "2000" : y >= 1990 ? "1990" : "old"; }
-  function isMixed(r, units, bld, year) { return /주상복합|주상/.test(r[2]) || (bld != null && bld <= 2 && units != null && units >= 150 && year >= 2000); }
+  function isMixed(r, units, bld, year) { return !!MIXED[r.code + "|" + r[0] + "|" + r[1]] || /주상복합|주상/.test(r[2]) || (bld != null && bld <= 2 && units != null && units >= 150 && year >= 2000); }
   function redevLabel(rd) { return rd ? (/재건축/.test(rd[1]) ? "재건축" : /재개발/.test(rd[1]) ? "재개발" : "정비사업") + " · " + rd[0] : ""; }
 
   function run() {
@@ -326,7 +328,7 @@ window.addEventListener("error", function (e) { var s = document.getElementById(
       if (x.bld != null) chips += '<span class="chip">' + x.bld + '개동</span>';
       if (x.year) chips += '<span class="chip">' + x.year + '년 준공</span>';
       chips += J.gradeChips(r.code, r[0]);
-      if (x.mixed) chips += '<span class="chip warn">주상복합 추정</span>';
+      if (x.mixed) chips += '<span class="chip warn">' + (MIXED[r.code + "|" + r[0] + "|" + r[1]] ? "주상복합" : "주상복합 추정") + '</span>';
       if (x.redev) chips += '<span class="chip mark" title="' + esc(x.redev[2]) + '">' + esc(redevLabel(x.redev)) + '</span>';
       chips += J.ratioChip(J.mainRatio(r, x.js)) + J.nearChips(r[6]);
       if (pinned[key]) chips += '<span class="chip accent">핀에 담김</span>';
